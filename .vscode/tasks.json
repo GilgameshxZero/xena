@@ -1,0 +1,39 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			/* Remove the intermediates directory obj/ and the output directory bin/. */
+			"type": "shell",
+			"label": "clean",
+			"options": { "cwd": "${workspaceFolder}/build" },
+			"presentation": { "clear": true, "reveal": "silent" },
+
+			"command": "make",
+			"args": ["clean"],
+			"windows": { "command": "nmake" }
+		},
+		{
+			/* Build the open file in release mode. */
+			"type": "shell",
+			"label": "build",
+			"options": { "cwd": "${workspaceFolder}/build" },
+			"presentation": { "clear": true },
+			"group": "build",
+
+			"command": "build",
+			"args": [],
+			"problemMatcher": []
+		},
+		{
+			/* Build the open file in release mode. */
+			"type": "shell",
+			"label": "run",
+			"options": { "cwd": "${workspaceFolder}/build" },
+			"presentation": { "clear": true },
+
+			"command": "build && run",
+			"args": [],
+			"problemMatcher": []
+		}
+	]
+}
