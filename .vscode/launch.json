@@ -1,0 +1,16 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "release",
+			"type": "launch",
+			"request": "launch",
+			"program": "${workspaceFolder}/build/run.bat",
+			"args": [],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/bin",
+			"preLaunchTask": "build-release-x64",
+			"MIMode": "gdb"
+		}
+	]
+}

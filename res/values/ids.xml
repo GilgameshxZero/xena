@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<item name="button_partial_update" type="id"/>
+	<item name="button_regal_partial" type="id"/>
+	<item name="button_enter_fast_mode" type="id"/>
+	<item name="button_quit_fast_mode" type="id"/>
+	<item name="button_screen_refresh" type="id"/>
+	<item name="textview" type="id"/>
+	<item name="surfaceview" type="id"/>
+	<item name="button_enter_x_mode" type="id"/>
+	<item name="activity_main" type="id"/>
+	<item name="button_enter_normal_mode" type="id"/>
+	<item name="button_enter_A2_mode" type="id"/>
+	<item name="button_enter_du_mode" type="id"/>
+</resources>
