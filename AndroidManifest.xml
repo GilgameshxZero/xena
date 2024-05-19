@@ -1,18 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.gilgamesh.xenagogy">
-	<uses-sdk android:targetSdkVersion="31" />
-	<application android:label="Xenagogy">
-		<activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+	package="com.gilgamesh.xenagogy">
+	<uses-sdk android:targetSdkVersion="34" />
+	<uses-permission android:name="android.permission.INTERNET" />
+	<application android:label="Xenagogy" android:usesCleartextTraffic="true">
+		<activity android:name=".FilePickerActivity" android:exported="true"
+			android:launchMode="singleTop"
+			android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 		</activity>
-		<!-- <activity android:name=".DrawActivity" android:exported="true" android:launchMode="singleTop">
+		<activity android:name=".CanvasActivity" android:exported="true"
+			android:launchMode="singleTop"
+			android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
 			<intent-filter>
-				<action android:name="android.intent.action.DRAW" />
-				<category android:name="android.intent.category.LAUNCHER" />
+				<action android:name="android.intent.action.RUN" />
+				<category android:name="android.intent.category.DEFAULT" />
 			</intent-filter>
-		</activity> -->
+		</activity>
 	</application>
 </manifest>

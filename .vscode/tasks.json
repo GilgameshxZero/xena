@@ -15,14 +15,22 @@
 		{
 			/* Build the open file in release mode. */
 			"type": "shell",
+			"label": "logcat",
+			"options": { "cwd": "${workspaceFolder}/build" },
+			"presentation": { "clear": true },
+
+			"command": "adb shell logcat *:E *:W *:V"
+		},
+		{
+			/* Build the open file in release mode. */
+			"type": "shell",
 			"label": "build-debug",
 			"options": { "cwd": "${workspaceFolder}/build" },
 			"presentation": { "clear": true },
 			"group": "build",
 
 			"command": "nmake",
-			"args": ["build"],
-			"problemMatcher": []
+			"args": ["build"]
 		},
 		{
 			/* Build the open file in release mode. */
@@ -33,8 +41,7 @@
 			"group": "build",
 
 			"command": "nmake",
-			"args": ["build", "BUILD=1"],
-			"problemMatcher": []
+			"args": ["build", "BUILD=1"]
 		},
 		{
 			/* Build the open file in release mode. */
@@ -44,8 +51,7 @@
 			"presentation": { "clear": true },
 
 			"command": "nmake",
-			"args": ["run"],
-			"problemMatcher": []
+			"args": ["run"]
 		},
 		{
 			/* Build the open file in release mode. */
@@ -55,8 +61,7 @@
 			"presentation": { "clear": true },
 
 			"command": "nmake",
-			"args": ["run", "BUILD=1"],
-			"problemMatcher": []
+			"args": ["run", "BUILD=1"]
 		}
 	]
 }
