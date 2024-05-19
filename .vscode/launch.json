@@ -2,15 +2,18 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "release",
-			"type": "launch",
+			"name": "debug",
+			"type": "node-terminal",
 			"request": "launch",
-			"program": "${workspaceFolder}/build/run.bat",
-			"args": [],
-			"stopAtEntry": false,
-			"cwd": "${workspaceFolder}/bin",
-			"preLaunchTask": "build-release-x64",
-			"MIMode": "gdb"
+			"cwd": "${workspaceFolder}/build",
+			"command": "nmake run"
+		},
+		{
+			"name": "release",
+			"type": "node-terminal",
+			"request": "launch",
+			"cwd": "${workspaceFolder}/build",
+			"command": "nmake run BUILD=1"
 		}
 	]
 }
