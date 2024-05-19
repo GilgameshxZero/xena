@@ -81,7 +81,7 @@ $(ROOT_DIR)priv\$(PROJECT_NAME).debug.keystore:
 		-alias android_debug_key -keyalg RSA -keysize 2048
 
 # Compile target: .java to .class. Only sources directly under the main path are compiled, for now.
-$(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class: $(ROOT_DIR)lib\onyxsdk-base-1.7.2.jar $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java $(ROOT_DIR)src\$(PACKAGE_PATH)\*
+$(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class: $(ROOT_DIR)lib\onyxsdk-base-1.7.2.jar $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java $(ROOT_DIR)src\$(PACKAGE_PATH)\*.java
 	@ECHO Compiling to .class...
 	@DIR /S /B $(ROOT_DIR)src\*.java > src.txt
 	@CALL "$(JAVA_HOME)\bin\javac" \
