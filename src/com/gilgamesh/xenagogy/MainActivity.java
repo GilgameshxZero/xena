@@ -3,9 +3,13 @@ package com.gilgamesh.xenagogy;
 import android.app.Activity;
 import android.os.Bundle;
 import android.widget.TextView;
+import android.webkit.WebView;
 import android.util.Log;
 
 import com.gilgamesh.xenagogy.R;
+
+import android.content.Intent;
+import android.net.Uri;
 
 //
 
@@ -34,6 +38,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
   TextView textView;
   SurfaceView surfaceView;
   RelativeLayout activityMain;
+	WebView webView;
 
   Button button_partial_update;
   Button button_regal_partial;
@@ -56,6 +61,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
 		textView = findViewById(R.id.textview);
 		surfaceView = findViewById(R.id.surfaceview);
 		activityMain = findViewById(R.id.activity_main);
+		this.webView = findViewById(R.id.webview);
+		this.webView.loadUrl("http://usaco.org");
+
 		button_partial_update = findViewById(R.id.button_partial_update);
 		button_regal_partial = findViewById(R.id.button_regal_partial);
 		button_enter_fast_mode = findViewById(R.id.button_enter_fast_mode);
@@ -93,24 +101,52 @@ public class MainActivity extends Activity implements View.OnClickListener {
 		// setContentView(textView);
   }
 
+	// Request code for selecting a PDF document.
+	private static final int PICK_PDF_FILE = 299999;
+
+	private void openFile(Uri pickerInitialUri) {
+		Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+		intent.addCategory(Intent.CATEGORY_OPENABLE);
+		intent.setType("image/svg+xml");
+
+		// Optionally, specify a URI for the file that should appear in the
+		// system file picker when it loads.
+		// intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, pickerInitialUri);
+
+		startActivityForResult(intent, PICK_PDF_FILE);
+	}
+
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		Log.d(TAG, "herehere");
+		Log.d(TAG, String.valueOf(requestCode));
+		Log.d(TAG, String.valueOf(resultCode));
+		String uri = data.getData().toString();
+		Log.d(TAG, uri);
+		
+		this.updateTextView(uri);
+		this.webView.loadUrl(uri);
+	}
+
   @Override
   public void onClick(View v) {
-		Log.e(TAG, "pogchamp2");
+		Log.d(TAG, "pogchamp2");
     if (v.equals(button_partial_update)) {
-			Log.e(TAG, "pogchamp3");
-      updateTextView();
+			Log.d(TAG, "pogchamp3");
+      updateTextView("partial");
 			EpdDeviceManager.refreshScreenWithGCIntervalWithoutRegal(textView);
 			// EpdDeviceManager.applyWithGCInterval(textView, true);
 			// EpdController.setViewDefaultUpdateMode(textView, UpdateMode.GU);
       // EpdDeviceManager.applyWithGCIntervalWithoutRegal(textView);
+
+			openFile(Uri.EMPTY);
     } else if (v.equals(button_regal_partial)) {
-      updateTextView();
+      updateTextView("partial regal");
 			EpdDeviceManager.refreshScreenWithGCIntervalWithRegal(textView);
 			// EpdDeviceManager.applyWithGCInterval(textView, true);
 			// EpdController.setViewDefaultUpdateMode(textView, UpdateMode.REGAL);
       // EpdDeviceManager.applyWithGCIntervalWitRegal(textView, true);
     } else if (v.equals(button_screen_refresh)) {
-      updateTextView();
+      updateTextView("refresh");
 			EpdDeviceManager.refreshScreenWithGCIntervalWithoutRegal(activityMain);
 			// EpdController.refreshScreen(textView, UpdateMode.GC);
 			// EpdDeviceManager.applyGCUpdate(textView);
@@ -141,10 +177,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
   }
 
-  private void updateTextView() {
-    StringBuilder sb = new StringBuilder();
-    sb.append(textView.getText());
-    sb.append("hello world!");
-    textView.setText(sb.toString());
+  private void updateTextView(String text) {
+    textView.setText(text);
   }
 }

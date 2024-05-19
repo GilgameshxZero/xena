@@ -12,6 +12,8 @@ SET PLATFORM_DIR=%ANDROID_HOME%/platforms/android-34
 SET ROOT_DIR=%CD%/..
 SET PACKAGE_PATH=com/gilgamesh/xenagogy
 
+ECHO ------------------------------------------------------
+
 rm -rf %ROOT_DIR%/obj
 rm -rf %ROOT_DIR%/bin
 mkdir %CD%\..\obj
