@@ -1,3 +1,4 @@
 bin/
+lib/*.jar
 obj/
 priv/

@@ -15,24 +15,47 @@
 		{
 			/* Build the open file in release mode. */
 			"type": "shell",
-			"label": "build",
+			"label": "build-debug",
 			"options": { "cwd": "${workspaceFolder}/build" },
 			"presentation": { "clear": true },
 			"group": "build",
 
-			"command": "build",
-			"args": [],
+			"command": "nmake",
+			"args": ["build"],
 			"problemMatcher": []
 		},
 		{
 			/* Build the open file in release mode. */
 			"type": "shell",
-			"label": "run",
+			"label": "build-release",
+			"options": { "cwd": "${workspaceFolder}/build" },
+			"presentation": { "clear": true },
+			"group": "build",
+
+			"command": "nmake",
+			"args": ["build", "BUILD=1"],
+			"problemMatcher": []
+		},
+		{
+			/* Build the open file in release mode. */
+			"type": "shell",
+			"label": "run-debug",
 			"options": { "cwd": "${workspaceFolder}/build" },
 			"presentation": { "clear": true },
 
-			"command": "build && run",
-			"args": [],
+			"command": "nmake",
+			"args": ["run"],
+			"problemMatcher": []
+		},
+		{
+			/* Build the open file in release mode. */
+			"type": "shell",
+			"label": "run-release",
+			"options": { "cwd": "${workspaceFolder}/build" },
+			"presentation": { "clear": true },
+
+			"command": "nmake",
+			"args": ["run", "BUILD=1"],
 			"problemMatcher": []
 		}
 	]

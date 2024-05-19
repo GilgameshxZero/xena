@@ -29,8 +29,9 @@ public final class R {
         public static final int webview=0x7f030000;
     }
     public static final class layout {
-        public static final int activity_epd_demo=0x7f020000;
-        public static final int activity_main=0x7f020001;
+        public static final int activity_draw=0x7f020000;
+        public static final int activity_epd_demo=0x7f020001;
+        public static final int activity_main=0x7f020002;
     }
     public static final class string {
         public static final int hello_world=0x7f040000;
