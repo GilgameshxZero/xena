@@ -33,12 +33,13 @@ BUILD_NAME = debug
 PROJECT_NAME = xenagogy
 PACKAGE_PATH = com\gilgamesh\$(PROJECT_NAME)
 PACKAGE_NAME = com.gilgamesh.$(PROJECT_NAME)
-MAIN_CLASS = MainActivity
+MAIN_CLASS = FilePickerActivity
 ROOT_DIR = $(MAKEDIR)\..^\
+# All library files to be declared here.
 LIB_NAMES = \
-repo.boox.com/repository/maven-public/com/onyx/android/sdk:onyxsdk-base:1.7.2 \
-repo.boox.com/repository/maven-public/com/onyx/android/sdk:onyxsdk-device:1.2.29 \
-repo.boox.com/repository/maven-public/com/onyx/android/sdk:onyxsdk-pen:1.4.10.1
+repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-base/1.7.2:onyxsdk-base-1.7.2 \
+repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-device/1.2.29:onyxsdk-device-1.2.29 \
+repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-pen/1.4.10.1:onyxsdk-pen-1.4.10.1
 
 # Real targets.
 # Default/build target only compiles and links, but does not run.
@@ -50,15 +51,15 @@ $(ROOT_DIR)lib\onyxsdk-base-1.7.2.jar:
 	@IF EXIST $(ROOT_DIR)lib RD /Q /S $(ROOT_DIR)lib
 	@MD $(ROOT_DIR)lib
 	@FOR %%I IN ($(LIB_NAMES)) DO @( \
-		@FOR /F "tokens=1-3 delims=:" %%J IN ("%%I") DO @( \
-			@ECHO Downloading $(ROOT_DIR)lib\%%K-%%L.jar... && \
+		@FOR /F "tokens=1-2 delims=:" %%J IN ("%%I") DO @( \
+			@ECHO Downloading $(ROOT_DIR)lib\%%K.jar... && \
 			BITSADMIN /RAWRETURN /TRANSFER LIB_DOWNLOAD \
 				/DOWNLOAD /PRIORITY FOREGROUND \
-				"http://%%J/%%K/%%L/%%K-%%L.aar" \
-				"$(ROOT_DIR)lib\%%K-%%L.aar" && \
-			jar xf $(ROOT_DIR)lib\%%K-%%L.aar classes.jar && \
-			MOVE classes.jar $(ROOT_DIR)lib\%%K-%%L.jar >NUL && \
-			DEL $(ROOT_DIR)lib\%%K-%%L.aar \
+				"http://%%J/%%K.aar" \
+				"$(ROOT_DIR)lib\%%K.aar" && \
+			jar xf $(ROOT_DIR)lib\%%K.aar classes.jar && \
+			MOVE classes.jar $(ROOT_DIR)lib\%%K.jar >NUL && \
+			DEL $(ROOT_DIR)lib\%%K.aar \
 		) \
 	)
 
@@ -95,7 +96,7 @@ $(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class: $(ROOT_DIR)lib\onyxsdk-base-1.7.2.jar $(
 	@DEL src.txt
 
 # Build target. R.class is used as dependency alias for compilation.
-$(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk: $(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class $(ROOT_DIR)priv\$(PROJECT_NAME).$(BUILD_NAME).keystore
+$(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk: $(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class $(ROOT_DIR)priv\$(PROJECT_NAME).$(BUILD_NAME).keystore $(ROOT_DIR)AndroidManifest.xml
 	@ECHO Building to $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk...
 	@IF NOT EXIST $(ROOT_DIR)bin MD $(ROOT_DIR)bin
 # Convert to DEX.
