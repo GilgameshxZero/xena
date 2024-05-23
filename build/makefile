@@ -30,7 +30,7 @@ BUILD_NAME = release
 !ELSE
 BUILD_NAME = debug
 !ENDIF
-PROJECT_NAME = xenagogy
+PROJECT_NAME = xena
 PACKAGE_PATH = com\gilgamesh\$(PROJECT_NAME)
 PACKAGE_NAME = com.gilgamesh.$(PROJECT_NAME)
 MAIN_CLASS = FilePickerActivity
@@ -55,7 +55,7 @@ $(ROOT_DIR)lib\onyxsdk-base-1.7.2.jar:
 			@ECHO Downloading $(ROOT_DIR)lib\%%K.jar... && \
 			BITSADMIN /RAWRETURN /TRANSFER LIB_DOWNLOAD \
 				/DOWNLOAD /PRIORITY FOREGROUND \
-				"http://%%J/%%K.aar" \
+				"https://%%J/%%K.aar" \
 				"$(ROOT_DIR)lib\%%K.aar" && \
 			jar xf $(ROOT_DIR)lib\%%K.aar classes.jar && \
 			MOVE classes.jar $(ROOT_DIR)lib\%%K.jar >NUL && \
@@ -154,6 +154,8 @@ clean:
 		DEL $(ROOT_DIR)priv\$(PROJECT_NAME).debug.keystore
 	@IF EXIST $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java \
 		DEL $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java
+	@ECHO Uninstalling from device...
+	@CALL $(PLATFORM_TOOLS_DIR)adb.exe uninstall $(PACKAGE_NAME)
 
 # ------------------------------------------------------------------------------
 !else

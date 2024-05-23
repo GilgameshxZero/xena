@@ -5,5 +5,5 @@
 	<item name="activity_file_picker_button_load_existing" type="id" />
 
 	<item name="activity_canvas" type="id" />
-	<item name="activity_canvas_webview" type="id" />
+	<item name="activity_canvas_image_view" type="id" />
 </resources>

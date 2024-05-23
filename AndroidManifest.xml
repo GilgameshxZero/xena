@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.gilgamesh.xenagogy">
+	package="com.gilgamesh.xena">
 	<uses-sdk android:targetSdkVersion="34" />
-	<uses-permission android:name="android.permission.INTERNET" />
-	<application android:label="Xenagogy" android:usesCleartextTraffic="true">
+	<application android:label="Xena">
 		<activity android:name=".FilePickerActivity" android:exported="true"
 			android:launchMode="singleTop"
 			android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
