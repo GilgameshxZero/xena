@@ -19,7 +19,7 @@
 			"options": { "cwd": "${workspaceFolder}/build" },
 			"presentation": { "clear": true },
 
-			"command": "adb shell logcat *:E *:W *:V"
+			"command": "adb shell logcat *:E XENA:V S:*",
 		},
 		{
 			/* Build the open file in release mode. */

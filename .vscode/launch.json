@@ -13,7 +13,8 @@
 			"type": "node-terminal",
 			"request": "launch",
 			"cwd": "${workspaceFolder}/build",
-			"command": "nmake run BUILD=1"
+			"command": "nmake run BUILD=1",
+			"timeout": 1
 		}
 	]
 }

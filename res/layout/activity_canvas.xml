@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:id="@+id/activity_canvas" android:orientation="vertical"
 	android:layout_width="match_parent" android:layout_height="match_parent">
-	<WebView android:id="@+id/activity_canvas_webview"
-		android:layout_width="match_parent" android:layout_height="300dp"
-		android:layout_weight="1" />
+	<ImageView android:id="@+id/activity_canvas_image_view"
+		android:layout_width="match_parent" android:layout_height="match_parent"
+		android:background="@android:color/white" />
 </LinearLayout>
