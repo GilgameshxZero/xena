@@ -41,7 +41,7 @@ public class CanvasActivity extends Activity {
 
 	private final int STROKE_WIDTH = 5;
 	private final float DRAW_SVG_SCALE_FACTOR = 8;
-	private final float DRAW_MOVE_EPSILON = 5;
+	private final float DRAW_MOVE_EPSILON = 3;
 
 	private final int DEBOUNCE_SAVE_DELAY_MS = 15000;
 	private TimerTask debounceSaveTask = new TimerTask() {
