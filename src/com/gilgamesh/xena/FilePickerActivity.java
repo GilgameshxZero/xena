@@ -14,8 +14,8 @@ public class FilePickerActivity extends Activity implements View.OnClickListener
 		LOAD_EXISTING
 	}
 
-	Button buttonCreateNew;
-	Button buttonLoadExisting;
+	// private Button buttonCreateNew;
+	// private Button buttonLoadExisting;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -24,8 +24,8 @@ public class FilePickerActivity extends Activity implements View.OnClickListener
 				.addCategory(Intent.CATEGORY_DEFAULT));
 		this.setContentView(R.layout.activity_file_picker);
 
-		this.buttonCreateNew = findViewById(R.id.activity_file_picker_button_create_new);
-		this.buttonLoadExisting = findViewById(R.id.activity_file_picker_button_load_existing);
+		// this.buttonCreateNew = findViewById(R.id.activity_file_picker_button_create_new);
+		// this.buttonLoadExisting = findViewById(R.id.activity_file_picker_button_load_existing);
 	}
 
 	@Override

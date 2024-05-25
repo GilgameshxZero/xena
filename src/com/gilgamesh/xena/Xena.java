@@ -1,5 +1,5 @@
 package com.gilgamesh.xena;
 
 public class Xena {
-	public static final String TAG = "XENAGOGY";
+	public static final String TAG = "XENA";
 }
