@@ -1,5 +1,6 @@
 {
 	"debug.internalConsoleOptions": "neverOpen",
+	"java.settings.url": ".vscode/settings.prefs",
 	// "java.project.referencedLibraries": {
 	// 	"include": ["C:/Android/platforms/android-34/*.jar", "lib/*.jar"]
 	// }
