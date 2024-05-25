@@ -210,14 +210,14 @@ public class CanvasActivity extends Activity {
 					touchPoint.y - drawOffset.y);
 			PointF pointDelta = new PointF(newPoint.x - lastPoint.x,
 					newPoint.y - lastPoint.y);
-			if (Math.sqrt(pointDelta.x * pointDelta.x
-					+ pointDelta.y * pointDelta.y) < DRAW_MOVE_EPSILON) {
+			if (drawPathsLocal.getLast().size() > 1
+					&& Math.sqrt(pointDelta.x * pointDelta.x
+							+ pointDelta.y * pointDelta.y) < DRAW_MOVE_EPSILON) {
 				return;
 			}
 			drawPaths.getLast()
 					.lineTo(newPoint.x, newPoint.y);
 			drawPathsLocal.getLast().add(newPoint);
-
 		}
 
 		@Override
