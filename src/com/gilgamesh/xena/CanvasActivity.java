@@ -40,7 +40,7 @@ public class CanvasActivity extends Activity {
 	private static Uri uri;
 
 	private final int STROKE_WIDTH = 5;
-	private final float DRAW_SVG_SCALE_FACTOR = 4;
+	private final float DRAW_SVG_SCALE_FACTOR = 8;
 	private final float DRAW_MOVE_EPSILON = 5;
 
 	private final int DEBOUNCE_SAVE_DELAY_MS = 15000;
@@ -113,19 +113,20 @@ public class CanvasActivity extends Activity {
 					containerBox.right += STROKE_WIDTH * DRAW_SVG_SCALE_FACTOR;
 					containerBox.bottom += STROKE_WIDTH * DRAW_SVG_SCALE_FACTOR;
 					outputStreamWriter.write(
-							"<svg viewBox=\"" + containerBox.left * DRAW_SVG_SCALE_FACTOR
+							"<svg viewBox=\""
+									+ Math.round(containerBox.left * DRAW_SVG_SCALE_FACTOR)
 									+ " "
-									+ containerBox.top * DRAW_SVG_SCALE_FACTOR + " "
-									+ (containerBox.right - containerBox.left)
+									+ Math.round(containerBox.top * DRAW_SVG_SCALE_FACTOR) + " "
+									+ Math.round(containerBox.right - containerBox.left)
 											* DRAW_SVG_SCALE_FACTOR
 									+ " "
-									+ (containerBox.bottom - containerBox.top)
+									+ Math.round(containerBox.bottom - containerBox.top)
 											* DRAW_SVG_SCALE_FACTOR
 									+ "\" stroke=\"black\" stroke-width=\""
 									+ STROKE_WIDTH * DRAW_SVG_SCALE_FACTOR
-									+ "\" stroke-linecap=\"round\" stroke-linejoin=\"round\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n");
+									+ "\" stroke-linecap=\"round\" stroke-linejoin=\"round\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">");
 					outputStreamWriter.write(
-							"<style>@media (prefers-color-scheme: dark) {svg {background-color: black;} svg>path {stroke: white;}}</style>");
+							"<style>@media(prefers-color-scheme:dark){svg{background-color:black;stroke:white;}}</style>\n");
 					outputStreamWriter.write(stringBuilder.toString());
 					outputStreamWriter.write(
 							"</svg>\n");
@@ -207,13 +208,16 @@ public class CanvasActivity extends Activity {
 					.get(drawPathsLocal.getLast().size() - 1);
 			PointF newPoint = new PointF(touchPoint.x - drawOffset.x,
 					touchPoint.y - drawOffset.y);
-			if (Math.abs(lastPoint.x - newPoint.x)
-					+ Math.abs(lastPoint.y - newPoint.y) < DRAW_MOVE_EPSILON) {
+			PointF pointDelta = new PointF(newPoint.x - lastPoint.x,
+					newPoint.y - lastPoint.y);
+			if (Math.sqrt(pointDelta.x * pointDelta.x
+					+ pointDelta.y * pointDelta.y) < DRAW_MOVE_EPSILON) {
 				return;
 			}
 			drawPaths.getLast()
 					.lineTo(newPoint.x, newPoint.y);
 			drawPathsLocal.getLast().add(newPoint);
+
 		}
 
 		@Override
