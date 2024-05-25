@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.content.Intent;
 import android.net.Uri;
 import android.view.View;
-// import android.widget.Button;
 import android.util.Log;
 
 public class FilePickerActivity extends Activity
@@ -15,21 +14,10 @@ public class FilePickerActivity extends Activity
 		LOAD_EXISTING
 	}
 
-	// private Button buttonCreateNew;
-	// private Button buttonLoadExisting;
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		// this.startActivity(new Intent(this, CanvasActivity.class)
-		// .setAction(Intent.ACTION_RUN)
-		// .addCategory(Intent.CATEGORY_DEFAULT));
 		this.setContentView(R.layout.activity_file_picker);
-
-		// this.buttonCreateNew =
-		// findViewById(R.id.activity_file_picker_button_create_new);
-		// this.buttonLoadExisting =
-		// findViewById(R.id.activity_file_picker_button_load_existing);
 	}
 
 	@Override

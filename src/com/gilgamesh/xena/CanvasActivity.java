@@ -241,11 +241,13 @@ public class CanvasActivity extends Activity {
 			ListIterator<Path> iterator = drawPaths.listIterator();
 			ListIterator<ArrayList<PointF>> iteratorLocal = drawPathsLocal
 					.listIterator();
+			paint.getFillPath(erasePath, erasePath);
 			while (iterator.hasNext()) {
-				Path resultPath = new Path();
-				resultPath.op(iterator.next(), erasePath, Path.Op.INTERSECT);
+				Path fillPath = new Path();
+				paint.getFillPath(iterator.next(), fillPath);
+				fillPath.op(erasePath, Path.Op.INTERSECT);
 				iteratorLocal.next();
-				if (!resultPath.isEmpty()) {
+				if (!fillPath.isEmpty()) {
 					iterator.remove();
 					iteratorLocal.remove();
 				}
