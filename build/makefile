@@ -38,10 +38,12 @@ ROOT_DIR = $(MAKEDIR)\..^\
 # All library files to be declared here.
 LIB_NAME_MARKER_VERSION = 1.6.47.2
 LIB_NAMES = \
-repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-base/$(LIB_NAME_MARKER_VERSION):onyxsdk-base-$(LIB_NAME_MARKER_VERSION) \
-repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-device/1.2.24:onyxsdk-device-1.2.24 \
-repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-pen/1.4.7:onyxsdk-pen-1.4.7 \
-# repo1.maven.org/maven2/io/reactivex/rxjava/1.3.8:rxjava-1.3.8
+repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-base/$(LIB_NAME_MARKER_VERSION):onyxsdk-base-$(LIB_NAME_MARKER_VERSION):aar \
+repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-device/1.2.24:onyxsdk-device-1.2.24:aar \
+repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-pen/1.4.7:onyxsdk-pen-1.4.7:aar \
+repo1.maven.org/maven2/io/reactivex/rxjava2/rxjava/2.2.21:rxjava-2.2.21:jar \
+repo1.maven.org/maven2/io/reactivex/rxjava2/rxandroid/2.1.1:rxandroid-2.1.1:aar \
+repo1.maven.org/maven2/org/reactivestreams/reactive-streams/1.0.4:reactive-streams-1.0.4:jar
 
 # Real targets.
 # Default/build target only compiles and links, but does not run.
@@ -53,15 +55,18 @@ $(ROOT_DIR)lib\onyxsdk-base-$(LIB_NAME_MARKER_VERSION).jar:
 	@IF EXIST $(ROOT_DIR)lib RD /Q /S $(ROOT_DIR)lib
 	@MD $(ROOT_DIR)lib
 	@FOR %%I IN ($(LIB_NAMES)) DO @( \
-		@FOR /F "tokens=1-2 delims=:" %%J IN ("%%I") DO @( \
-			@ECHO Downloading $(ROOT_DIR)lib\%%K.jar... && \
+		@FOR /F "tokens=1-3 delims=:" %%J IN ("%%I") DO @( \
+			@ECHO Downloading $(ROOT_DIR)lib\%%K.%%L... && \
 			BITSADMIN /RAWRETURN /TRANSFER LIB_DOWNLOAD \
 				/DOWNLOAD /PRIORITY FOREGROUND \
-				"https://%%J/%%K.aar" \
-				"$(ROOT_DIR)lib\%%K.aar" && \
-			jar xf $(ROOT_DIR)lib\%%K.aar classes.jar && \
-			MOVE classes.jar $(ROOT_DIR)lib\%%K.jar >NUL && \
-			DEL $(ROOT_DIR)lib\%%K.aar \
+				"https://%%J/%%K.%%L" \
+				"$(ROOT_DIR)lib\%%K.%%L" && \
+			IF "%%L" == "aar" ( \
+				@ECHO Extracting $(ROOT_DIR)lib\%%K.aar... && \
+				jar xf $(ROOT_DIR)lib\%%K.aar classes.jar && \
+				MOVE classes.jar $(ROOT_DIR)lib\%%K.jar >NUL && \
+				DEL $(ROOT_DIR)lib\%%K.aar \
+			) \
 		) \
 	)
 
@@ -115,12 +120,6 @@ $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk: $(ROOT_DIR)obj\$(PACKAGE_PATH)
 		--output $(ROOT_DIR)bin \
 		$(ROOT_DIR)obj\$(PACKAGE_PATH)\*.class \
 		$(ROOT_DIR)lib\*.jar
-# @DIR /S /B $(ROOT_DIR)lib\*.jar > lib.txt
-# --classpath @lib.txt \
-# -j "$(ROOT_DIR)lib\onyxsdk-base-1.7.2.jar" \
-# -j "$(ROOT_DIR)lib\onyxsdk-device-1.2.29.jar" \
-# -j "$(ROOT_DIR)lib\onyxsdk-pen-1.2.1.jar" \
-# @DEL lib.txt
 # For some reason, aapt add only works for classes.dex in the current directory
 	@MOVE "$(ROOT_DIR)bin\classes.dex" . >NUL
 	@CALL $(BUILD_TOOLS_DIR)aapt.exe add \
