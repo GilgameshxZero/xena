@@ -36,10 +36,12 @@ PACKAGE_NAME = com.gilgamesh.$(PROJECT_NAME)
 MAIN_CLASS = FilePickerActivity
 ROOT_DIR = $(MAKEDIR)\..^\
 # All library files to be declared here.
+LIB_NAME_MARKER_VERSION = 1.6.47.2
 LIB_NAMES = \
-repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-base/1.7.2:onyxsdk-base-1.7.2 \
-repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-device/1.2.29:onyxsdk-device-1.2.29 \
-repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-pen/1.4.10.1:onyxsdk-pen-1.4.10.1
+repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-base/$(LIB_NAME_MARKER_VERSION):onyxsdk-base-$(LIB_NAME_MARKER_VERSION) \
+repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-device/1.2.24:onyxsdk-device-1.2.24 \
+repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-pen/1.4.7:onyxsdk-pen-1.4.7 \
+# repo1.maven.org/maven2/io/reactivex/rxjava/1.3.8:rxjava-1.3.8
 
 # Real targets.
 # Default/build target only compiles and links, but does not run.
@@ -47,7 +49,7 @@ _default: build
 
 # All libraries are made together. One file is specified as target to track
 # dependency, since tracking a directory is not possible.
-$(ROOT_DIR)lib\onyxsdk-base-1.7.2.jar:
+$(ROOT_DIR)lib\onyxsdk-base-$(LIB_NAME_MARKER_VERSION).jar:
 	@IF EXIST $(ROOT_DIR)lib RD /Q /S $(ROOT_DIR)lib
 	@MD $(ROOT_DIR)lib
 	@FOR %%I IN ($(LIB_NAMES)) DO @( \
@@ -82,7 +84,7 @@ $(ROOT_DIR)priv\$(PROJECT_NAME).debug.keystore:
 		-alias android_debug_key -keyalg RSA -keysize 2048
 
 # Compile target: .java to .class. Only sources directly under the main path are compiled, for now.
-$(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class: $(ROOT_DIR)lib\onyxsdk-base-1.7.2.jar $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java $(ROOT_DIR)src\$(PACKAGE_PATH)\*.java
+$(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class: $(ROOT_DIR)lib\onyxsdk-base-$(LIB_NAME_MARKER_VERSION).jar $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java $(ROOT_DIR)src\$(PACKAGE_PATH)\*.java
 	@ECHO Compiling to .class...
 	@DIR /S /B $(ROOT_DIR)src\*.java > src.txt
 	@CALL "$(JAVA_HOME)\bin\javac" \
@@ -99,28 +101,40 @@ $(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class: $(ROOT_DIR)lib\onyxsdk-base-1.7.2.jar $(
 $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk: $(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class $(ROOT_DIR)priv\$(PROJECT_NAME).$(BUILD_NAME).keystore $(ROOT_DIR)AndroidManifest.xml
 	@ECHO Building to $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk...
 	@IF NOT EXIST $(ROOT_DIR)bin MD $(ROOT_DIR)bin
-# Convert to DEX.
-	@DIR /S /B $(ROOT_DIR)lib\*.jar > lib.txt
-	@CALL $(BUILD_TOOLS_DIR)d8.bat \
-		--lib "$(PLATFORM_DIR)android.jar" \
-		--classpath @lib.txt \
-		--min-api 34 \
-		--$(BUILD_NAME) \
-		--output $(ROOT_DIR)bin \
-		$(ROOT_DIR)obj\$(PACKAGE_PATH)\*.class
-	@DEL lib.txt
 # Generate APK.
 	@CALL $(BUILD_TOOLS_DIR)aapt.exe package -f -m \
 		-F "$(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).unsigned.unaligned.apk" \
 		-M "$(ROOT_DIR)AndroidManifest.xml" \
 		-S "$(ROOT_DIR)res" \
 		-I $(PLATFORM_DIR)/android.jar
+# Convert to DEX.
+	@CALL $(BUILD_TOOLS_DIR)d8.bat \
+		--lib "$(PLATFORM_DIR)android.jar" \
+		--min-api 34 \
+		--$(BUILD_NAME) \
+		--output $(ROOT_DIR)bin \
+		$(ROOT_DIR)obj\$(PACKAGE_PATH)\*.class \
+		$(ROOT_DIR)lib\*.jar
+# @DIR /S /B $(ROOT_DIR)lib\*.jar > lib.txt
+# --classpath @lib.txt \
+# -j "$(ROOT_DIR)lib\onyxsdk-base-1.7.2.jar" \
+# -j "$(ROOT_DIR)lib\onyxsdk-device-1.2.29.jar" \
+# -j "$(ROOT_DIR)lib\onyxsdk-pen-1.2.1.jar" \
+# @DEL lib.txt
 # For some reason, aapt add only works for classes.dex in the current directory
 	@MOVE "$(ROOT_DIR)bin\classes.dex" . >NUL
 	@CALL $(BUILD_TOOLS_DIR)aapt.exe add \
 		"$(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).unsigned.unaligned.apk" \
 		classes.dex
 	@DEL classes.dex
+# Add shared dependencies.
+	@MKDIR lib lib\arm64-v8a
+	@COPY "$(ROOT_DIR)so" lib\arm64-v8a >NUL
+	@CALL $(BUILD_TOOLS_DIR)aapt.exe add \
+		"$(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).unsigned.unaligned.apk" \
+		lib/arm64-v8a/libonyx_pen_touch_reader.so \
+		lib/arm64-v8a/libc++_shared.so
+	@RD /Q /S lib
 # Align to 4-byte boundaries.
 	@CALL $(BUILD_TOOLS_DIR)zipalign.exe -f 4 \
 	"$(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).unsigned.unaligned.apk" \
@@ -141,7 +155,7 @@ build: $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk
 # Build and run.
 run: $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk
 	@ECHO Uninstalling from device...
-	@CALL $(PLATFORM_TOOLS_DIR)adb.exe uninstall $(PACKAGE_NAME)
+	@CALL $(PLATFORM_TOOLS_DIR)adb.exe uninstall $(PACKAGE_NAME) &
 	@CALL $(PLATFORM_TOOLS_DIR)adb.exe install -r $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk
 	@CALL $(PLATFORM_TOOLS_DIR)adb.exe shell am start $(PACKAGE_NAME)/$(PACKAGE_NAME).$(MAIN_CLASS)
 
@@ -155,7 +169,7 @@ clean:
 	@IF EXIST $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java \
 		DEL $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java
 	@ECHO Uninstalling from device...
-	@CALL $(PLATFORM_TOOLS_DIR)adb.exe uninstall $(PACKAGE_NAME)
+	@CALL $(PLATFORM_TOOLS_DIR)adb.exe uninstall $(PACKAGE_NAME) &
 
 # ------------------------------------------------------------------------------
 !else
