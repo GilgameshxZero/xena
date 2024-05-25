@@ -21,9 +21,9 @@ public class FilePickerActivity extends Activity
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		this.startActivity(new Intent(this, CanvasActivity.class)
-				.setAction(Intent.ACTION_RUN)
-				.addCategory(Intent.CATEGORY_DEFAULT));
+		// this.startActivity(new Intent(this, CanvasActivity.class)
+		// .setAction(Intent.ACTION_RUN)
+		// .addCategory(Intent.CATEGORY_DEFAULT));
 		this.setContentView(R.layout.activity_file_picker);
 
 		// this.buttonCreateNew =
