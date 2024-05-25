@@ -39,7 +39,7 @@ public class CanvasActivity extends Activity {
 	private static PointF drawOffset = new PointF(0, 0);
 	private static Uri uri;
 
-	private final int STROKE_WIDTH = 5;
+	private final int STROKE_WIDTH = 4;
 	private final float DRAW_SVG_SCALE_FACTOR = 8;
 	private final float DRAW_MOVE_EPSILON = 3;
 
