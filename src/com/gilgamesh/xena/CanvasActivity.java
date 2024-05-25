@@ -1,8 +1,10 @@
 package com.gilgamesh.xena;
 
+import java.util.LinkedList;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.ListIterator;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -19,6 +21,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.PointF;
 
 import com.onyx.android.sdk.pen.RawInputCallback;
 import com.onyx.android.sdk.pen.TouchHelper;
@@ -26,8 +29,10 @@ import com.onyx.android.sdk.data.note.TouchPoint;
 import com.onyx.android.sdk.pen.data.TouchPointList;
 
 public class CanvasActivity extends Activity {
-	private final int STROKE_WIDTH = 6;
-	private final int DEBOUNCE_REDRAW_DELAY_MS = 1000;
+	private final float STROKE_WIDTH = 5;
+
+	private static LinkedList<Path> drawPaths = new LinkedList<Path>();
+	private static PointF drawOffset = new PointF(0, 0);
 
 	private Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 	private SurfaceView surfaceView;
@@ -35,8 +40,12 @@ public class CanvasActivity extends Activity {
 	private Canvas canvas;
 
 	private TouchHelper touchHelper;
+	private boolean isRawInputting = false;
 
 	private RawInputCallback rawInputCallback = new RawInputCallback() {
+		private Path erasePath = new Path();
+		private final int DEBOUNCE_REDRAW_DELAY_MS = 1000;
+		private final int DEBOUNCE_REDRAW_ERASE_DELAY_MS = 50;
 		// Cancellable dummy.
 		private TimerTask debounceRedrawTask = new TimerTask() {
 			@Override
@@ -48,39 +57,43 @@ public class CanvasActivity extends Activity {
 			this.debounceRedrawTask.cancel();
 		}
 
-		private void debounceRedraw() {
+		private void debounceRedraw(int delayMs) {
+			Log.d(Xena.TAG, "CanvasActivity.debounceRedraw");
 			this.resetDebounce();
 			this.debounceRedrawTask = new TimerTask() {
 				@Override
 				public void run() {
+					Log.d(Xena.TAG, "CanvasActivity.debounceRedrawTask");
+					isRawInputting = false;
 					drawBitmapToSurface();
 					touchHelper.setRawDrawingEnabled(false);
 					touchHelper.setRawDrawingEnabled(true);
-					Log.d(Xena.TAG, "CanvasActivity.debounceRedrawTask");
 				}
 			};
-			new Timer().schedule(this.debounceRedrawTask, DEBOUNCE_REDRAW_DELAY_MS);
-			Log.d(Xena.TAG, "CanvasActivity.debounceRedraw");
+			new Timer().schedule(this.debounceRedrawTask, delayMs);
 		}
 
 		@Override
 		public void onBeginRawDrawing(boolean b, TouchPoint touchPoint) {
+			isRawInputting = true;
 			this.resetDebounce();
-			Xena.drawPaths.add(new Path());
-			Xena.drawPaths.get(Xena.drawPaths.size() - 1).moveTo(touchPoint.x,
-					touchPoint.y);
+			drawPaths.add(new Path());
+			drawPaths.getLast()
+					.moveTo(touchPoint.x - drawOffset.x,
+							touchPoint.y - drawOffset.y);
 		}
 
 		@Override
 		public void onEndRawDrawing(boolean b, TouchPoint touchPoint) {
-			canvas.drawPath(Xena.drawPaths.get(Xena.drawPaths.size() - 1), paint);
-			this.debounceRedraw();
+			drawPathToCanvas(drawPaths.getLast());
+			this.debounceRedraw(DEBOUNCE_REDRAW_DELAY_MS);
 		}
 
 		@Override
 		public void onRawDrawingTouchPointMoveReceived(TouchPoint touchPoint) {
-			Xena.drawPaths.get(Xena.drawPaths.size() - 1).lineTo(touchPoint.x,
-					touchPoint.y);
+			drawPaths.getLast()
+					.lineTo(touchPoint.x - drawOffset.x,
+							touchPoint.y - drawOffset.y);
 		}
 
 		@Override
@@ -90,16 +103,36 @@ public class CanvasActivity extends Activity {
 
 		@Override
 		public void onBeginRawErasing(boolean b, TouchPoint touchPoint) {
+			isRawInputting = true;
 			this.resetDebounce();
+			erasePath.reset();
+			erasePath
+					.moveTo(touchPoint.x - drawOffset.x,
+							touchPoint.y - drawOffset.y);
 		}
 
 		@Override
 		public void onEndRawErasing(boolean b, TouchPoint touchPoint) {
-			this.debounceRedraw();
+			int initialSize = drawPaths.size();
+			ListIterator<Path> iterator = drawPaths.listIterator();
+			while (iterator.hasNext()) {
+				Path resultPath = new Path();
+				resultPath.op(iterator.next(), erasePath, Path.Op.INTERSECT);
+				if (!resultPath.isEmpty()) {
+					iterator.remove();
+				}
+			}
+			Log.d(Xena.TAG, "CanvasActivity.onEndRawErasing: removed "
+					+ (initialSize - drawPaths.size()) + " paths.");
+			drawAllPathsToCanvas();
+			this.debounceRedraw(DEBOUNCE_REDRAW_ERASE_DELAY_MS);
 		}
 
 		@Override
 		public void onRawErasingTouchPointMoveReceived(TouchPoint touchPoint) {
+			erasePath
+					.lineTo(touchPoint.x - drawOffset.x,
+							touchPoint.y - drawOffset.y);
 		}
 
 		@Override
@@ -117,10 +150,38 @@ public class CanvasActivity extends Activity {
 	};
 
 	private View.OnTouchListener surfaceViewOnTouchListener = new View.OnTouchListener() {
+		private PointF previousPoint = new PointF(0, 0);
+
 		@Override
 		public boolean onTouch(View v, MotionEvent event) {
-			Log.d(Xena.TAG, "CanvasActivity.onTouchListener: " + event.getAction());
-			return false;
+			PointF touchPoint = new PointF(event.getX(), event.getY());
+			switch (event.getAction()) {
+				case MotionEvent.ACTION_DOWN:
+					previousPoint.x = touchPoint.x;
+					previousPoint.y = touchPoint.y;
+					break;
+				case MotionEvent.ACTION_MOVE:
+					// Track the touches but do not update offset if using pen.
+					if (isRawInputting) {
+						break;
+					}
+					drawOffset.x += touchPoint.x - previousPoint.x;
+					drawOffset.y += touchPoint.y - previousPoint.y;
+					previousPoint.x = touchPoint.x;
+					previousPoint.y = touchPoint.y;
+					drawAllPathsToCanvas();
+					drawBitmapToSurface();
+					break;
+				case MotionEvent.ACTION_UP:
+					if (isRawInputting) {
+						break;
+					}
+					Log.d(Xena.TAG,
+							"CanvasActivity.surfaceViewOnTouchListener: drawOffset = ("
+									+ drawOffset.x + ", " + drawOffset.y + ".");
+					break;
+			}
+			return true;
 		}
 	};
 
@@ -141,10 +202,7 @@ public class CanvasActivity extends Activity {
 
 			bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 			canvas = new Canvas(bitmap);
-			canvas.drawColor(Color.WHITE);
-			for (Path path : Xena.drawPaths) {
-				canvas.drawPath(path, paint);
-			}
+			drawAllPathsToCanvas();
 			drawBitmapToSurface();
 
 			touchHelper.setLimitRect(new Rect(0, 0, width, height), new ArrayList<>())
@@ -153,6 +211,7 @@ public class CanvasActivity extends Activity {
 
 		@Override
 		public void surfaceDestroyed(SurfaceHolder holder) {
+			touchHelper.closeRawDrawing();
 			holder.removeCallback(this);
 		}
 	};
@@ -189,12 +248,17 @@ public class CanvasActivity extends Activity {
 		super.onPause();
 	}
 
-	@Override
-	protected void onDestroy() {
-		if (this.touchHelper != null) {
-			this.touchHelper.closeRawDrawing();
+	private void drawPathToCanvas(Path path) {
+		Path offsetPath = new Path(path);
+		offsetPath.offset(drawOffset.x, drawOffset.y);
+		canvas.drawPath(offsetPath, paint);
+	}
+
+	private void drawAllPathsToCanvas() {
+		canvas.drawColor(Color.WHITE);
+		for (Path path : drawPaths) {
+			drawPathToCanvas(path);
 		}
-		super.onDestroy();
 	}
 
 	private void drawBitmapToSurface() {
