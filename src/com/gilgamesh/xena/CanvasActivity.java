@@ -6,6 +6,7 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.ListIterator;
 import java.util.Iterator;
 
@@ -50,12 +51,8 @@ public class CanvasActivity extends Activity {
 		}
 	};
 
-	private void resetDebounceSave() {
-		this.debounceSaveTask.cancel();
-	}
-
 	private void debounceSave(int delayMs) {
-		this.resetDebounceSave();
+		this.debounceSaveTask.cancel();
 		this.debounceSaveTask = new TimerTask() {
 			@Override
 			public void run() {
@@ -136,7 +133,7 @@ public class CanvasActivity extends Activity {
 							"CanvasActivity::debounceSaveTask: Failed to write to file: "
 									+ e.toString() + ".");
 				}
-				Log.d(Xena.TAG, "CanvasActivity.debounceSaveTask: Finished to "
+				Log.d(Xena.TAG, "CanvasActivity::debounceSaveTask: Finished to "
 						+ uri.toString() + ".");
 			}
 		};
@@ -145,8 +142,10 @@ public class CanvasActivity extends Activity {
 
 	private Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 	private SurfaceView surfaceView;
-	private Bitmap bitmap;
+	private Bitmap bitmap = null;
 	private Canvas canvas;
+	private boolean surfaceAvailable = false;
+	private ReentrantLock surfaceLock = new ReentrantLock();
 
 	private TouchHelper touchHelper;
 	private boolean isRawInputting = false;
@@ -162,21 +161,16 @@ public class CanvasActivity extends Activity {
 			}
 		};
 
-		private void resetDebounceRedraw() {
-			this.debounceRedrawTask.cancel();
-		}
-
 		private void debounceRedraw(int delayMs) {
-			Log.d(Xena.TAG, "CanvasActivity.debounceRedraw");
-			this.resetDebounceRedraw();
+			Log.d(Xena.TAG, "CanvasActivity::debounceRedraw");
+			this.debounceRedrawTask.cancel();
 			this.debounceRedrawTask = new TimerTask() {
 				@Override
 				public void run() {
-					Log.d(Xena.TAG, "CanvasActivity.debounceRedrawTask");
+					Log.d(Xena.TAG, "CanvasActivity::debounceRedrawTask");
 					isRawInputting = false;
 					drawBitmapToSurface();
-					touchHelper.setRawDrawingEnabled(false);
-					touchHelper.setRawDrawingEnabled(true);
+					touchHelper.setRawDrawingEnabled(false).setRawDrawingEnabled(true);
 				}
 			};
 			new Timer().schedule(this.debounceRedrawTask, delayMs);
@@ -185,7 +179,7 @@ public class CanvasActivity extends Activity {
 		@Override
 		public void onBeginRawDrawing(boolean b, TouchPoint touchPoint) {
 			isRawInputting = true;
-			this.resetDebounceRedraw();
+			this.debounceRedrawTask.cancel();
 			drawPaths.add(new Path());
 			drawPathsLocal.add(new ArrayList<PointF>());
 			drawPaths.getLast()
@@ -210,10 +204,11 @@ public class CanvasActivity extends Activity {
 					touchPoint.y - drawOffset.y);
 			PointF pointDelta = new PointF(newPoint.x - lastPoint.x,
 					newPoint.y - lastPoint.y);
-			if (drawPathsLocal.getLast().size() > 1
-					&& Math.sqrt(pointDelta.x * pointDelta.x
-							+ pointDelta.y * pointDelta.y) < DRAW_MOVE_EPSILON) {
-				return;
+			if (drawPathsLocal.getLast().size() > 1) {
+				if (Math.sqrt(pointDelta.x * pointDelta.x
+						+ pointDelta.y * pointDelta.y) < DRAW_MOVE_EPSILON) {
+					return;
+				}
 			}
 			drawPaths.getLast()
 					.lineTo(newPoint.x, newPoint.y);
@@ -228,7 +223,7 @@ public class CanvasActivity extends Activity {
 		@Override
 		public void onBeginRawErasing(boolean b, TouchPoint touchPoint) {
 			isRawInputting = true;
-			this.resetDebounceRedraw();
+			this.debounceRedrawTask.cancel();
 			erasePath.reset();
 			erasePath
 					.moveTo(touchPoint.x - drawOffset.x,
@@ -252,7 +247,7 @@ public class CanvasActivity extends Activity {
 					iteratorLocal.remove();
 				}
 			}
-			Log.d(Xena.TAG, "CanvasActivity.onEndRawErasing: removed "
+			Log.d(Xena.TAG, "CanvasActivity::onEndRawErasing: removed "
 					+ (initialSize - drawPaths.size()) + " paths.");
 			drawAllPathsToCanvas();
 			this.debounceRedraw(DEBOUNCE_REDRAW_ERASE_DELAY_MS);
@@ -302,33 +297,34 @@ public class CanvasActivity extends Activity {
 					previousPoint.y = touchPoint.y;
 					drawAllPathsToCanvas();
 					drawBitmapToSurface();
+					// No need to reset raw input capture here, for some reason.
 					break;
 				case MotionEvent.ACTION_UP:
 					if (isRawInputting) {
 						break;
 					}
 					Log.d(Xena.TAG,
-							"CanvasActivity.surfaceViewOnTouchListener: drawOffset = ("
-									+ drawOffset.x + ", " + drawOffset.y + ".");
+							"CanvasActivity::surfaceViewOnTouchListener: drawOffset = ("
+									+ drawOffset.x + ", " + drawOffset.y + ").");
 					break;
 			}
 			return true;
 		}
 	};
 
+	// openRawDrawing must not be called twice in succession.
 	private SurfaceHolder.Callback surfaceHolderCallback = new SurfaceHolder.Callback() {
 		@Override
 		public void surfaceCreated(SurfaceHolder holder) {
-			touchHelper = TouchHelper.create(surfaceView, rawInputCallback)
-					.setStrokeWidth(STROKE_WIDTH)
-					.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL).openRawDrawing()
-					.setRawDrawingEnabled(true);
-			surfaceView.setOnTouchListener(surfaceViewOnTouchListener);
+			surfaceLock.lock();
+			surfaceAvailable = true;
+			surfaceLock.unlock();
 		}
 
 		@Override
 		public void surfaceChanged(SurfaceHolder holder, int format, int width,
 				int height) {
+			surfaceLock.lock();
 			touchHelper.closeRawDrawing();
 
 			bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
@@ -336,14 +332,18 @@ public class CanvasActivity extends Activity {
 			drawAllPathsToCanvas();
 			drawBitmapToSurface();
 
+			Log.d(Xena.TAG, "CanvasActivity::surfaceHolderCallback: width = " + width
+					+ ", height = " + height + ".");
 			touchHelper.setLimitRect(new Rect(0, 0, width, height), new ArrayList<>())
 					.openRawDrawing().setRawDrawingEnabled(true);
+			surfaceLock.unlock();
 		}
 
 		@Override
 		public void surfaceDestroyed(SurfaceHolder holder) {
-			touchHelper.closeRawDrawing();
-			holder.removeCallback(this);
+			surfaceLock.lock();
+			surfaceAvailable = false;
+			surfaceLock.unlock();
 		}
 	};
 
@@ -362,23 +362,31 @@ public class CanvasActivity extends Activity {
 
 		this.surfaceView = findViewById(R.id.activity_canvas_surface_view);
 		this.surfaceView.getHolder().addCallback(surfaceHolderCallback);
+		this.surfaceView.setOnTouchListener(surfaceViewOnTouchListener);
+
+		this.touchHelper = TouchHelper.create(surfaceView, rawInputCallback)
+				.setStrokeWidth(this.STROKE_WIDTH)
+				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL).openRawDrawing()
+				.setRawDrawingEnabled(true);
 	}
 
 	@Override
 	protected void onResume() {
-		if (this.touchHelper != null) {
-			this.touchHelper.setRawDrawingEnabled(true);
-		}
+		this.touchHelper.setRawDrawingEnabled(true);
 		super.onResume();
 	}
 
 	@Override
 	protected void onPause() {
 		this.debounceSave(0);
-		if (this.touchHelper != null) {
-			this.touchHelper.setRawDrawingEnabled(false);
-		}
+		this.touchHelper.setRawDrawingEnabled(false);
 		super.onPause();
+	}
+
+	@Override
+	protected void onDestroy() {
+		this.touchHelper.closeRawDrawing();
+		super.onDestroy();
 	}
 
 	private void drawPathToCanvas(Path path) {
@@ -395,9 +403,13 @@ public class CanvasActivity extends Activity {
 	}
 
 	private void drawBitmapToSurface() {
-		Canvas lockCanvas = this.surfaceView.getHolder().lockCanvas();
-		lockCanvas.drawColor(Color.WHITE);
-		lockCanvas.drawBitmap(bitmap, 0, 0, paint);
-		this.surfaceView.getHolder().unlockCanvasAndPost(lockCanvas);
+		this.surfaceLock.lock();
+		if (surfaceAvailable) {
+			Canvas lockCanvas = this.surfaceView.getHolder().lockCanvas();
+			lockCanvas.drawColor(Color.WHITE);
+			lockCanvas.drawBitmap(bitmap, 0, 0, paint);
+			this.surfaceView.getHolder().unlockCanvasAndPost(lockCanvas);
+		}
+		this.surfaceLock.unlock();
 	}
 }

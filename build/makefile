@@ -170,6 +170,15 @@ clean:
 	@ECHO Uninstalling from device...
 	@CALL $(PLATFORM_TOOLS_DIR)adb.exe uninstall $(PACKAGE_NAME) &
 
+logcat:
+	@CALL $(PLATFORM_TOOLS_DIR)adb.exe shell logcat \
+		*:E XENA:V S:* \
+		IntervalStats:S ANDR-PERF-LM:S BitmapFactory:S \
+		SurfaceFlinger:S SDM:S PermissionMonitor:S \
+		ReflectUtil:S lowmemorykiller:S SWEpdcManager:S \
+		BatteryStatsService:S SWEpdcManager:S PowerManager:S \
+		FirebaseMessaging:S KernelCpuSpeedReader:S
+
 # ------------------------------------------------------------------------------
 !else
 else
