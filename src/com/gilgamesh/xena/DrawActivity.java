@@ -2,17 +2,23 @@ package com.gilgamesh.xena;
 
 import java.util.LinkedList;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantLock;
+
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+
 import java.util.ListIterator;
 import java.util.Iterator;
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Xml;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.View;
@@ -33,12 +39,19 @@ import com.onyx.android.sdk.pen.TouchHelper;
 import com.onyx.android.sdk.data.note.TouchPoint;
 import com.onyx.android.sdk.pen.data.TouchPointList;
 
-public class CanvasActivity extends Activity {
+public class DrawActivity extends Activity {
 	private static LinkedList<Path> drawPaths = new LinkedList<Path>();
 	// Duplicate list of paths which can be iterated through.
 	private static LinkedList<ArrayList<PointF>> drawPathsLocal = new LinkedList<ArrayList<PointF>>();
 	private static PointF drawOffset = new PointF(0, 0);
 	private static Uri uri;
+
+	private static void coverWithRectF(RectF rectangle, PointF point) {
+		rectangle.left = Math.min(rectangle.left, point.x);
+		rectangle.top = Math.min(rectangle.top, point.y);
+		rectangle.right = Math.max(rectangle.right, point.x);
+		rectangle.bottom = Math.max(rectangle.bottom, point.y);
+	}
 
 	private final int STROKE_WIDTH = 4;
 	private final float DRAW_SVG_SCALE_FACTOR = 8;
@@ -56,84 +69,92 @@ public class CanvasActivity extends Activity {
 		this.debounceSaveTask = new TimerTask() {
 			@Override
 			public void run() {
-				OutputStreamWriter outputStreamWriter = null;
+				OutputStreamWriter outputStreamWriter;
 				try {
 					outputStreamWriter = new OutputStreamWriter(
 							getContentResolver().openOutputStream(uri, "wt"));
-					RectF containerBox = new RectF(Float.POSITIVE_INFINITY,
-							Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY,
-							Float.NEGATIVE_INFINITY);
-					StringBuilder stringBuilder = new StringBuilder();
-					for (ArrayList<PointF> path : drawPathsLocal) {
-						stringBuilder.append(
-								"<path d=\"");
-						Iterator<PointF> pathIterator = path.iterator();
-						PointF point = pathIterator.next();
-						stringBuilder
-								.append("M" + Math.round(point.x * DRAW_SVG_SCALE_FACTOR) + " "
-										+ Math.round(point.y * DRAW_SVG_SCALE_FACTOR) + "l");
-						Xena.coverWithRectF(containerBox, point);
+					try {
+						RectF containerBox = new RectF(Float.POSITIVE_INFINITY,
+								Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY,
+								Float.NEGATIVE_INFINITY);
+						StringBuilder stringBuilder = new StringBuilder();
+						for (ArrayList<PointF> path : drawPathsLocal) {
+							stringBuilder.append(
+									"<path d=\"");
+							Iterator<PointF> pathIterator = path.iterator();
+							PointF point = pathIterator.next();
+							stringBuilder
+									.append(
+											"M" + Math.round(point.x * DRAW_SVG_SCALE_FACTOR) + " "
+													+ Math.round(point.y * DRAW_SVG_SCALE_FACTOR) + "l");
+							DrawActivity.coverWithRectF(containerBox, point);
 
-						PointF nextPoint;
-						PointF pointDelta = new PointF(0, 0);
-						PointF roundError = new PointF(0, 0);
-						String[] pointDeltaS = new String[2];
-						while (pathIterator.hasNext()) {
-							nextPoint = pathIterator.next();
+							PointF nextPoint;
+							PointF pointDelta = new PointF(0, 0);
+							PointF roundError = new PointF(0, 0);
+							String[] pointDeltaS = new String[2];
+							while (pathIterator.hasNext()) {
+								nextPoint = pathIterator.next();
 
-							// Minimize ` -`.
-							pointDelta.x = nextPoint.x * DRAW_SVG_SCALE_FACTOR
-									- point.x * DRAW_SVG_SCALE_FACTOR + roundError.x;
-							pointDelta.y = nextPoint.y * DRAW_SVG_SCALE_FACTOR
-									- point.y * DRAW_SVG_SCALE_FACTOR + roundError.y;
-							roundError.x = pointDelta.x - Math.round(pointDelta.x);
-							roundError.y = pointDelta.y - Math.round(pointDelta.y);
-							pointDeltaS[0] = String.valueOf(Math.round(pointDelta.x));
-							pointDeltaS[1] = String.valueOf(Math.round(pointDelta.y));
-							if (pointDeltaS[0].charAt(0) != '-') {
-								stringBuilder.append(" ");
+								// Minimize ` -`.
+								pointDelta.x = nextPoint.x * DRAW_SVG_SCALE_FACTOR
+										- point.x * DRAW_SVG_SCALE_FACTOR + roundError.x;
+								pointDelta.y = nextPoint.y * DRAW_SVG_SCALE_FACTOR
+										- point.y * DRAW_SVG_SCALE_FACTOR + roundError.y;
+								roundError.x = pointDelta.x - Math.round(pointDelta.x);
+								roundError.y = pointDelta.y - Math.round(pointDelta.y);
+								pointDeltaS[0] = String.valueOf(Math.round(pointDelta.x));
+								pointDeltaS[1] = String.valueOf(Math.round(pointDelta.y));
+								if (pointDeltaS[0].charAt(0) != '-') {
+									stringBuilder.append(" ");
+								}
+								stringBuilder.append(pointDeltaS[0]);
+								if (pointDeltaS[1].charAt(0) != '-') {
+									stringBuilder.append(" ");
+								}
+								stringBuilder.append(pointDeltaS[1]);
+
+								point = nextPoint;
+								DrawActivity.coverWithRectF(containerBox, point);
 							}
-							stringBuilder.append(pointDeltaS[0]);
-							if (pointDeltaS[1].charAt(0) != '-') {
-								stringBuilder.append(" ");
-							}
-							stringBuilder.append(pointDeltaS[1]);
-
-							point = nextPoint;
-							Xena.coverWithRectF(containerBox, point);
+							stringBuilder.append("\"/>\n");
 						}
-						stringBuilder.append("\"/>\n");
-					}
 
-					containerBox.left -= STROKE_WIDTH * DRAW_SVG_SCALE_FACTOR;
-					containerBox.top -= STROKE_WIDTH * DRAW_SVG_SCALE_FACTOR;
-					containerBox.right += STROKE_WIDTH * DRAW_SVG_SCALE_FACTOR;
-					containerBox.bottom += STROKE_WIDTH * DRAW_SVG_SCALE_FACTOR;
-					outputStreamWriter.write(
-							"<svg viewBox=\""
-									+ Math.round(containerBox.left * DRAW_SVG_SCALE_FACTOR)
-									+ " "
-									+ Math.round(containerBox.top * DRAW_SVG_SCALE_FACTOR) + " "
-									+ Math.round(containerBox.right - containerBox.left)
-											* DRAW_SVG_SCALE_FACTOR
-									+ " "
-									+ Math.round(containerBox.bottom - containerBox.top)
-											* DRAW_SVG_SCALE_FACTOR
-									+ "\" stroke=\"black\" stroke-width=\""
-									+ STROKE_WIDTH * DRAW_SVG_SCALE_FACTOR
-									+ "\" stroke-linecap=\"round\" stroke-linejoin=\"round\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">");
-					outputStreamWriter.write(
-							"<style>@media(prefers-color-scheme:dark){svg{background-color:black;stroke:white;}}</style>\n");
-					outputStreamWriter.write(stringBuilder.toString());
-					outputStreamWriter.write(
-							"</svg>\n");
-					outputStreamWriter.close();
+						containerBox.left -= STROKE_WIDTH * DRAW_SVG_SCALE_FACTOR;
+						containerBox.top -= STROKE_WIDTH * DRAW_SVG_SCALE_FACTOR;
+						containerBox.right += STROKE_WIDTH * DRAW_SVG_SCALE_FACTOR;
+						containerBox.bottom += STROKE_WIDTH * DRAW_SVG_SCALE_FACTOR;
+						outputStreamWriter.write(
+								"<svg viewBox=\""
+										+ Math.round(containerBox.left * DRAW_SVG_SCALE_FACTOR)
+										+ " "
+										+ Math.round(containerBox.top * DRAW_SVG_SCALE_FACTOR) + " "
+										+ Math.round(containerBox.right - containerBox.left)
+												* DRAW_SVG_SCALE_FACTOR
+										+ " "
+										+ Math.round(containerBox.bottom - containerBox.top)
+												* DRAW_SVG_SCALE_FACTOR
+										+ "\" stroke=\"black\" stroke-width=\""
+										+ Math.round(STROKE_WIDTH * DRAW_SVG_SCALE_FACTOR)
+										+ "\" stroke-linecap=\"round\" stroke-linejoin=\"round\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">");
+						outputStreamWriter.write(
+								"<style>@media(prefers-color-scheme:dark){svg{background-color:black;stroke:white;}}</style>\n");
+						outputStreamWriter.write(stringBuilder.toString());
+						outputStreamWriter.write(
+								"</svg>\n");
+					} catch (IOException e) {
+						Log.e(Xena.TAG,
+								"DrawActivity::debounceSaveTask: Failed to write to file: "
+										+ e.toString() + ".");
+					} finally {
+						outputStreamWriter.close();
+					}
 				} catch (IOException e) {
 					Log.e(Xena.TAG,
-							"CanvasActivity::debounceSaveTask: Failed to write to file: "
+							"DrawActivity::debounceSaveTask: Failed to write to file: "
 									+ e.toString() + ".");
 				}
-				Log.d(Xena.TAG, "CanvasActivity::debounceSaveTask: Finished to "
+				Log.d(Xena.TAG, "DrawActivity::debounceSaveTask: Finished to "
 						+ uri.toString() + ".");
 			}
 		};
@@ -162,12 +183,12 @@ public class CanvasActivity extends Activity {
 		};
 
 		private void debounceRedraw(int delayMs) {
-			Log.d(Xena.TAG, "CanvasActivity::debounceRedraw");
+			Log.d(Xena.TAG, "DrawActivity::debounceRedraw");
 			this.debounceRedrawTask.cancel();
 			this.debounceRedrawTask = new TimerTask() {
 				@Override
 				public void run() {
-					Log.d(Xena.TAG, "CanvasActivity::debounceRedrawTask");
+					Log.d(Xena.TAG, "DrawActivity::debounceRedrawTask");
 					isRawInputting = false;
 					drawBitmapToSurface();
 					touchHelper.setRawDrawingEnabled(false).setRawDrawingEnabled(true);
@@ -247,7 +268,7 @@ public class CanvasActivity extends Activity {
 					iteratorLocal.remove();
 				}
 			}
-			Log.d(Xena.TAG, "CanvasActivity::onEndRawErasing: removed "
+			Log.d(Xena.TAG, "DrawActivity::onEndRawErasing: removed "
 					+ (initialSize - drawPaths.size()) + " paths.");
 			drawAllPathsToCanvas();
 			this.debounceRedraw(DEBOUNCE_REDRAW_ERASE_DELAY_MS);
@@ -304,7 +325,7 @@ public class CanvasActivity extends Activity {
 						break;
 					}
 					Log.d(Xena.TAG,
-							"CanvasActivity::surfaceViewOnTouchListener: drawOffset = ("
+							"DrawActivity::surfaceViewOnTouchListener: drawOffset = ("
 									+ drawOffset.x + ", " + drawOffset.y + ").");
 					break;
 			}
@@ -332,7 +353,7 @@ public class CanvasActivity extends Activity {
 			drawAllPathsToCanvas();
 			drawBitmapToSurface();
 
-			Log.d(Xena.TAG, "CanvasActivity::surfaceHolderCallback: width = " + width
+			Log.d(Xena.TAG, "DrawActivity::surfaceHolderCallback: width = " + width
 					+ ", height = " + height + ".");
 			touchHelper.setLimitRect(new Rect(0, 0, width, height), new ArrayList<>())
 					.openRawDrawing().setRawDrawingEnabled(true);
@@ -350,8 +371,9 @@ public class CanvasActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		this.setContentView(R.layout.activity_canvas);
-		uri = getIntent().getData();
+		this.setContentView(R.layout.activity_draw);
+		DrawActivity.uri = getIntent().getData();
+		this.loadSvgFromFileData();
 
 		this.paint.setColor(Color.BLACK);
 		this.paint.setStrokeWidth(STROKE_WIDTH);
@@ -360,7 +382,7 @@ public class CanvasActivity extends Activity {
 		this.paint.setStrokeCap(Paint.Cap.ROUND);
 		this.paint.setPathEffect(new CornerPathEffect(STROKE_WIDTH));
 
-		this.surfaceView = findViewById(R.id.activity_canvas_surface_view);
+		this.surfaceView = findViewById(R.id.activity_draw_surface_view);
 		this.surfaceView.getHolder().addCallback(surfaceHolderCallback);
 		this.surfaceView.setOnTouchListener(surfaceViewOnTouchListener);
 
@@ -411,5 +433,100 @@ public class CanvasActivity extends Activity {
 			this.surfaceView.getHolder().unlockCanvasAndPost(lockCanvas);
 		}
 		this.surfaceLock.unlock();
+	}
+
+	private void loadSvgFromFileData() {
+		try {
+			InputStream in = getContentResolver().openInputStream(DrawActivity.uri);
+			try {
+				XmlPullParser parser = Xml.newPullParser();
+				parser.setInput(in, null);
+				parser.nextTag();
+				parser.require(XmlPullParser.START_TAG, null, "svg");
+				parser.nextTag();
+				parser.require(XmlPullParser.START_TAG, null, "style");
+				parser.next();
+				parser.getText();
+				parser.nextTag();
+				parser.require(XmlPullParser.END_TAG, null, "style");
+				while (parser.nextTag() != XmlPullParser.END_TAG) {
+					parser.require(XmlPullParser.START_TAG, null, "path");
+
+					DrawActivity.drawPaths.add(new Path());
+					Path path = DrawActivity.drawPaths.getLast();
+					DrawActivity.drawPathsLocal.add(new ArrayList<PointF>());
+					ArrayList<PointF> pathLocal = DrawActivity.drawPathsLocal.getLast();
+					String d = parser.getAttributeValue(null, "d");
+					StringBuilder buffer = new StringBuilder();
+					PointF pointDelta = new PointF();
+					PointF lastPoint = new PointF();
+
+					int i = 1;
+					for (; i < d.length() && d.charAt(i) != ' '; i++) {
+						buffer.append(d.charAt(i));
+					}
+					lastPoint.x = Integer.parseInt(buffer.toString())
+							/ DRAW_SVG_SCALE_FACTOR;
+					buffer.setLength(0);
+					for (i++; i < d.length() && d.charAt(i) != 'l'; i++) {
+						buffer.append(d.charAt(i));
+					}
+					lastPoint.y = Integer.parseInt(buffer.toString())
+							/ DRAW_SVG_SCALE_FACTOR;
+					buffer.setLength(0);
+					path.moveTo(lastPoint.x, lastPoint.y);
+					pathLocal.add(new PointF(lastPoint));
+
+					for (i++; i < d.length();) {
+						if (d.charAt(i) == ' ') {
+							i++;
+						}
+						buffer.append(d.charAt(i));
+						for (i++; i < d.length() && d.charAt(i) != ' '
+								&& d.charAt(i) != '-'; i++) {
+							buffer.append(d.charAt(i));
+						}
+						pointDelta.x = Integer.parseInt(buffer.toString())
+								/ DRAW_SVG_SCALE_FACTOR;
+						buffer.setLength(0);
+						if (d.charAt(i) == ' ') {
+							i++;
+						}
+						buffer.append(d.charAt(i));
+						for (i++; i < d.length() && d.charAt(i) != ' '
+								&& d.charAt(i) != '-'; i++) {
+							buffer.append(d.charAt(i));
+						}
+						pointDelta.y = Integer.parseInt(buffer.toString())
+								/ DRAW_SVG_SCALE_FACTOR;
+						buffer.setLength(0);
+						lastPoint.x += pointDelta.x;
+						lastPoint.y += pointDelta.y;
+						path.lineTo(lastPoint.x, lastPoint.y);
+						pathLocal.add(new PointF(lastPoint));
+					}
+
+					parser.nextTag();
+					parser.require(XmlPullParser.END_TAG, null, "path");
+				}
+				parser.require(XmlPullParser.END_TAG, null, "svg");
+				Log.d(Xena.TAG, "DrawActivity::loadSvgFromFileData: Parsed "
+						+ DrawActivity.drawPaths.size() + " paths.");
+			} catch (IOException e) {
+				Log.e(Xena.TAG,
+						"DrawActivity::loadSvgFromFileData: Failed to read from file: "
+								+ e.toString() + ".");
+			} catch (XmlPullParserException e) {
+				Log.e(Xena.TAG,
+						"DrawActivity::loadSvgFromFileData: Failed to parse file: "
+								+ e.toString() + ".");
+			} finally {
+				in.close();
+			}
+		} catch (IOException e) {
+			Log.e(Xena.TAG,
+					"DrawActivity::loadSvgFromFileData: Failed to read from file: "
+							+ e.toString() + ".");
+		}
 	}
 }

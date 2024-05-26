@@ -11,7 +11,7 @@
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 		</activity>
-		<activity android:name=".CanvasActivity" android:exported="true"
+		<activity android:name=".DrawActivity" android:exported="true"
 			android:launchMode="singleTop"
 			android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
 			<intent-filter>

@@ -46,7 +46,7 @@ public class FilePickerActivity extends Activity
 		Uri uri = data.getData();
 		Log.d(Xena.TAG, "FilePickerActivity.onActivityResult: " + uri.toString());
 		this.startActivity(
-				new Intent(this, CanvasActivity.class).setAction(Intent.ACTION_RUN)
+				new Intent(this, DrawActivity.class).setAction(Intent.ACTION_RUN)
 						.addCategory(Intent.CATEGORY_DEFAULT).setData(uri));
 	}
 }
