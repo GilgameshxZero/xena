@@ -19,7 +19,9 @@
 			"options": { "cwd": "${workspaceFolder}/build" },
 			"presentation": { "clear": true },
 
-			"command": "adb shell logcat *:E XENA:V S:* IntervalStats:S ANDR-PERF-LM:S BitmapFactory:S SurfaceFlinger:S SDM:S PermissionMonitor:S ReflectUtil:S lowmemorykiller:S SWEpdcManager:S BatteryStatsService:S SWEpdcManager:S PowerManager:S FirebaseMessaging:S KernelCpuSpeedReader:S",
+			"command": "make",
+			"args": ["logcat"],
+			"windows": { "command": "nmake" }
 		},
 		{
 			/* Build the open file in release mode. */
