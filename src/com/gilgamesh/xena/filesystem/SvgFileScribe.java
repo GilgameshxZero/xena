@@ -1,6 +1,7 @@
 package com.gilgamesh.xena.filesystem;
 
 import com.gilgamesh.xena.XenaApplication;
+import com.gilgamesh.xena.scribble.CompoundPath;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -24,17 +25,10 @@ import android.util.Xml;
 public class SvgFileScribe {
 	static final public float COORDINATE_SCALE_FACTOR = 8;
 
-	static private void coverWithRectF(RectF rectangle, PointF point) {
-		rectangle.left = Math.min(rectangle.left, point.x);
-		rectangle.top = Math.min(rectangle.top, point.y);
-		rectangle.right = Math.max(rectangle.right, point.x);
-		rectangle.bottom = Math.max(rectangle.bottom, point.y);
-	}
-
 	// Parameter viewportOffset is updated.
-	static public LinkedList<ArrayList<PointF>> loadPathsFromSvg(Context context,
+	static public LinkedList<CompoundPath> loadPathsFromSvg(Context context,
 			Uri uri, PointF viewportOffset) {
-		LinkedList<ArrayList<PointF>> paths = new LinkedList<ArrayList<PointF>>();
+		LinkedList<CompoundPath> paths = new LinkedList<CompoundPath>();
 		try {
 			InputStream in = context.getContentResolver().openInputStream(uri);
 			try {
@@ -60,8 +54,6 @@ public class SvgFileScribe {
 					}
 
 					// Only parse paths from the SVG file. Other elements are thrown away.
-					paths.add(new ArrayList<PointF>());
-					ArrayList<PointF> path = paths.getLast();
 					String d = parser.getAttributeValue(null, "d");
 					StringBuilder buffer = new StringBuilder();
 					PointF pointDelta = new PointF();
@@ -80,7 +72,8 @@ public class SvgFileScribe {
 					lastPoint.y = Integer.parseInt(buffer.toString())
 							/ SvgFileScribe.COORDINATE_SCALE_FACTOR;
 					buffer.setLength(0);
-					path.add(new PointF(lastPoint));
+					paths.add(new CompoundPath(lastPoint));
+					CompoundPath path = paths.getLast();
 
 					for (i++; i < d.length();) {
 						if (d.charAt(i) == ' ') {
@@ -107,7 +100,7 @@ public class SvgFileScribe {
 						buffer.setLength(0);
 						lastPoint.x += pointDelta.x;
 						lastPoint.y += pointDelta.y;
-						path.add(new PointF(lastPoint));
+						path.addPoint(lastPoint);
 					}
 				}
 				Log.v(XenaApplication.TAG, "SvgFileScribe::loadPathsFromSvg: Parsed "
@@ -138,7 +131,7 @@ public class SvgFileScribe {
 	};
 
 	private void debounceSaveTaskRun(Context context, Uri uri,
-			LinkedList<ArrayList<PointF>> paths, PointF viewportOffset,
+			LinkedList<CompoundPath> paths, PointF viewportOffset,
 			final int STROKE_WIDTH) {
 		try {
 			OutputStreamWriter outputStreamWriter = new OutputStreamWriter(
@@ -148,11 +141,11 @@ public class SvgFileScribe {
 						Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY,
 						Float.NEGATIVE_INFINITY);
 				StringBuilder stringBuilder = new StringBuilder();
-				for (ArrayList<PointF> path : paths) {
+				for (CompoundPath path : paths) {
 					stringBuilder.append(
 							"<path d=\"");
-					Iterator<PointF> pathIterator = path.iterator();
-					PointF point = pathIterator.next();
+					Iterator<PointF> iterator = path.points.iterator();
+					PointF point = iterator.next();
 					stringBuilder
 							.append(
 									"M" + Math
@@ -161,13 +154,13 @@ public class SvgFileScribe {
 											+ Math.round(
 													point.y * SvgFileScribe.COORDINATE_SCALE_FACTOR)
 											+ "l");
-					SvgFileScribe.coverWithRectF(containerBox, point);
+					containerBox.union(point.x, point.y);
 
 					PointF nextPoint, pointDelta = new PointF(0, 0),
 							roundError = new PointF(0, 0);
 					String[] pointDeltaS = new String[2];
-					while (pathIterator.hasNext()) {
-						nextPoint = pathIterator.next();
+					while (iterator.hasNext()) {
+						nextPoint = iterator.next();
 
 						// Minimize ` -`.
 						pointDelta.x = nextPoint.x * SvgFileScribe.COORDINATE_SCALE_FACTOR
@@ -190,7 +183,7 @@ public class SvgFileScribe {
 						stringBuilder.append(pointDeltaS[1]);
 
 						point = nextPoint;
-						SvgFileScribe.coverWithRectF(containerBox, point);
+						containerBox.union(point.x, point.y);
 					}
 					stringBuilder.append("\"/>\n");
 				}
@@ -246,7 +239,7 @@ public class SvgFileScribe {
 	}
 
 	public void debounceSave(Context context, Uri uri,
-			LinkedList<ArrayList<PointF>> paths, PointF drawOffset,
+			LinkedList<CompoundPath> paths, PointF drawOffset,
 			final int STROKE_WIDTH,
 			int delayMs) {
 		this.debounceSaveTask.cancel();
@@ -261,8 +254,8 @@ public class SvgFileScribe {
 
 	// Default delayMs.
 	public void debounceSave(Context context, Uri uri,
-			LinkedList<ArrayList<PointF>> paths, PointF drawOffset,
+			LinkedList<CompoundPath> paths, PointF drawOffset,
 			final int STROKE_WIDTH) {
-		this.debounceSave(context, uri, paths, drawOffset, STROKE_WIDTH, 15000);
+		this.debounceSave(context, uri, paths, drawOffset, STROKE_WIDTH, 60000);
 	}
 }
