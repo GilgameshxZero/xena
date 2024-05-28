@@ -1,22 +1,21 @@
-package com.gilgamesh.xena;
+package com.gilgamesh.xena.scribble;
 
-import com.gilgamesh.xena.filesystem.SvgFileIo;
+import com.gilgamesh.xena.filesystem.SvgFileScribe;
+import com.gilgamesh.xena.R;
+import com.gilgamesh.xena.XenaApplication;
 
-import java.util.LinkedList;
+import com.onyx.android.sdk.data.note.TouchPoint;
+import com.onyx.android.sdk.pen.data.TouchPointList;
+import com.onyx.android.sdk.pen.RawInputCallback;
+import com.onyx.android.sdk.pen.TouchHelper;
+
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.ArrayList;
+import java.util.ListIterator;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.locks.ReentrantLock;
-
-import java.util.ListIterator;
 
 import android.app.Activity;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.MotionEvent;
-import android.view.SurfaceHolder;
-import android.view.View;
-import android.view.SurfaceView;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -27,22 +26,22 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.PointF;
 import android.net.Uri;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.MotionEvent;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
+import android.view.View;
 
-import com.onyx.android.sdk.pen.RawInputCallback;
-import com.onyx.android.sdk.pen.TouchHelper;
-import com.onyx.android.sdk.data.note.TouchPoint;
-import com.onyx.android.sdk.pen.data.TouchPointList;
-
-public class DrawActivity extends Activity {
-	private static LinkedList<Path> pathsNative = new LinkedList<Path>();
-	private static LinkedList<Path> pathsNativeFilled = new LinkedList<Path>();
-	// Duplicate list of paths which can be iterated through.
-	private static LinkedList<ArrayList<PointF>> paths = new LinkedList<ArrayList<PointF>>();
-	private static PointF drawOffset = new PointF(0, 0);
-	private static Uri uri;
+public class ScribbleActivity extends Activity {
+	static private PointF drawOffset = new PointF();
+	private Uri uri;
 
 	private final int STROKE_WIDTH = 4;
 	private final float DRAW_MOVE_EPSILON = 3;
+
+	private SvgFileScribe svgFileScribe = new SvgFileScribe();
+	private PathDrawer pathDrawer = new PathDrawer();
 
 	private Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 	private SurfaceView surfaceView;
@@ -66,12 +65,12 @@ public class DrawActivity extends Activity {
 		};
 
 		private void debounceRedraw(int delayMs) {
-			Log.d(XenaApplication.TAG, "DrawActivity::debounceRedraw");
+			Log.d(XenaApplication.TAG, "ScribbleActivity::debounceRedraw");
 			this.debounceRedrawTask.cancel();
 			this.debounceRedrawTask = new TimerTask() {
 				@Override
 				public void run() {
-					Log.d(XenaApplication.TAG, "DrawActivity::debounceRedrawTask");
+					Log.d(XenaApplication.TAG, "ScribbleActivity::debounceRedrawTask");
 					isRawInputting = false;
 					drawBitmapToSurface();
 					touchHelper.setRawDrawingEnabled(false).setRawDrawingEnabled(true);
@@ -84,41 +83,42 @@ public class DrawActivity extends Activity {
 		public void onBeginRawDrawing(boolean b, TouchPoint touchPoint) {
 			isRawInputting = true;
 			this.debounceRedrawTask.cancel();
-			pathsNative.add(new Path());
-			paths.add(new ArrayList<PointF>());
-			pathsNative.getLast()
-					.moveTo(touchPoint.x - drawOffset.x,
-							touchPoint.y - drawOffset.y);
-			paths.getLast().add(
+			pathDrawer.pathsNative.add(new Path());
+			pathDrawer.paths.add(new ArrayList<PointF>());
+			pathDrawer.pathsNative.getLast().moveTo(touchPoint.x - drawOffset.x,
+					touchPoint.y - drawOffset.y);
+			pathDrawer.paths.getLast().add(
 					new PointF(touchPoint.x - drawOffset.x, touchPoint.y - drawOffset.y));
 		}
 
 		@Override
 		public void onEndRawDrawing(boolean b, TouchPoint touchPoint) {
-			pathsNativeFilled.add(new Path());
-			paint.getFillPath(pathsNative.getLast(), pathsNativeFilled.getLast());
-			drawPathToCanvas(pathsNative.getLast());
+			pathDrawer.pathsNativeFilled.add(new Path());
+			paint.getFillPath(pathDrawer.pathsNative.getLast(),
+					pathDrawer.pathsNativeFilled.getLast());
+			drawPathToCanvas(pathDrawer.pathsNative.getLast());
 			this.debounceRedraw(DEBOUNCE_REDRAW_DELAY_MS);
-			SvgFileIo.debounceSave(DrawActivity.this, uri, paths, STROKE_WIDTH);
+			svgFileScribe.debounceSave(ScribbleActivity.this, uri,
+					pathDrawer.paths, drawOffset,
+					STROKE_WIDTH);
 		}
 
 		@Override
 		public void onRawDrawingTouchPointMoveReceived(TouchPoint touchPoint) {
-			PointF lastPoint = paths.getLast()
-					.get(paths.getLast().size() - 1);
+			PointF lastPoint = pathDrawer.paths.getLast()
+					.get(pathDrawer.paths.getLast().size() - 1);
 			PointF newPoint = new PointF(touchPoint.x - drawOffset.x,
 					touchPoint.y - drawOffset.y);
 			PointF pointDelta = new PointF(newPoint.x - lastPoint.x,
 					newPoint.y - lastPoint.y);
-			if (paths.getLast().size() > 1) {
+			if (pathDrawer.paths.getLast().size() > 1) {
 				if (Math.sqrt(pointDelta.x * pointDelta.x
 						+ pointDelta.y * pointDelta.y) < DRAW_MOVE_EPSILON) {
 					return;
 				}
 			}
-			pathsNative.getLast()
-					.lineTo(newPoint.x, newPoint.y);
-			paths.getLast().add(newPoint);
+			pathDrawer.pathsNative.getLast().lineTo(newPoint.x, newPoint.y);
+			pathDrawer.paths.getLast().add(newPoint);
 		}
 
 		@Override
@@ -131,18 +131,18 @@ public class DrawActivity extends Activity {
 			isRawInputting = true;
 			this.debounceRedrawTask.cancel();
 			erasePath.reset();
-			erasePath
-					.moveTo(touchPoint.x - drawOffset.x,
-							touchPoint.y - drawOffset.y);
+			erasePath.moveTo(touchPoint.x - drawOffset.x,
+					touchPoint.y - drawOffset.y);
 		}
 
 		@Override
 		public void onEndRawErasing(boolean b, TouchPoint touchPoint) {
-			int initialSize = paths.size();
-			ListIterator<ArrayList<PointF>> iterator = paths
+			int initialSize = pathDrawer.paths.size();
+			ListIterator<ArrayList<PointF>> iterator = pathDrawer.paths
 					.listIterator();
-			ListIterator<Path> iteratorNative = pathsNative.listIterator();
-			ListIterator<Path> iteratorNativeFilled = pathsNativeFilled
+			ListIterator<Path> iteratorNative = pathDrawer.pathsNative
+					.listIterator();
+			ListIterator<Path> iteratorNativeFilled = pathDrawer.pathsNativeFilled
 					.listIterator();
 			paint.getFillPath(erasePath, erasePath);
 			Path intersectPath = new Path();
@@ -157,18 +157,20 @@ public class DrawActivity extends Activity {
 					iteratorNativeFilled.remove();
 				}
 			}
-			Log.d(XenaApplication.TAG, "DrawActivity::onEndRawErasing: removed "
-					+ (initialSize - paths.size()) + " paths.");
+			Log.d(XenaApplication.TAG, "ScribbleActivity::onEndRawErasing: removed "
+					+ (initialSize - pathDrawer.paths.size())
+					+ " ScribbleState.paths.");
 			drawAllPathsToCanvas();
 			this.debounceRedraw(DEBOUNCE_REDRAW_ERASE_DELAY_MS);
-			SvgFileIo.debounceSave(DrawActivity.this, uri, paths, STROKE_WIDTH);
+			svgFileScribe.debounceSave(ScribbleActivity.this, uri,
+					pathDrawer.paths, drawOffset,
+					STROKE_WIDTH);
 		}
 
 		@Override
 		public void onRawErasingTouchPointMoveReceived(TouchPoint touchPoint) {
-			erasePath
-					.lineTo(touchPoint.x - drawOffset.x,
-							touchPoint.y - drawOffset.y);
+			erasePath.lineTo(touchPoint.x - drawOffset.x,
+					touchPoint.y - drawOffset.y);
 		}
 
 		@Override
@@ -214,7 +216,7 @@ public class DrawActivity extends Activity {
 						break;
 					}
 					Log.d(XenaApplication.TAG,
-							"DrawActivity::surfaceViewOnTouchListener: drawOffset = ("
+							"ScribbleActivity::surfaceViewOnTouchListener: drawOffset = ("
 									+ drawOffset.x + ", " + drawOffset.y + ").");
 					break;
 			}
@@ -243,8 +245,8 @@ public class DrawActivity extends Activity {
 			drawBitmapToSurface();
 
 			Log.d(XenaApplication.TAG,
-					"DrawActivity::surfaceHolderCallback: width = " + width
-							+ ", height = " + height + ".");
+					"ScribbleActivity::surfaceHolderCallback: width = "
+							+ width + ", height = " + height + ".");
 			touchHelper.setLimitRect(new Rect(0, 0, width, height), new ArrayList<>())
 					.openRawDrawing().setRawDrawingEnabled(true);
 			surfaceLock.unlock();
@@ -262,19 +264,21 @@ public class DrawActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		this.setContentView(R.layout.activity_draw);
-		DrawActivity.uri = getIntent().getData();
-		DrawActivity.paths = SvgFileIo.loadPathsFromSvg(DrawActivity.this, uri);
-		for (ArrayList<PointF> path : paths) {
+		this.uri = getIntent().getData();
+		this.pathDrawer.paths = SvgFileScribe.loadPathsFromSvg(
+				ScribbleActivity.this,
+				uri, ScribbleActivity.drawOffset);
+		for (ArrayList<PointF> path : this.pathDrawer.paths) {
 			Path pathNative = new Path();
 			pathNative.moveTo(path.get(0).x, path.get(0).y);
 			for (int i = 1; i < path.size(); i++) {
 				pathNative.lineTo(path.get(i).x, path.get(i).y);
 			}
-			DrawActivity.pathsNative.add(pathNative);
+			this.pathDrawer.pathsNative.add(pathNative);
 
 			Path pathNativeFilled = new Path();
 			paint.getFillPath(pathNative, pathNativeFilled);
-			DrawActivity.pathsNativeFilled.add(pathNativeFilled);
+			this.pathDrawer.pathsNativeFilled.add(pathNativeFilled);
 		}
 
 		this.paint.setColor(Color.BLACK);
@@ -303,7 +307,9 @@ public class DrawActivity extends Activity {
 	@Override
 	protected void onPause() {
 		// onPause will be called when "back" is pressed as well.
-		SvgFileIo.debounceSave(DrawActivity.this, uri, paths, STROKE_WIDTH, 0);
+		this.svgFileScribe.debounceSave(ScribbleActivity.this, uri,
+				this.pathDrawer.paths, drawOffset,
+				STROKE_WIDTH, 0);
 		this.touchHelper.setRawDrawingEnabled(false);
 		super.onPause();
 	}
@@ -322,7 +328,7 @@ public class DrawActivity extends Activity {
 
 	private void drawAllPathsToCanvas() {
 		canvas.drawColor(Color.WHITE);
-		for (Path pathNative : pathsNative) {
+		for (Path pathNative : this.pathDrawer.pathsNative) {
 			drawPathToCanvas(pathNative);
 		}
 	}
