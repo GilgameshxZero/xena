@@ -5,6 +5,7 @@ import com.gilgamesh.xena.algorithm.Geometry;
 import java.util.ArrayList;
 
 import android.graphics.Path;
+import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.RectF;
 
@@ -14,8 +15,14 @@ public class CompoundPath {
 	static public final float BOUNDS_AREA_EPS = 16;
 
 	static public abstract class Callback {
-		public abstract void onPointAdded(PointF point);
+		public abstract void onPointAdded(CompoundPath that, PointF previousPoint,
+				PointF currentPointF);
 	}
+
+	// CompoundPaths are given unique IDs sequentially.
+	static public int nextId = 0;
+
+	public final int ID = CompoundPath.nextId++;
 
 	private Callback callback;
 
@@ -25,13 +32,15 @@ public class CompoundPath {
 	public Path path = new Path();
 	// Bounding box of path.
 	public RectF bounds = new RectF();
+	// Stores the chunks that this path is in.
+	public ArrayList<Point> containingChunks = new ArrayList<Point>();
 
 	public CompoundPath(PointF point, Callback callback) {
 		this.points.add(new PointF(point));
 		this.path.moveTo(point.x, point.y);
 		this.bounds.set(point.x, point.y, point.x, point.y);
 		this.callback = callback;
-		this.callback.onPointAdded(point);
+		this.callback.onPointAdded(this, null, point);
 	}
 
 	public boolean isIntersectingSegment(PointF start, PointF end) {
@@ -68,9 +77,10 @@ public class CompoundPath {
 	}
 
 	public void addPoint(PointF point) {
+		this.callback.onPointAdded(this, this.points.get(this.points.size() - 1),
+				point);
 		this.points.add(new PointF(point));
 		this.path.lineTo(point.x, point.y);
 		this.bounds.union(point.x, point.y);
-		this.callback.onPointAdded(point);
 	}
 }

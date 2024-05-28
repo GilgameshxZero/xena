@@ -1,9 +1,9 @@
 package com.gilgamesh.xena.scribble;
 
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 
 import com.gilgamesh.xena.XenaApplication;
@@ -17,43 +17,18 @@ public class PathManager {
 	// Size of one chunk is one viewport, always.
 	private final Point CHUNK_SIZE;
 
-	// Compound paths are given sequential unique IDs.
-	private int nextPathId = 0;
-
 	// Maps ID -> Compound path.
 	private HashMap<Integer, CompoundPath> paths = new HashMap<Integer, CompoundPath>();
 
 	// Maps chunk coordinate -> path IDs intersecting this chunk. Paths may span
-	// multiple chunks in a 2x2 chunk area.
-	private HashMap<Point, HashSet<Integer>> chunkPathIds = new HashMap<Point, HashSet<Integer>>();
+	// multiple chunks in a (larger than, if created on another device) 2x2 chunk
+	// area.
+	private HashMap<Point, Chunk> chunks = new HashMap<Point, Chunk>();
 
 	// Offset of the upper-left point of the viewport.
 	private PointF viewportOffset = new PointF(0, 0);
 
 	private Point currentChunk = new Point(0, 0);
-	private HashSet<Integer> loadedPathIds = new HashSet<Integer>();
-
-	// Returns the joint set of path IDs for a 3x3 chunk area around the viewport
-	// offset.
-	private void computeLoadedPathIds() {
-		Point chunk = new Point((int) -Math.floor(viewportOffset.x / CHUNK_SIZE.x),
-				(int) -Math.floor(viewportOffset.y / CHUNK_SIZE.y));
-		this.loadedPathIds = new HashSet<Integer>();
-
-		for (int i = -1; i <= 1; i++) {
-			for (int j = -1; j <= 1; j++) {
-				HashSet<Integer> chunkPathIds = this.chunkPathIds
-						.get(new Point(chunk.x + i, chunk.y + j));
-				if (chunkPathIds != null) {
-					this.loadedPathIds.addAll(chunkPathIds);
-				}
-			}
-		}
-
-		Log.v(XenaApplication.TAG,
-				"PathManager::computeLoadedPathIds: Found " + this.loadedPathIds.size()
-						+ " paths in chunks surrounding " + chunk.x + ", " + chunk.y + ".");
-	}
 
 	public PathManager(Point chunkSize) {
 		this.CHUNK_SIZE = chunkSize;
@@ -62,40 +37,41 @@ public class PathManager {
 	public AbstractMap.SimpleEntry<Integer, CompoundPath> addPath(PointF point) {
 		CompoundPath path = new CompoundPath(point,
 				new CompoundPath.Callback() {
-					private final int pathId = nextPathId;
-
 					@Override
-					public void onPointAdded(PointF point) {
-						// Update the chunkPathIds map.
-						Point chunk = new Point((int) Math.floor(point.x / CHUNK_SIZE.x),
-								(int) Math.floor(point.y / CHUNK_SIZE.y));
-						HashSet<Integer> pathIds = chunkPathIds.get(chunk);
-						if (pathIds != null) {
-							if (!pathIds.contains(this.pathId)) {
-								pathIds.add(this.pathId);
+					public void onPointAdded(CompoundPath that, PointF previousPoint,
+							PointF currentPoint) {
+						// Update/create new chunks and render the new path segment onto the
+						// chunk. Use containingChunks to remember that this path spans this
+						// chunk.
+						Point chunkCoordinate = new Point(
+								(int) Math.floor(currentPoint.x / CHUNK_SIZE.x),
+								(int) Math.floor(currentPoint.y / CHUNK_SIZE.y));
+						Chunk chunk = chunks.get(chunkCoordinate);
+						if (chunk != null) {
+							if (!chunk.getPathIds().contains(that.ID)) {
+								chunk.addPath(that.ID);
+								that.containingChunks.add(chunkCoordinate);
 								Log.v(XenaApplication.TAG,
-										"Added path " + this.pathId + " to chunk " + chunk.x + ", "
-												+ chunk.y + ".");
+										"Added path " + that.ID + " to chunk "
+												+ chunkCoordinate.x + ", "
+												+ chunkCoordinate.y + ".");
 							}
 						} else {
-							pathIds = new HashSet<Integer>();
-							pathIds.add(this.pathId);
-							chunkPathIds.put(chunk, pathIds);
+							chunk = new Chunk(CHUNK_SIZE.x,
+									CHUNK_SIZE.y, chunkCoordinate.x * CHUNK_SIZE.x,
+									chunkCoordinate.y * CHUNK_SIZE.y);
+							chunk.addPath(that.ID);
+							chunks.put(chunkCoordinate, chunk);
+							that.containingChunks.add(chunkCoordinate);
 							Log.v(XenaApplication.TAG,
-									"Added path " + this.pathId + " to new chunk " + chunk.x
-											+ ", " + chunk.y + ".");
-						}
-
-						// Load this path if it is in loaded chunks.
-						if (Math.abs(chunk.x - currentChunk.x) <= 1
-								&& Math.abs(chunk.y - currentChunk.y) <= 1) {
-							loadedPathIds.add(this.pathId);
+									"Added path " + that.ID + " to new chunk "
+											+ chunkCoordinate.x
+											+ ", " + chunkCoordinate.y + ".");
 						}
 					}
 				});
-		this.paths.put(nextPathId, path);
-		return new AbstractMap.SimpleEntry<Integer, CompoundPath>(nextPathId++,
-				path);
+		this.paths.put(path.ID, path);
+		return new AbstractMap.SimpleEntry<Integer, CompoundPath>(path.ID, path);
 	}
 
 	public CompoundPath getPath(int id) {
@@ -112,26 +88,37 @@ public class PathManager {
 
 	// MUST call this function to remove a path iterator. This will remove the
 	// path from chunk loading as well.
-	public void prepareEntryForRemove(Map.Entry<Integer, CompoundPath> entry) {
-		this.loadedPathIds.remove(entry.getKey());
-		CompoundPath path = entry.getValue();
-		Point[] chunks = new Point[] {
-				new Point((int) Math.floor(path.bounds.left / CHUNK_SIZE.x),
-						(int) Math.floor(path.bounds.top / CHUNK_SIZE.y)),
-				new Point((int) Math.floor(path.bounds.right / CHUNK_SIZE.x),
-						(int) Math.floor(path.bounds.top / CHUNK_SIZE.y)),
-				new Point((int) Math.floor(path.bounds.right / CHUNK_SIZE.x),
-						(int) Math.floor(path.bounds.bottom / CHUNK_SIZE.y)),
-				new Point((int) Math.floor(path.bounds.left / CHUNK_SIZE.x),
-						(int) Math.floor(path.bounds.bottom / CHUNK_SIZE.y)) };
-		for (Point chunk : chunks) {
-			HashSet<Integer> pathIds = chunkPathIds.get(chunk);
-			if (pathIds != null && pathIds.contains(entry.getKey())) {
-				pathIds.remove(entry.getKey());
-				Log.v(XenaApplication.TAG,
-						"PathManager::prepareEntryForRemove: Removed path " + entry.getKey()
-								+ " from chunk " + chunk.x + ", " + chunk.y + ".");
+	public void removePathId(int pathId) {
+		CompoundPath path = this.paths.get(pathId);
+		for (int chunkCoordinateX = (int) Math
+				.floor(path.bounds.left / CHUNK_SIZE.x); chunkCoordinateX <= (int) Math
+						.floor(path.bounds.right / CHUNK_SIZE.y); chunkCoordinateX++) {
+			for (int chunkCoordinateY = (int) Math
+					.floor(
+							path.bounds.top / CHUNK_SIZE.x); chunkCoordinateY <= (int) Math
+									.floor(
+											path.bounds.bottom / CHUNK_SIZE.y); chunkCoordinateY++) {
+				Chunk chunk = chunks
+						.get(new Point(chunkCoordinateX, chunkCoordinateY));
+				if (chunk != null && chunk.getPathIds().contains(pathId)) {
+					chunk.removePath(path);
+					Log.v(XenaApplication.TAG,
+							"PathManager::prepareEntryForRemove: Removed path "
+									+ pathId
+									+ " from chunk " + chunkCoordinateX + ", " + chunkCoordinateY
+									+ ".");
+				}
 			}
+		}
+
+		this.paths.remove(pathId);
+	}
+
+	// Renders the complete path onto all relevant chunk bitmaps.
+	public void finalizePath(CompoundPath path) {
+		for (Point chunkCoordinate : path.containingChunks) {
+			Chunk chunk = chunks.get(chunkCoordinate);
+			chunk.addPath(path);
 		}
 	}
 
@@ -146,12 +133,30 @@ public class PathManager {
 		Point newChunk = new Point((int) -Math.floor(offset.x / CHUNK_SIZE.x),
 				(int) -Math.floor(offset.y / CHUNK_SIZE.y));
 		if (!newChunk.equals(this.currentChunk)) {
-			this.computeLoadedPathIds();
+			Log.v(XenaApplication.TAG,
+					"PathManager::setViewportOffset: Moved into new chunk "
+							+ newChunk.x + ", " + newChunk.y + ".");
 			this.currentChunk = newChunk;
 		}
 	}
 
-	public HashSet<Integer> getLoadedPathIds() {
-		return this.loadedPathIds;
+	public Chunk[] getVisibleChunks() {
+		Chunk[] visibleChunks = new Chunk[4];
+		Point[] chunkCoordinates = new Point[] {
+				new Point(this.currentChunk),
+				new Point(this.currentChunk.x - 1, this.currentChunk.y),
+				new Point(this.currentChunk.x, this.currentChunk.y - 1),
+				new Point(this.currentChunk.x - 1, this.currentChunk.y - 1)
+		};
+		for (int i = 0; i < 4; i++) {
+			visibleChunks[i] = chunks.get(chunkCoordinates[i]);
+			if (visibleChunks[i] == null) {
+				visibleChunks[i] = new Chunk(CHUNK_SIZE.x,
+						CHUNK_SIZE.y, chunkCoordinates[i].x * CHUNK_SIZE.x,
+						chunkCoordinates[i].y * CHUNK_SIZE.y);
+				chunks.put(chunkCoordinates[i], visibleChunks[i]);
+			}
+		}
+		return visibleChunks;
 	}
 }

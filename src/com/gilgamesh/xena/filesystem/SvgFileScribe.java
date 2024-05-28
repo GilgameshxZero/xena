@@ -1,6 +1,7 @@
 package com.gilgamesh.xena.filesystem;
 
 import com.gilgamesh.xena.XenaApplication;
+import com.gilgamesh.xena.scribble.Chunk;
 import com.gilgamesh.xena.scribble.CompoundPath;
 import com.gilgamesh.xena.scribble.PathManager;
 
@@ -10,9 +11,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -101,6 +100,8 @@ public class SvgFileScribe {
 						lastPoint.y += pointDelta.y;
 						path.addPoint(lastPoint);
 					}
+
+					pathManager.finalizePath(path);
 				}
 				Log.v(XenaApplication.TAG, "SvgFileScribe::loadPathsFromSvg: Parsed "
 						+ pathManager.getPathsCount() + " paths.");
@@ -129,8 +130,7 @@ public class SvgFileScribe {
 	};
 
 	private void debounceSaveTaskRun(Context context, Uri uri,
-			PathManager pathManager,
-			final int STROKE_WIDTH) {
+			PathManager pathManager) {
 		try {
 			OutputStreamWriter outputStreamWriter = new OutputStreamWriter(
 					context.getContentResolver().openOutputStream(uri, "wt"));
@@ -189,30 +189,31 @@ public class SvgFileScribe {
 					stringBuilder.append("\"/>\n");
 				}
 
-				containerBox.left -= STROKE_WIDTH
+				containerBox.left -= Chunk.STROKE_WIDTH
 						* SvgFileScribe.COORDINATE_SCALE_FACTOR;
-				containerBox.top -= STROKE_WIDTH
+				containerBox.top -= Chunk.STROKE_WIDTH
 						* SvgFileScribe.COORDINATE_SCALE_FACTOR;
-				containerBox.right += STROKE_WIDTH
+				containerBox.right += Chunk.STROKE_WIDTH
 						* SvgFileScribe.COORDINATE_SCALE_FACTOR;
-				containerBox.bottom += STROKE_WIDTH
+				containerBox.bottom += Chunk.STROKE_WIDTH
 						* SvgFileScribe.COORDINATE_SCALE_FACTOR;
 				outputStreamWriter.write(
 						"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\""
-								+ Math.round(
-										containerBox.left * SvgFileScribe.COORDINATE_SCALE_FACTOR)
+								+ Math.round(Math.floor(
+										containerBox.left * SvgFileScribe.COORDINATE_SCALE_FACTOR))
 								+ " "
-								+ Math.round(
-										containerBox.top * SvgFileScribe.COORDINATE_SCALE_FACTOR)
+								+ Math.round(Math.floor(
+										containerBox.top * SvgFileScribe.COORDINATE_SCALE_FACTOR))
 								+ " "
-								+ Math.round((containerBox.right - containerBox.left)
+								+ Math.round(Math.ceil((containerBox.right - containerBox.left))
 										* SvgFileScribe.COORDINATE_SCALE_FACTOR)
 								+ " "
-								+ Math.round((containerBox.bottom - containerBox.top)
+								+ Math.round(Math.ceil((containerBox.bottom - containerBox.top))
 										* SvgFileScribe.COORDINATE_SCALE_FACTOR)
 								+ "\" stroke=\"black\" stroke-width=\""
 								+ Math
-										.round(STROKE_WIDTH * SvgFileScribe.COORDINATE_SCALE_FACTOR)
+										.round(Chunk.STROKE_WIDTH
+												* SvgFileScribe.COORDINATE_SCALE_FACTOR)
 								+ "\" stroke-linecap=\"round\" stroke-linejoin=\"round\" fill=\"none\" data-xena=\""
 								+ Math.round(pathManager.getViewportOffset().x)
 								+ ' '
@@ -241,13 +242,12 @@ public class SvgFileScribe {
 
 	public void debounceSave(Context context, Uri uri,
 			PathManager pathManager,
-			final int STROKE_WIDTH,
 			int delayMs) {
 		this.debounceSaveTask.cancel();
 		this.debounceSaveTask = new TimerTask() {
 			@Override
 			public void run() {
-				debounceSaveTaskRun(context, uri, pathManager, STROKE_WIDTH);
+				debounceSaveTaskRun(context, uri, pathManager);
 			}
 		};
 		new Timer().schedule(this.debounceSaveTask, delayMs);
@@ -255,8 +255,7 @@ public class SvgFileScribe {
 
 	// Default delayMs.
 	public void debounceSave(Context context, Uri uri,
-			PathManager pathManager,
-			final int STROKE_WIDTH) {
-		this.debounceSave(context, uri, pathManager, STROKE_WIDTH, 60000);
+			PathManager pathManager) {
+		this.debounceSave(context, uri, pathManager, 60000);
 	}
 }
