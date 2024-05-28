@@ -40,9 +40,10 @@ import com.onyx.android.sdk.data.note.TouchPoint;
 import com.onyx.android.sdk.pen.data.TouchPointList;
 
 public class DrawActivity extends Activity {
-	private static LinkedList<Path> drawPaths = new LinkedList<Path>();
+	private static LinkedList<Path> pathsNative = new LinkedList<Path>();
+	private static LinkedList<Path> pathsNativeFilled = new LinkedList<Path>();
 	// Duplicate list of paths which can be iterated through.
-	private static LinkedList<ArrayList<PointF>> drawPathsLocal = new LinkedList<ArrayList<PointF>>();
+	private static LinkedList<ArrayList<PointF>> paths = new LinkedList<ArrayList<PointF>>();
 	private static PointF drawOffset = new PointF(0, 0);
 	private static Uri uri;
 
@@ -78,7 +79,7 @@ public class DrawActivity extends Activity {
 								Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY,
 								Float.NEGATIVE_INFINITY);
 						StringBuilder stringBuilder = new StringBuilder();
-						for (ArrayList<PointF> path : drawPathsLocal) {
+						for (ArrayList<PointF> path : paths) {
 							stringBuilder.append(
 									"<path d=\"");
 							Iterator<PointF> pathIterator = path.iterator();
@@ -201,39 +202,41 @@ public class DrawActivity extends Activity {
 		public void onBeginRawDrawing(boolean b, TouchPoint touchPoint) {
 			isRawInputting = true;
 			this.debounceRedrawTask.cancel();
-			drawPaths.add(new Path());
-			drawPathsLocal.add(new ArrayList<PointF>());
-			drawPaths.getLast()
+			pathsNative.add(new Path());
+			paths.add(new ArrayList<PointF>());
+			pathsNative.getLast()
 					.moveTo(touchPoint.x - drawOffset.x,
 							touchPoint.y - drawOffset.y);
-			drawPathsLocal.getLast().add(
+			paths.getLast().add(
 					new PointF(touchPoint.x - drawOffset.x, touchPoint.y - drawOffset.y));
 		}
 
 		@Override
 		public void onEndRawDrawing(boolean b, TouchPoint touchPoint) {
-			drawPathToCanvas(drawPaths.getLast());
+			pathsNativeFilled.add(new Path());
+			paint.getFillPath(pathsNative.getLast(), pathsNativeFilled.getLast());
+			drawPathToCanvas(pathsNative.getLast());
 			this.debounceRedraw(DEBOUNCE_REDRAW_DELAY_MS);
 			debounceSave(DEBOUNCE_SAVE_DELAY_MS);
 		}
 
 		@Override
 		public void onRawDrawingTouchPointMoveReceived(TouchPoint touchPoint) {
-			PointF lastPoint = drawPathsLocal.getLast()
-					.get(drawPathsLocal.getLast().size() - 1);
+			PointF lastPoint = paths.getLast()
+					.get(paths.getLast().size() - 1);
 			PointF newPoint = new PointF(touchPoint.x - drawOffset.x,
 					touchPoint.y - drawOffset.y);
 			PointF pointDelta = new PointF(newPoint.x - lastPoint.x,
 					newPoint.y - lastPoint.y);
-			if (drawPathsLocal.getLast().size() > 1) {
+			if (paths.getLast().size() > 1) {
 				if (Math.sqrt(pointDelta.x * pointDelta.x
 						+ pointDelta.y * pointDelta.y) < DRAW_MOVE_EPSILON) {
 					return;
 				}
 			}
-			drawPaths.getLast()
+			pathsNative.getLast()
 					.lineTo(newPoint.x, newPoint.y);
-			drawPathsLocal.getLast().add(newPoint);
+			paths.getLast().add(newPoint);
 		}
 
 		@Override
@@ -253,23 +256,27 @@ public class DrawActivity extends Activity {
 
 		@Override
 		public void onEndRawErasing(boolean b, TouchPoint touchPoint) {
-			int initialSize = drawPaths.size();
-			ListIterator<Path> iterator = drawPaths.listIterator();
-			ListIterator<ArrayList<PointF>> iteratorLocal = drawPathsLocal
+			int initialSize = paths.size();
+			ListIterator<ArrayList<PointF>> iterator = paths
+					.listIterator();
+			ListIterator<Path> iteratorNative = pathsNative.listIterator();
+			ListIterator<Path> iteratorNativeFilled = pathsNativeFilled
 					.listIterator();
 			paint.getFillPath(erasePath, erasePath);
+			Path intersectPath = new Path();
 			while (iterator.hasNext()) {
-				Path fillPath = new Path();
-				paint.getFillPath(iterator.next(), fillPath);
-				fillPath.op(erasePath, Path.Op.INTERSECT);
-				iteratorLocal.next();
-				if (!fillPath.isEmpty()) {
+				iterator.next();
+				iteratorNative.next();
+				intersectPath.op(iteratorNativeFilled.next(), erasePath,
+						Path.Op.INTERSECT);
+				if (!intersectPath.isEmpty()) {
 					iterator.remove();
-					iteratorLocal.remove();
+					iteratorNative.remove();
+					iteratorNativeFilled.remove();
 				}
 			}
 			Log.d(Xena.TAG, "DrawActivity::onEndRawErasing: removed "
-					+ (initialSize - drawPaths.size()) + " paths.");
+					+ (initialSize - paths.size()) + " paths.");
 			drawAllPathsToCanvas();
 			this.debounceRedraw(DEBOUNCE_REDRAW_ERASE_DELAY_MS);
 			debounceSave(DEBOUNCE_SAVE_DELAY_MS);
@@ -419,8 +426,8 @@ public class DrawActivity extends Activity {
 
 	private void drawAllPathsToCanvas() {
 		canvas.drawColor(Color.WHITE);
-		for (Path path : drawPaths) {
-			drawPathToCanvas(path);
+		for (Path pathNative : pathsNative) {
+			drawPathToCanvas(pathNative);
 		}
 	}
 
@@ -436,6 +443,9 @@ public class DrawActivity extends Activity {
 	}
 
 	private void loadSvgFromFileData() {
+		DrawActivity.paths.clear();
+		DrawActivity.pathsNative.clear();
+		DrawActivity.pathsNativeFilled.clear();
 		try {
 			InputStream in = getContentResolver().openInputStream(DrawActivity.uri);
 			try {
@@ -452,10 +462,12 @@ public class DrawActivity extends Activity {
 				while (parser.nextTag() != XmlPullParser.END_TAG) {
 					parser.require(XmlPullParser.START_TAG, null, "path");
 
-					DrawActivity.drawPaths.add(new Path());
-					Path path = DrawActivity.drawPaths.getLast();
-					DrawActivity.drawPathsLocal.add(new ArrayList<PointF>());
-					ArrayList<PointF> pathLocal = DrawActivity.drawPathsLocal.getLast();
+					DrawActivity.paths.add(new ArrayList<PointF>());
+					ArrayList<PointF> path = DrawActivity.paths.getLast();
+					DrawActivity.pathsNative.add(new Path());
+					Path pathNative = DrawActivity.pathsNative.getLast();
+					DrawActivity.pathsNativeFilled.add(new Path());
+					Path pathNativeFilled = DrawActivity.pathsNativeFilled.getLast();
 					String d = parser.getAttributeValue(null, "d");
 					StringBuilder buffer = new StringBuilder();
 					PointF pointDelta = new PointF();
@@ -474,8 +486,9 @@ public class DrawActivity extends Activity {
 					lastPoint.y = Integer.parseInt(buffer.toString())
 							/ DRAW_SVG_SCALE_FACTOR;
 					buffer.setLength(0);
-					path.moveTo(lastPoint.x, lastPoint.y);
-					pathLocal.add(new PointF(lastPoint));
+					path.add(new PointF(lastPoint));
+					pathNative.moveTo(lastPoint.x, lastPoint.y);
+					pathNativeFilled.moveTo(lastPoint.x, lastPoint.y);
 
 					for (i++; i < d.length();) {
 						if (d.charAt(i) == ' ') {
@@ -502,8 +515,9 @@ public class DrawActivity extends Activity {
 						buffer.setLength(0);
 						lastPoint.x += pointDelta.x;
 						lastPoint.y += pointDelta.y;
-						path.lineTo(lastPoint.x, lastPoint.y);
-						pathLocal.add(new PointF(lastPoint));
+						path.add(new PointF(lastPoint));
+						pathNative.lineTo(lastPoint.x, lastPoint.y);
+						pathNativeFilled.lineTo(lastPoint.x, lastPoint.y);
 					}
 
 					parser.nextTag();
@@ -511,7 +525,7 @@ public class DrawActivity extends Activity {
 				}
 				parser.require(XmlPullParser.END_TAG, null, "svg");
 				Log.d(Xena.TAG, "DrawActivity::loadSvgFromFileData: Parsed "
-						+ DrawActivity.drawPaths.size() + " paths.");
+						+ DrawActivity.paths.size() + " paths.");
 			} catch (IOException e) {
 				Log.e(Xena.TAG,
 						"DrawActivity::loadSvgFromFileData: Failed to read from file: "

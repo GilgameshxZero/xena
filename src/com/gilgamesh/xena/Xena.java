@@ -1,5 +1,7 @@
 package com.gilgamesh.xena;
 
-public class Xena {
+import android.app.Application;
+
+public class Xena extends Application {
 	public static final String TAG = "XENA";
 }
