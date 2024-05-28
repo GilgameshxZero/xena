@@ -54,7 +54,7 @@ public class ScribbleActivity extends Activity {
 	private boolean isRawInputting = false;
 
 	private RawInputCallback rawInputCallback = new RawInputCallback() {
-		private final int DEBOUNCE_REDRAW_DELAY_MS = 1000;
+		private final int DEBOUNCE_REDRAW_DELAY_MS = 300;
 
 		private PointF previousErasePoint = new PointF();
 		private PointF previousTentativeDrawPoint = new PointF();
