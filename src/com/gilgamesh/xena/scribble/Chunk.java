@@ -7,7 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.PointF;
+import android.graphics.RectF;
 
 // Low-level store for a bitmap and operations onto the bitmap.
 // Chunk stores some path IDs which are in the chunk, as well as a bitmap rendering of all paths in the chunk. The chunk also stores the offset of its top-left corner in the viewport to enable rendering.
@@ -45,7 +45,12 @@ public class Chunk {
 	// Path IDs in the chunk.
 	private HashSet<Integer> pathIds = new HashSet<Integer>();
 
-	public Chunk(int width, int height, int offsetX, int offsetY) {
+	// Used to query paths by ID for rendering.
+	private PathManager pathManager;
+
+	public Chunk(PathManager pathManager, int width, int height, int offsetX,
+			int offsetY) {
+		this.pathManager = pathManager;
 		this.OFFSET_X = offsetX;
 		this.OFFSET_Y = offsetY;
 		this.bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
@@ -73,6 +78,14 @@ public class Chunk {
 		Path offsetPath = new Path(path.path);
 		offsetPath.offset(-this.OFFSET_X, -this.OFFSET_Y);
 		canvas.drawPath(offsetPath, Chunk.PAINT_ERASE);
+
+		// Paths whose bounding box intersects this one will be redrawn.
+		for (int pathId : this.pathIds) {
+			CompoundPath pathToRedraw = this.pathManager.getPath(pathId);
+			if (RectF.intersects(pathToRedraw.bounds, path.bounds)) {
+				this.addPath(pathToRedraw);
+			}
+		}
 	}
 
 	public Bitmap getBitmap() {
