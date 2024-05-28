@@ -179,7 +179,9 @@ logcat:
 		SurfaceFlinger:S SDM:S PermissionMonitor:S \
 		ReflectUtil:S lowmemorykiller:S SWEpdcManager:S \
 		BatteryStatsService:S SWEpdcManager:S PowerManager:S \
-		FirebaseMessaging:S KernelCpuSpeedReader:S
+		FirebaseMessaging:S KernelCpuSpeedReader:S \
+		CouchHolder:S CouchbaseLite/NETWORK:S \
+		CouchbaseLite/REPLICATOR:S
 
 # ------------------------------------------------------------------------------
 !else
