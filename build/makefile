@@ -33,7 +33,7 @@ BUILD_NAME = debug
 PROJECT_NAME = xena
 PACKAGE_PATH = com\gilgamesh\$(PROJECT_NAME)
 PACKAGE_NAME = com.gilgamesh.$(PROJECT_NAME)
-MAIN_CLASS = FilePickerActivity
+MAIN_CLASS = filesystem.FilePickerActivity
 ROOT_DIR = $(MAKEDIR)\..^\
 # All library files to be declared here.
 LIB_NAME_MARKER_VERSION = 1.6.47.2
@@ -71,7 +71,7 @@ $(ROOT_DIR)lib\onyxsdk-base-$(LIB_NAME_MARKER_VERSION).jar:
 	)
 
 # Create R.java.
-$(ROOT_DIR)src\$(PACKAGE_PATH)\R.java: $(ROOT_DIR)res\** $(ROOT_DIR)res\layout\* $(ROOT_DIR)res\values\*
+$(ROOT_DIR)src\$(PACKAGE_PATH)\R.java: $(ROOT_DIR)res\layout\* $(ROOT_DIR)res\values\* $(ROOT_DIR)res\drawable\*
 	@ECHO Creating $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java...
 	@IF NOT EXIST $(ROOT_DIR)obj MD $(ROOT_DIR)obj
 	@CALL $(BUILD_TOOLS_DIR)aapt.exe package -f -m \
@@ -88,10 +88,10 @@ $(ROOT_DIR)priv\$(PROJECT_NAME).debug.keystore:
 		-storepass android -keypass android \
 		-alias android_debug_key -keyalg RSA -keysize 2048
 
-# Compile target: .java to .class. Only sources directly under the main path are compiled, for now.
-$(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class: $(ROOT_DIR)lib\onyxsdk-base-$(LIB_NAME_MARKER_VERSION).jar $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java $(ROOT_DIR)src\$(PACKAGE_PATH)\*.java
+# Compile target: .java to .class.
+$(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class: $(ROOT_DIR)lib\onyxsdk-base-$(LIB_NAME_MARKER_VERSION).jar $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java $(ROOT_DIR)src\$(PACKAGE_PATH)\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\filesystem\*.java
 	@ECHO Compiling to .class...
-	@DIR /S /B $(ROOT_DIR)src\*.java > src.txt
+	@DIR /A-D /S /B $(ROOT_DIR)src\*.java > src.txt
 	@CALL "$(JAVA_HOME)\bin\javac" \
 		-source $(JAVA_SOURCE_VERSION) \
 		-target $(JAVA_SOURCE_VERSION) \
@@ -113,13 +113,15 @@ $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk: $(ROOT_DIR)obj\$(PACKAGE_PATH)
 		-S "$(ROOT_DIR)res" \
 		-I $(PLATFORM_DIR)/android.jar
 # Convert to DEX.
+	@DIR /A-D /S /B $(ROOT_DIR)obj\*.class > obj.txt
 	@CALL $(BUILD_TOOLS_DIR)d8.bat \
 		--lib "$(PLATFORM_DIR)android.jar" \
 		--min-api 34 \
 		--$(BUILD_NAME) \
 		--output $(ROOT_DIR)bin \
-		$(ROOT_DIR)obj\$(PACKAGE_PATH)\*.class \
+		@obj.txt \
 		$(ROOT_DIR)lib\*.jar
+	@DEL obj.txt
 # For some reason, aapt add only works for classes.dex in the current directory
 	@MOVE "$(ROOT_DIR)bin\classes.dex" . >NUL
 	@CALL $(BUILD_TOOLS_DIR)aapt.exe add \

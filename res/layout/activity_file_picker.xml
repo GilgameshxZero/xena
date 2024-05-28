@@ -1,19 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:id="@+id/activity_file_picker" android:orientation="vertical"
-	android:layout_width="match_parent" android:layout_height="match_parent">
-	<LinearLayout android:orientation="horizontal"
-		android:layout_width="match_parent" android:layout_height="wrap_content"
-		android:layout_weight="0">
-		<Button android:id="@+id/activity_file_picker_button_create_new"
-			android:layout_width="0dp"
-			android:layout_height="wrap_content" android:layout_weight="1"
-			android:onClick="onClick"
-			android:text="CREATE NEW SVG" />
-		<Button android:id="@+id/activity_file_picker_button_load_existing"
-			android:layout_width="0dp"
-			android:layout_height="wrap_content" android:layout_weight="1"
-			android:onClick="onClick"
-			android:text="LOAD EXISTING SVG" />
-	</LinearLayout>
+	android:layout_width="match_parent" android:layout_height="match_parent"
+	android:gravity="center"
+	android:background="@android:color/white">
+	<Button android:id="@+id/activity_file_picker_button_create_new"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_margin="8dp"
+		android:padding="16dp"
+		android:textSize="32dp"
+		android:background="@drawable/button"
+		android:onClick="onClick"
+		android:text="CREATE NEW SVG" />
+	<Button android:id="@+id/activity_file_picker_button_load_existing"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_margin="8dp"
+		android:padding="16dp"
+		android:textSize="32dp"
+		android:background="@drawable/button"
+		android:onClick="onClick"
+		android:text="LOAD EXISTING SVG" />
+	<Button android:id="@+id/activity_file_picker_button_load_pdf"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_margin="8dp"
+		android:padding="16dp"
+		android:textSize="32dp"
+		android:background="@drawable/button"
+		android:onClick="onClick"
+		android:text="LOAD PDF" />
 </LinearLayout>

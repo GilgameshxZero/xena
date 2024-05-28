@@ -3,6 +3,7 @@
 	<item name="activity_file_picker" type="id" />
 	<item name="activity_file_picker_button_create_new" type="id" />
 	<item name="activity_file_picker_button_load_existing" type="id" />
+	<item name="activity_file_picker_button_load_pdf" type="id" />
 
 	<item name="activity_draw" type="id" />
 	<item name="activity_draw_surface_view" type="id" />
