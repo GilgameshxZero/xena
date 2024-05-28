@@ -11,7 +11,9 @@ import com.onyx.android.sdk.pen.TouchHelper;
 
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.ArrayList;
-import java.util.ListIterator;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -22,6 +24,7 @@ import android.graphics.Color;
 import android.graphics.CornerPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.PointF;
@@ -38,7 +41,7 @@ public class ScribbleActivity extends Activity {
 	private final float DRAW_MOVE_EPSILON = 3;
 
 	private SvgFileScribe svgFileScribe = new SvgFileScribe();
-	private PathDrawer pathDrawer = new PathDrawer();
+	private PathManager pathManager;
 
 	private Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 	private SurfaceView surfaceView;
@@ -55,6 +58,7 @@ public class ScribbleActivity extends Activity {
 		private final int DEBOUNCE_REDRAW_DELAY_MS = 1000;
 
 		private PointF previousErasePoint = new PointF();
+		private CompoundPath currentPath;
 
 		// Cancellable dummy.
 		private TimerTask debounceRedrawTask = new TimerTask() {
@@ -81,31 +85,31 @@ public class ScribbleActivity extends Activity {
 		public void onBeginRawDrawing(boolean b, TouchPoint touchPoint) {
 			isRawInputting = true;
 			this.debounceRedrawTask.cancel();
-			pathDrawer.paths
-					.add(new CompoundPath(touchPoint.x - pathDrawer.viewportOffset.x,
-							touchPoint.y - pathDrawer.viewportOffset.y));
+			this.currentPath = pathManager
+					.addPath(new PointF(touchPoint.x - pathManager.viewportOffset.x,
+							touchPoint.y - pathManager.viewportOffset.y))
+					.getValue();
 		}
 
 		@Override
 		public void onEndRawDrawing(boolean b, TouchPoint touchPoint) {
-			drawPathToCanvas(pathDrawer.paths.getLast().path);
+			drawPathToCanvas(this.currentPath);
 			this.debounceRedraw(DEBOUNCE_REDRAW_DELAY_MS);
 			svgFileScribe.debounceSave(ScribbleActivity.this, uri,
-					pathDrawer.paths, pathDrawer.viewportOffset,
-					STROKE_WIDTH);
+					pathManager, STROKE_WIDTH);
 		}
 
 		@Override
 		public void onRawDrawingTouchPointMoveReceived(TouchPoint touchPoint) {
-			PointF lastPoint = pathDrawer.paths.getLast().points
-					.get(pathDrawer.paths.getLast().points.size() - 1);
-			PointF newPoint = new PointF(touchPoint.x - pathDrawer.viewportOffset.x,
-					touchPoint.y - pathDrawer.viewportOffset.y);
-			if (pathDrawer.paths.getLast().points.size() > 1
+			PointF lastPoint = this.currentPath.points
+					.get(this.currentPath.points.size() - 1);
+			PointF newPoint = new PointF(touchPoint.x - pathManager.viewportOffset.x,
+					touchPoint.y - pathManager.viewportOffset.y);
+			if (this.currentPath.points.size() > 1
 					&& Geometry.distance(lastPoint, newPoint) < DRAW_MOVE_EPSILON) {
 				return;
 			}
-			pathDrawer.paths.getLast().addPoint(newPoint);
+			this.currentPath.addPoint(newPoint);
 		}
 
 		@Override
@@ -119,8 +123,8 @@ public class ScribbleActivity extends Activity {
 					"ScribbleActivity::onBeginRawErasing.");
 			isRawInputting = true;
 			this.debounceRedrawTask.cancel();
-			this.previousErasePoint.set(touchPoint.x - pathDrawer.viewportOffset.x,
-					touchPoint.y - pathDrawer.viewportOffset.y);
+			this.previousErasePoint.set(touchPoint.x - pathManager.viewportOffset.x,
+					touchPoint.y - pathManager.viewportOffset.y);
 		}
 
 		@Override
@@ -137,24 +141,24 @@ public class ScribbleActivity extends Activity {
 
 		@Override
 		public void onRawErasingTouchPointMoveReceived(TouchPoint touchPoint) {
-			int initialSize = pathDrawer.paths.size();
+			int initialSize = pathManager.getPathsCount();
 			PointF currentErasePoint = new PointF(
-					touchPoint.x - pathDrawer.viewportOffset.x,
-					touchPoint.y - pathDrawer.viewportOffset.y);
-			ListIterator<CompoundPath> iterator = pathDrawer.paths
-					.listIterator();
+					touchPoint.x - pathManager.viewportOffset.x,
+					touchPoint.y - pathManager.viewportOffset.y);
+			Iterator<Map.Entry<Integer, CompoundPath>> iterator = pathManager
+					.getPathsIterator();
 			while (iterator.hasNext()) {
-				if (iterator.next().isIntersectingSegment(this.previousErasePoint,
+				if (iterator.next().getValue().isIntersectingSegment(
+						this.previousErasePoint,
 						currentErasePoint)) {
 					iterator.remove();
 				}
 			}
-			if (initialSize != pathDrawer.paths.size()) {
-				drawAllPathsToCanvas();
+			if (initialSize != pathManager.getPathsCount()) {
+				drawLoadedPathsToCanvas();
 				drawBitmapToSurface();
 				svgFileScribe.debounceSave(ScribbleActivity.this, uri,
-						pathDrawer.paths, pathDrawer.viewportOffset,
-						STROKE_WIDTH);
+						pathManager, STROKE_WIDTH);
 			}
 			this.previousErasePoint.set(currentErasePoint);
 		}
@@ -188,19 +192,19 @@ public class ScribbleActivity extends Activity {
 					previousPoint.y = touchPoint.y;
 					break;
 				case MotionEvent.ACTION_MOVE:
-					pathDrawer.viewportOffset.x += touchPoint.x - previousPoint.x;
-					pathDrawer.viewportOffset.y += touchPoint.y - previousPoint.y;
+					pathManager.viewportOffset.x += touchPoint.x - previousPoint.x;
+					pathManager.viewportOffset.y += touchPoint.y - previousPoint.y;
 					previousPoint.x = touchPoint.x;
 					previousPoint.y = touchPoint.y;
-					drawAllPathsToCanvas();
+					drawLoadedPathsToCanvas();
 					drawBitmapToSurface();
 					// No need to reset raw input capture here, for some reason.
 					break;
 				case MotionEvent.ACTION_UP:
 					Log.d(XenaApplication.TAG,
-							"ScribbleActivity::surfaceViewOnTouchListener: pathDrawer.viewportOffset = ("
-									+ pathDrawer.viewportOffset.x + ", "
-									+ pathDrawer.viewportOffset.y + ").");
+							"ScribbleActivity::surfaceViewOnTouchListener: pathManager.viewportOffset = ("
+									+ pathManager.viewportOffset.x + ", "
+									+ pathManager.viewportOffset.y + ").");
 					break;
 			}
 			return true;
@@ -211,25 +215,27 @@ public class ScribbleActivity extends Activity {
 	private SurfaceHolder.Callback surfaceHolderCallback = new SurfaceHolder.Callback() {
 		@Override
 		public void surfaceCreated(SurfaceHolder holder) {
-			surfaceLock.lock();
-			surfaceAvailable = true;
-			surfaceLock.unlock();
 		}
 
 		@Override
 		public void surfaceChanged(SurfaceHolder holder, int format, int width,
 				int height) {
+			Log.d(XenaApplication.TAG,
+					"ScribbleActivity::surfaceHolderCallback: ("
+							+ width + ", " + height + ").");
+
 			surfaceLock.lock();
 			touchHelper.closeRawDrawing();
 
+			surfaceAvailable = true;
+			pathManager = new PathManager(new Point(width, height));
+			SvgFileScribe.loadPathsFromSvg(ScribbleActivity.this, uri, pathManager);
+
 			bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 			canvas = new Canvas(bitmap);
-			drawAllPathsToCanvas();
+			drawLoadedPathsToCanvas();
 			drawBitmapToSurface();
 
-			Log.d(XenaApplication.TAG,
-					"ScribbleActivity::surfaceHolderCallback: width = "
-							+ width + ", height = " + height + ".");
 			touchHelper.setLimitRect(new Rect(0, 0, width, height), new ArrayList<>())
 					.openRawDrawing().setRawDrawingEnabled(true);
 			surfaceLock.unlock();
@@ -248,9 +254,6 @@ public class ScribbleActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		this.setContentView(R.layout.activity_draw);
 		this.uri = getIntent().getData();
-		this.pathDrawer.paths = SvgFileScribe.loadPathsFromSvg(
-				ScribbleActivity.this,
-				uri, this.pathDrawer.viewportOffset);
 
 		this.paint.setColor(Color.BLACK);
 		this.paint.setStrokeWidth(STROKE_WIDTH);
@@ -262,6 +265,7 @@ public class ScribbleActivity extends Activity {
 		this.surfaceView = findViewById(R.id.activity_draw_surface_view);
 		this.surfaceView.getHolder().addCallback(surfaceHolderCallback);
 		this.surfaceView.setOnTouchListener(surfaceViewOnTouchListener);
+		this.surfaceAvailable = false;
 
 		this.touchHelper = TouchHelper.create(surfaceView, rawInputCallback)
 				.setStrokeWidth(this.STROKE_WIDTH)
@@ -279,7 +283,7 @@ public class ScribbleActivity extends Activity {
 	protected void onPause() {
 		// onPause will be called when "back" is pressed as well.
 		this.svgFileScribe.debounceSave(ScribbleActivity.this, uri,
-				this.pathDrawer.paths, this.pathDrawer.viewportOffset,
+				this.pathManager,
 				STROKE_WIDTH, 0);
 		this.touchHelper.setRawDrawingEnabled(false);
 		super.onPause();
@@ -291,17 +295,19 @@ public class ScribbleActivity extends Activity {
 		super.onDestroy();
 	}
 
-	private void drawPathToCanvas(Path path) {
-		Path offsetPath = new Path(path);
-		offsetPath.offset(this.pathDrawer.viewportOffset.x,
-				this.pathDrawer.viewportOffset.y);
+	private void drawPathToCanvas(CompoundPath path) {
+		Path offsetPath = new Path(path.path);
+		offsetPath.offset(this.pathManager.viewportOffset.x,
+				this.pathManager.viewportOffset.y);
 		canvas.drawPath(offsetPath, paint);
 	}
 
-	private void drawAllPathsToCanvas() {
+	// Only draw paths in a 3v3 chunk area around the viewport.
+	private void drawLoadedPathsToCanvas() {
 		canvas.drawColor(Color.WHITE);
-		for (CompoundPath path : this.pathDrawer.paths) {
-			drawPathToCanvas(path.path);
+		HashSet<Integer> pathIds = this.pathManager.getChunkPathIds();
+		for (Integer pathId : pathIds) {
+			drawPathToCanvas(this.pathManager.getPath(pathId));
 		}
 	}
 

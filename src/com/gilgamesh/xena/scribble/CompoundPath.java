@@ -13,6 +13,12 @@ public class CompoundPath {
 	static public final float SHORT_DISTANCE_EPS = 4;
 	static public final float BOUNDS_AREA_EPS = 16;
 
+	static public abstract class PointAddedCallback {
+		public abstract void onPointAdded(PointF point);
+	}
+
+	private PointAddedCallback callback;
+
 	// Ground truth for paths for loading/saving SVGs.
 	public ArrayList<PointF> points = new ArrayList<PointF>();
 	// Used to draw paths.
@@ -20,14 +26,12 @@ public class CompoundPath {
 	// Bounding box of path.
 	public RectF bounds = new RectF();
 
-	public CompoundPath(PointF point) {
+	public CompoundPath(PointF point, PointAddedCallback callback) {
 		this.points.add(new PointF(point));
 		this.path.moveTo(point.x, point.y);
 		this.bounds.set(point.x, point.y, point.x, point.y);
-	}
-
-	public CompoundPath(float x, float y) {
-		this(new PointF(x, y));
+		this.callback = callback;
+		this.callback.onPointAdded(point);
 	}
 
 	public boolean isIntersectingSegment(PointF start, PointF end) {
@@ -67,5 +71,6 @@ public class CompoundPath {
 		this.points.add(new PointF(point));
 		this.path.lineTo(point.x, point.y);
 		this.bounds.union(point.x, point.y);
+		this.callback.onPointAdded(point);
 	}
 }
