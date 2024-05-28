@@ -1,19 +1,19 @@
 package com.gilgamesh.xena.filesystem;
 
-import com.gilgamesh.xena.DrawActivity;
+import com.gilgamesh.xena.scribble.ScribbleActivity;
 import com.gilgamesh.xena.R;
 import com.gilgamesh.xena.XenaApplication;
 
 import android.app.Activity;
-import android.os.Bundle;
 import android.content.Intent;
 import android.net.Uri;
-import android.view.View;
+import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
 public class FilePickerActivity extends Activity
 		implements View.OnClickListener {
-	private static enum INTENT_REQUEST {
+	static private enum INTENT_REQUEST {
 		CREATE_NEW,
 		LOAD_EXISTING
 	}
@@ -55,7 +55,7 @@ public class FilePickerActivity extends Activity
 		Log.d(XenaApplication.TAG,
 				"FilePickerActivity::onActivityResult: " + uri.toString());
 		this.startActivity(
-				new Intent(this, DrawActivity.class).setAction(Intent.ACTION_RUN)
+				new Intent(this, ScribbleActivity.class).setAction(Intent.ACTION_RUN)
 						.addCategory(Intent.CATEGORY_DEFAULT).setData(uri));
 	}
 }

@@ -89,7 +89,7 @@ $(ROOT_DIR)priv\$(PROJECT_NAME).debug.keystore:
 		-alias android_debug_key -keyalg RSA -keysize 2048
 
 # Compile target: .java to .class.
-$(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class: $(ROOT_DIR)lib\onyxsdk-base-$(LIB_NAME_MARKER_VERSION).jar $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java $(ROOT_DIR)src\$(PACKAGE_PATH)\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\filesystem\*.java
+$(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class: $(ROOT_DIR)lib\onyxsdk-base-$(LIB_NAME_MARKER_VERSION).jar $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java $(ROOT_DIR)src\$(PACKAGE_PATH)\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\filesystem\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\scribble\*.java
 	@ECHO Compiling to .class...
 	@DIR /A-D /S /B $(ROOT_DIR)src\*.java > src.txt
 	@CALL "$(JAVA_HOME)\bin\javac" \

@@ -2,8 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	package="com.gilgamesh.xena">
 	<uses-sdk android:targetSdkVersion="34" />
-	<application android:label="Xena">
-		<activity android:name=".filesystem.FilePickerActivity" android:exported="true"
+	<application android:label="Xena" android:name=".XenaApplication">
+		<activity android:name=".filesystem.FilePickerActivity"
+			android:exported="true"
 			android:launchMode="singleTop"
 			android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
 			<intent-filter>
@@ -11,7 +12,7 @@
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 		</activity>
-		<activity android:name=".DrawActivity" android:exported="true"
+		<activity android:name=".scribble.ScribbleActivity" android:exported="true"
 			android:launchMode="singleTop"
 			android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
 			<intent-filter>
