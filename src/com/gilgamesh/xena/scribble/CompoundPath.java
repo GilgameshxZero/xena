@@ -13,11 +13,11 @@ public class CompoundPath {
 	static public final float SHORT_DISTANCE_EPS = 4;
 	static public final float BOUNDS_AREA_EPS = 16;
 
-	static public abstract class PointAddedCallback {
+	static public abstract class Callback {
 		public abstract void onPointAdded(PointF point);
 	}
 
-	private PointAddedCallback callback;
+	private Callback callback;
 
 	// Ground truth for paths for loading/saving SVGs.
 	public ArrayList<PointF> points = new ArrayList<PointF>();
@@ -26,7 +26,7 @@ public class CompoundPath {
 	// Bounding box of path.
 	public RectF bounds = new RectF();
 
-	public CompoundPath(PointF point, PointAddedCallback callback) {
+	public CompoundPath(PointF point, Callback callback) {
 		this.points.add(new PointF(point));
 		this.path.moveTo(point.x, point.y);
 		this.bounds.set(point.x, point.y, point.x, point.y);

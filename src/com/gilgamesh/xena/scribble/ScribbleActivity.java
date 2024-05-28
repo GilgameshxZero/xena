@@ -86,13 +86,15 @@ public class ScribbleActivity extends Activity {
 			isRawInputting = true;
 			this.debounceRedrawTask.cancel();
 			this.currentPath = pathManager
-					.addPath(new PointF(touchPoint.x - pathManager.viewportOffset.x,
-							touchPoint.y - pathManager.viewportOffset.y))
+					.addPath(new PointF(touchPoint.x - pathManager.getViewportOffset().x,
+							touchPoint.y - pathManager.getViewportOffset().y))
 					.getValue();
 		}
 
 		@Override
 		public void onEndRawDrawing(boolean b, TouchPoint touchPoint) {
+			// Draw ONLY the new path onto the canvas. It is automatically "loaded" by
+			// the path manager.
 			drawPathToCanvas(this.currentPath);
 			this.debounceRedraw(DEBOUNCE_REDRAW_DELAY_MS);
 			svgFileScribe.debounceSave(ScribbleActivity.this, uri,
@@ -103,8 +105,9 @@ public class ScribbleActivity extends Activity {
 		public void onRawDrawingTouchPointMoveReceived(TouchPoint touchPoint) {
 			PointF lastPoint = this.currentPath.points
 					.get(this.currentPath.points.size() - 1);
-			PointF newPoint = new PointF(touchPoint.x - pathManager.viewportOffset.x,
-					touchPoint.y - pathManager.viewportOffset.y);
+			PointF newPoint = new PointF(
+					touchPoint.x - pathManager.getViewportOffset().x,
+					touchPoint.y - pathManager.getViewportOffset().y);
 			if (this.currentPath.points.size() > 1
 					&& Geometry.distance(lastPoint, newPoint) < DRAW_MOVE_EPSILON) {
 				return;
@@ -119,12 +122,11 @@ public class ScribbleActivity extends Activity {
 
 		@Override
 		public void onBeginRawErasing(boolean b, TouchPoint touchPoint) {
-			Log.d(XenaApplication.TAG,
-					"ScribbleActivity::onBeginRawErasing.");
 			isRawInputting = true;
 			this.debounceRedrawTask.cancel();
-			this.previousErasePoint.set(touchPoint.x - pathManager.viewportOffset.x,
-					touchPoint.y - pathManager.viewportOffset.y);
+			this.previousErasePoint.set(
+					touchPoint.x - pathManager.getViewportOffset().x,
+					touchPoint.y - pathManager.getViewportOffset().y);
 		}
 
 		@Override
@@ -143,14 +145,16 @@ public class ScribbleActivity extends Activity {
 		public void onRawErasingTouchPointMoveReceived(TouchPoint touchPoint) {
 			int initialSize = pathManager.getPathsCount();
 			PointF currentErasePoint = new PointF(
-					touchPoint.x - pathManager.viewportOffset.x,
-					touchPoint.y - pathManager.viewportOffset.y);
+					touchPoint.x - pathManager.getViewportOffset().x,
+					touchPoint.y - pathManager.getViewportOffset().y);
 			Iterator<Map.Entry<Integer, CompoundPath>> iterator = pathManager
 					.getPathsIterator();
 			while (iterator.hasNext()) {
-				if (iterator.next().getValue().isIntersectingSegment(
+				Map.Entry<Integer, CompoundPath> entry = iterator.next();
+				if (entry.getValue().isIntersectingSegment(
 						this.previousErasePoint,
 						currentErasePoint)) {
+					pathManager.prepareEntryForRemove(entry);
 					iterator.remove();
 				}
 			}
@@ -192,8 +196,12 @@ public class ScribbleActivity extends Activity {
 					previousPoint.y = touchPoint.y;
 					break;
 				case MotionEvent.ACTION_MOVE:
-					pathManager.viewportOffset.x += touchPoint.x - previousPoint.x;
-					pathManager.viewportOffset.y += touchPoint.y - previousPoint.y;
+					pathManager
+							.setViewportOffset(new PointF(
+									pathManager.getViewportOffset().x + touchPoint.x
+											- previousPoint.x,
+									pathManager.getViewportOffset().y + touchPoint.y
+											- previousPoint.y));
 					previousPoint.x = touchPoint.x;
 					previousPoint.y = touchPoint.y;
 					drawLoadedPathsToCanvas();
@@ -202,9 +210,9 @@ public class ScribbleActivity extends Activity {
 					break;
 				case MotionEvent.ACTION_UP:
 					Log.d(XenaApplication.TAG,
-							"ScribbleActivity::surfaceViewOnTouchListener: pathManager.viewportOffset = ("
-									+ pathManager.viewportOffset.x + ", "
-									+ pathManager.viewportOffset.y + ").");
+							"ScribbleActivity::surfaceViewOnTouchListener: pathManager.getViewportOffset() = ("
+									+ pathManager.getViewportOffset().x + ", "
+									+ pathManager.getViewportOffset().y + ").");
 					break;
 			}
 			return true;
@@ -297,15 +305,15 @@ public class ScribbleActivity extends Activity {
 
 	private void drawPathToCanvas(CompoundPath path) {
 		Path offsetPath = new Path(path.path);
-		offsetPath.offset(this.pathManager.viewportOffset.x,
-				this.pathManager.viewportOffset.y);
+		offsetPath.offset(this.pathManager.getViewportOffset().x,
+				this.pathManager.getViewportOffset().y);
 		canvas.drawPath(offsetPath, paint);
 	}
 
 	// Only draw paths in a 3v3 chunk area around the viewport.
 	private void drawLoadedPathsToCanvas() {
 		canvas.drawColor(Color.WHITE);
-		HashSet<Integer> pathIds = this.pathManager.getChunkPathIds();
+		HashSet<Integer> pathIds = this.pathManager.getLoadedPathIds();
 		for (Integer pathId : pathIds) {
 			drawPathToCanvas(this.pathManager.getPath(pathId));
 		}
