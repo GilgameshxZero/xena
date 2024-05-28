@@ -45,8 +45,8 @@ public class SvgFileScribe {
 						// Viewport is not scaled.
 						String[] viewport = parser.getAttributeValue(null, "data-xena")
 								.split(" ");
-						pathManager.viewportOffset.x = Integer.parseInt(viewport[0]);
-						pathManager.viewportOffset.y = Integer.parseInt(viewport[1]);
+						pathManager.setViewportOffset(new PointF(
+								Integer.parseInt(viewport[0]), Integer.parseInt(viewport[1])));
 					}
 
 					if (!parser.getName().equals("path")) {
@@ -214,9 +214,9 @@ public class SvgFileScribe {
 								+ Math
 										.round(STROKE_WIDTH * SvgFileScribe.COORDINATE_SCALE_FACTOR)
 								+ "\" stroke-linecap=\"round\" stroke-linejoin=\"round\" fill=\"none\" data-xena=\""
-								+ Math.round(pathManager.viewportOffset.x)
+								+ Math.round(pathManager.getViewportOffset().x)
 								+ ' '
-								+ Math.round(pathManager.viewportOffset.y)
+								+ Math.round(pathManager.getViewportOffset().y)
 								+ "\">"
 								+ "<style>@media(prefers-color-scheme:dark){svg{background-color:black;stroke:white;}}</style>\n");
 				outputStreamWriter.write(stringBuilder.toString());
