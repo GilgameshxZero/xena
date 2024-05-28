@@ -1,4 +1,8 @@
-package com.gilgamesh.xena;
+package com.gilgamesh.xena.filesystem;
+
+import com.gilgamesh.xena.DrawActivity;
+import com.gilgamesh.xena.R;
+import com.gilgamesh.xena.XenaApplication;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -35,6 +39,10 @@ public class FilePickerActivity extends Activity
 								.addCategory(Intent.CATEGORY_OPENABLE).setType("image/svg+xml"),
 						INTENT_REQUEST.LOAD_EXISTING.ordinal());
 				break;
+			case R.id.activity_file_picker_button_load_pdf:
+				Log.e(XenaApplication.TAG,
+						"FilePickerActivity::onClick: PDF not implemented.");
+				break;
 		}
 	}
 
@@ -44,7 +52,8 @@ public class FilePickerActivity extends Activity
 			return;
 		}
 		Uri uri = data.getData();
-		Log.d(Xena.TAG, "FilePickerActivity.onActivityResult: " + uri.toString());
+		Log.d(XenaApplication.TAG,
+				"FilePickerActivity::onActivityResult: " + uri.toString());
 		this.startActivity(
 				new Intent(this, DrawActivity.class).setAction(Intent.ACTION_RUN)
 						.addCategory(Intent.CATEGORY_DEFAULT).setData(uri));
