@@ -5,6 +5,6 @@
 	<item name="activity_file_picker_button_load_existing" type="id" />
 	<item name="activity_file_picker_button_load_pdf" type="id" />
 
-	<item name="activity_draw" type="id" />
-	<item name="activity_draw_surface_view" type="id" />
+	<item name="activity_scribble" type="id" />
+	<item name="activity_scribble_image_view" type="id" />
 </resources>

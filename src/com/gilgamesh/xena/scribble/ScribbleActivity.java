@@ -9,13 +9,13 @@ import com.onyx.android.sdk.pen.data.TouchPointList;
 import com.onyx.android.sdk.pen.RawInputCallback;
 import com.onyx.android.sdk.pen.TouchHelper;
 
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -27,36 +27,37 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
+import android.widget.ImageView;
 
 public class ScribbleActivity extends Activity {
 	private final float DRAW_MOVE_EPSILON = 3;
-	private final int STROKE_WIDTH_TENTATIVE = Chunk.STROKE_WIDTH / 4;
 	static public final Paint PAINT;
 	static {
 		PAINT = new Paint();
+		PAINT.setAntiAlias(true);
 		PAINT.setColor(Color.BLACK);
-		PAINT.setStyle(Paint.Style.FILL);
+		PAINT.setStyle(Paint.Style.STROKE);
+		PAINT.setStrokeJoin(Paint.Join.ROUND);
+		PAINT.setStrokeCap(Paint.Cap.ROUND);
+		PAINT.setStrokeWidth(Chunk.STROKE_WIDTH);
 	}
 
 	private SvgFileScribe svgFileScribe = new SvgFileScribe();
 	private PathManager pathManager;
 
-	private SurfaceView surfaceView;
-	private boolean surfaceAvailable = false;
-	private ReentrantLock surfaceLock = new ReentrantLock();
+	private ImageView imageView;
+	private Bitmap imageViewBitmap;
+	private Canvas imageViewCanvas;
 	private TouchHelper touchHelper;
 	private Uri uri;
 	private boolean isRawInputting = false;
 
 	private RawInputCallback rawInputCallback = new RawInputCallback() {
-		static Rect refreshRect = new Rect();
-
 		private final int DEBOUNCE_REDRAW_DELAY_MS = 1000;
 
 		private PointF previousErasePoint = new PointF();
+		private PointF previousTentativeDrawPoint = new PointF();
 		private CompoundPath currentPath;
 
 		// Cancellable dummy.
@@ -71,9 +72,9 @@ public class ScribbleActivity extends Activity {
 			this.debounceRedrawTask = new TimerTask() {
 				@Override
 				public void run() {
-					Log.d(XenaApplication.TAG, "ScribbleActivity::debounceRedrawTask");
+					Log.v(XenaApplication.TAG, "ScribbleActivity::debounceRedrawTask");
 					isRawInputting = false;
-					drawBitmapToSurface();
+					drawBitmapToView(true);
 					touchHelper.setRawDrawingEnabled(false).setRawDrawingEnabled(true);
 				}
 			};
@@ -84,9 +85,10 @@ public class ScribbleActivity extends Activity {
 		public void onBeginRawDrawing(boolean b, TouchPoint touchPoint) {
 			isRawInputting = true;
 			this.debounceRedrawTask.cancel();
-			this.currentPath = pathManager
-					.addPath(new PointF(touchPoint.x - pathManager.getViewportOffset().x,
-							touchPoint.y - pathManager.getViewportOffset().y))
+			this.previousTentativeDrawPoint.set(touchPoint.x, touchPoint.y);
+			this.currentPath = pathManager.addPath(new PointF(
+					touchPoint.x - pathManager.getViewportOffset().x,
+					touchPoint.y - pathManager.getViewportOffset().y))
 					.getValue();
 		}
 
@@ -111,26 +113,19 @@ public class ScribbleActivity extends Activity {
 					&& Geometry.distance(lastPoint, newPoint) < DRAW_MOVE_EPSILON) {
 				return;
 			}
-			// // Temporary line to be traced over later.
-			// refreshRect.set(
-			// 		(int) Math.min(Math.floor(touchPoint.x),
-			// 				Math.floor(lastPoint.x + pathManager.getViewportOffset().x))
-			// 				- STROKE_WIDTH_TENTATIVE,
-			// 		(int) Math.min(Math.floor(touchPoint.y),
-			// 				Math.ceil(lastPoint.y + pathManager.getViewportOffset().y))
-			// 				- STROKE_WIDTH_TENTATIVE,
-			// 		(int) Math.max(Math.ceil(touchPoint.x),
-			// 				Math.ceil(lastPoint.x + pathManager.getViewportOffset().x))
-			// 				+ STROKE_WIDTH_TENTATIVE,
-			// 		(int) Math.max(Math.ceil(touchPoint.y),
-			// 				Math.ceil(lastPoint.y + pathManager.getViewportOffset().y))
-			// 				+ STROKE_WIDTH_TENTATIVE);
-			// Log.d(XenaApplication.TAG,
-			// 		"ScribbleActivity::onRawDrawingTouchPointMoveReceived: "
-			// 				+ refreshRect.toString());
-			// Canvas lockCanvas = surfaceView.getHolder().lockCanvas(refreshRect);
-			// lockCanvas.drawRect(refreshRect, ScribbleActivity.PAINT);
-			// surfaceView.getHolder().unlockCanvasAndPost(lockCanvas);
+			if (imageView.isDirty()) {
+				Log.v(XenaApplication.TAG,
+						"ScribbleActivity::onRawDrawingTouchPointMoveReceived: ImageView is dirty, skipping draw.");
+			} else {
+				imageViewCanvas.drawLine(
+						previousTentativeDrawPoint.x,
+						previousTentativeDrawPoint.y,
+						touchPoint.x,
+						touchPoint.y,
+						PAINT);
+				imageView.postInvalidate();
+				previousTentativeDrawPoint.set(touchPoint.x, touchPoint.y);
+			}
 
 			this.currentPath.addPoint(newPoint);
 		}
@@ -181,7 +176,7 @@ public class ScribbleActivity extends Activity {
 			}
 
 			if (initialSize != pathManager.getPathsCount()) {
-				drawBitmapToSurface();
+				drawBitmapToView(true);
 				svgFileScribe.debounceSave(ScribbleActivity.this, uri,
 						pathManager);
 			}
@@ -202,7 +197,7 @@ public class ScribbleActivity extends Activity {
 		}
 	};
 
-	private View.OnTouchListener surfaceViewOnTouchListener = new View.OnTouchListener() {
+	private View.OnTouchListener imageViewOnTouchListener = new View.OnTouchListener() {
 		private PointF previousPoint = new PointF(0, 0);
 
 		@Override
@@ -224,64 +219,49 @@ public class ScribbleActivity extends Activity {
 									- previousPoint.y));
 					previousPoint.x = touchPoint.x;
 					previousPoint.y = touchPoint.y;
-					drawBitmapToSurface();
+					drawBitmapToView(false);
 					// No need to reset raw input capture here, for some reason.
 					break;
 				case MotionEvent.ACTION_UP:
+					drawBitmapToView(true);
 					break;
 			}
 			return true;
 		}
 	};
 
-	// openRawDrawing must not be called twice in succession.
-	private SurfaceHolder.Callback surfaceHolderCallback = new SurfaceHolder.Callback() {
-		@Override
-		public void surfaceCreated(SurfaceHolder holder) {
-		}
-
-		@Override
-		public void surfaceChanged(SurfaceHolder holder, int format, int width,
-				int height) {
-			Log.d(XenaApplication.TAG, "ScribbleActivity::surfaceHolderCallback: ("
-					+ width + ", " + height + ").");
-
-			surfaceLock.lock();
-			touchHelper.closeRawDrawing();
-
-			surfaceAvailable = true;
-			pathManager = new PathManager(new Point(width, height));
-			SvgFileScribe.loadPathsFromSvg(ScribbleActivity.this, uri, pathManager);
-			drawBitmapToSurface();
-
-			touchHelper.setLimitRect(new Rect(0, 0, width, height), new ArrayList<>())
-					.openRawDrawing().setRawDrawingEnabled(true);
-			surfaceLock.unlock();
-		}
-
-		@Override
-		public void surfaceDestroyed(SurfaceHolder holder) {
-			surfaceLock.lock();
-			surfaceAvailable = false;
-			surfaceLock.unlock();
-		}
-	};
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		this.setContentView(R.layout.activity_draw);
+		this.setContentView(R.layout.activity_scribble);
 		this.uri = getIntent().getData();
 
-		this.surfaceView = findViewById(R.id.activity_draw_surface_view);
-		this.surfaceView.getHolder().addCallback(surfaceHolderCallback);
-		this.surfaceView.setOnTouchListener(surfaceViewOnTouchListener);
-		this.surfaceAvailable = false;
+		this.imageView = findViewById(R.id.activity_scribble_image_view);
+		this.imageView.post(new Runnable() {
+			@Override
+			public void run() {
+				pathManager = new PathManager(
+						new Point(imageView.getWidth(), imageView.getHeight()));
+				SvgFileScribe.loadPathsFromSvg(ScribbleActivity.this, uri, pathManager);
+				imageViewBitmap = Bitmap.createBitmap(imageView.getWidth(),
+						imageView.getHeight(),
+						Bitmap.Config.ARGB_8888);
+				imageViewCanvas = new Canvas(imageViewBitmap);
+				imageView.setImageBitmap(imageViewBitmap);
+				drawBitmapToView(true);
 
-		this.touchHelper = TouchHelper.create(surfaceView, rawInputCallback)
+				touchHelper
+						.setLimitRect(
+								new Rect(0, 0, imageView.getWidth(), imageView.getHeight()),
+								new ArrayList<>())
+						.openRawDrawing().setRawDrawingEnabled(true);
+			}
+		});
+		this.imageView.setOnTouchListener(imageViewOnTouchListener);
+
+		this.touchHelper = TouchHelper.create(imageView, rawInputCallback)
 				.setStrokeWidth(Chunk.STROKE_WIDTH)
-				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL).openRawDrawing()
-				.setRawDrawingEnabled(true);
+				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL);
 	}
 
 	@Override
@@ -305,18 +285,17 @@ public class ScribbleActivity extends Activity {
 		super.onDestroy();
 	}
 
-	private void drawBitmapToSurface() {
-		this.surfaceLock.lock();
-		if (this.surfaceAvailable) {
-			// Do not use hardware canvas here so that we can lock regions later on.
-			Canvas lockCanvas = this.surfaceView.getHolder().lockCanvas();
-			for (Chunk chunk : pathManager.getVisibleChunks()) {
-				lockCanvas.drawBitmap(chunk.getBitmap(),
-						chunk.OFFSET_X + pathManager.getViewportOffset().x,
-						chunk.OFFSET_Y + pathManager.getViewportOffset().y, null);
-			}
-			this.surfaceView.getHolder().unlockCanvasAndPost(lockCanvas);
+	private void drawBitmapToView(boolean force) {
+		if (!force && imageView.isDirty()) {
+			Log.v(XenaApplication.TAG,
+					"ScribbleActivity::drawBitmapToView: ImageView is dirty, skipping draw.");
+			return;
 		}
-		this.surfaceLock.unlock();
+		for (Chunk chunk : pathManager.getVisibleChunks()) {
+			this.imageViewCanvas.drawBitmap(chunk.getBitmap(),
+					chunk.OFFSET_X + pathManager.getViewportOffset().x,
+					chunk.OFFSET_Y + pathManager.getViewportOffset().y, null);
+		}
+		this.imageView.postInvalidate();
 	}
 }

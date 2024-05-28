@@ -14,6 +14,8 @@ import android.util.Log;
 
 // Path state and utility functions.
 public class PathManager {
+	private final PathManager that = this;
+
 	// Size of one chunk is one viewport, always.
 	private final Point CHUNK_SIZE;
 
@@ -38,7 +40,7 @@ public class PathManager {
 		CompoundPath path = new CompoundPath(point,
 				new CompoundPath.Callback() {
 					@Override
-					public void onPointAdded(CompoundPath that, PointF previousPoint,
+					public void onPointAdded(CompoundPath path, PointF previousPoint,
 							PointF currentPoint) {
 						// Update/create new chunks and render the new path segment onto the
 						// chunk. Use containingChunks to remember that this path spans this
@@ -48,23 +50,23 @@ public class PathManager {
 								(int) Math.floor(currentPoint.y / CHUNK_SIZE.y));
 						Chunk chunk = chunks.get(chunkCoordinate);
 						if (chunk != null) {
-							if (!chunk.getPathIds().contains(that.ID)) {
-								chunk.addPath(that.ID);
-								that.containingChunks.add(chunkCoordinate);
+							if (!chunk.getPathIds().contains(path.ID)) {
+								chunk.addPath(path.ID);
+								path.containingChunks.add(chunkCoordinate);
 								Log.v(XenaApplication.TAG,
-										"Added path " + that.ID + " to chunk "
+										"Added path " + path.ID + " to chunk "
 												+ chunkCoordinate.x + ", "
 												+ chunkCoordinate.y + ".");
 							}
 						} else {
-							chunk = new Chunk(CHUNK_SIZE.x,
+							chunk = new Chunk(that, CHUNK_SIZE.x,
 									CHUNK_SIZE.y, chunkCoordinate.x * CHUNK_SIZE.x,
 									chunkCoordinate.y * CHUNK_SIZE.y);
-							chunk.addPath(that.ID);
+							chunk.addPath(path.ID);
 							chunks.put(chunkCoordinate, chunk);
-							that.containingChunks.add(chunkCoordinate);
+							path.containingChunks.add(chunkCoordinate);
 							Log.v(XenaApplication.TAG,
-									"Added path " + that.ID + " to new chunk "
+									"Added path " + path.ID + " to new chunk "
 											+ chunkCoordinate.x
 											+ ", " + chunkCoordinate.y + ".");
 						}
@@ -151,7 +153,7 @@ public class PathManager {
 		for (int i = 0; i < 4; i++) {
 			visibleChunks[i] = chunks.get(chunkCoordinates[i]);
 			if (visibleChunks[i] == null) {
-				visibleChunks[i] = new Chunk(CHUNK_SIZE.x,
+				visibleChunks[i] = new Chunk(this, CHUNK_SIZE.x,
 						CHUNK_SIZE.y, chunkCoordinates[i].x * CHUNK_SIZE.x,
 						chunkCoordinates[i].y * CHUNK_SIZE.y);
 				chunks.put(chunkCoordinates[i], visibleChunks[i]);

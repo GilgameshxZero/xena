@@ -52,8 +52,8 @@ public class FilePickerActivity extends Activity
 			return;
 		}
 		Uri uri = data.getData();
-		Log.d(XenaApplication.TAG,
-				"FilePickerActivity::onActivityResult: " + uri.toString());
+		Log.v(XenaApplication.TAG,
+				"FilePickerActivity::onActivityResult: Picked " + uri.toString());
 		this.startActivity(
 				new Intent(this, ScribbleActivity.class).setAction(Intent.ACTION_RUN)
 						.addCategory(Intent.CATEGORY_DEFAULT).setData(uri));
