@@ -2,6 +2,7 @@ package com.gilgamesh.xena.filesystem;
 
 import com.gilgamesh.xena.XenaApplication;
 import com.gilgamesh.xena.scribble.CompoundPath;
+import com.gilgamesh.xena.scribble.PathManager;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -12,6 +13,7 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -25,10 +27,8 @@ import android.util.Xml;
 public class SvgFileScribe {
 	static final public float COORDINATE_SCALE_FACTOR = 8;
 
-	// Parameter viewportOffset is updated.
-	static public LinkedList<CompoundPath> loadPathsFromSvg(Context context,
-			Uri uri, PointF viewportOffset) {
-		LinkedList<CompoundPath> paths = new LinkedList<CompoundPath>();
+	static public void loadPathsFromSvg(Context context,
+			Uri uri, PathManager pathManager) {
 		try {
 			InputStream in = context.getContentResolver().openInputStream(uri);
 			try {
@@ -45,8 +45,8 @@ public class SvgFileScribe {
 						// Viewport is not scaled.
 						String[] viewport = parser.getAttributeValue(null, "data-xena")
 								.split(" ");
-						viewportOffset.x = Integer.parseInt(viewport[0]);
-						viewportOffset.y = Integer.parseInt(viewport[1]);
+						pathManager.viewportOffset.x = Integer.parseInt(viewport[0]);
+						pathManager.viewportOffset.y = Integer.parseInt(viewport[1]);
 					}
 
 					if (!parser.getName().equals("path")) {
@@ -72,8 +72,7 @@ public class SvgFileScribe {
 					lastPoint.y = Integer.parseInt(buffer.toString())
 							/ SvgFileScribe.COORDINATE_SCALE_FACTOR;
 					buffer.setLength(0);
-					paths.add(new CompoundPath(lastPoint));
-					CompoundPath path = paths.getLast();
+					CompoundPath path = pathManager.addPath(lastPoint).getValue();
 
 					for (i++; i < d.length();) {
 						if (d.charAt(i) == ' ') {
@@ -104,7 +103,7 @@ public class SvgFileScribe {
 					}
 				}
 				Log.v(XenaApplication.TAG, "SvgFileScribe::loadPathsFromSvg: Parsed "
-						+ paths.size() + " paths.");
+						+ pathManager.getPathsCount() + " paths.");
 			} catch (IOException e) {
 				Log.e(XenaApplication.TAG,
 						"SvgFileScribe::loadPathsFromSvg: Failed to read file: "
@@ -121,7 +120,6 @@ public class SvgFileScribe {
 					"SvgFileScribe::loadPathsFromSvg: Failed to open file: "
 							+ e.toString() + ".");
 		}
-		return paths;
 	}
 
 	private TimerTask debounceSaveTask = new TimerTask() {
@@ -131,7 +129,7 @@ public class SvgFileScribe {
 	};
 
 	private void debounceSaveTaskRun(Context context, Uri uri,
-			LinkedList<CompoundPath> paths, PointF viewportOffset,
+			PathManager pathManager,
 			final int STROKE_WIDTH) {
 		try {
 			OutputStreamWriter outputStreamWriter = new OutputStreamWriter(
@@ -141,11 +139,14 @@ public class SvgFileScribe {
 						Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY,
 						Float.NEGATIVE_INFINITY);
 				StringBuilder stringBuilder = new StringBuilder();
-				for (CompoundPath path : paths) {
+				Iterator<Map.Entry<Integer, CompoundPath>> iterator = pathManager
+						.getPathsIterator();
+				while (iterator.hasNext()) {
 					stringBuilder.append(
 							"<path d=\"");
-					Iterator<PointF> iterator = path.points.iterator();
-					PointF point = iterator.next();
+					Iterator<PointF> pointsIterator = iterator.next().getValue().points
+							.iterator();
+					PointF point = pointsIterator.next();
 					stringBuilder
 							.append(
 									"M" + Math
@@ -159,8 +160,8 @@ public class SvgFileScribe {
 					PointF nextPoint, pointDelta = new PointF(0, 0),
 							roundError = new PointF(0, 0);
 					String[] pointDeltaS = new String[2];
-					while (iterator.hasNext()) {
-						nextPoint = iterator.next();
+					while (pointsIterator.hasNext()) {
+						nextPoint = pointsIterator.next();
 
 						// Minimize ` -`.
 						pointDelta.x = nextPoint.x * SvgFileScribe.COORDINATE_SCALE_FACTOR
@@ -213,9 +214,9 @@ public class SvgFileScribe {
 								+ Math
 										.round(STROKE_WIDTH * SvgFileScribe.COORDINATE_SCALE_FACTOR)
 								+ "\" stroke-linecap=\"round\" stroke-linejoin=\"round\" fill=\"none\" data-xena=\""
-								+ Math.round(viewportOffset.x)
+								+ Math.round(pathManager.viewportOffset.x)
 								+ ' '
-								+ Math.round(viewportOffset.y)
+								+ Math.round(pathManager.viewportOffset.y)
 								+ "\">"
 								+ "<style>@media(prefers-color-scheme:dark){svg{background-color:black;stroke:white;}}</style>\n");
 				outputStreamWriter.write(stringBuilder.toString());
@@ -239,14 +240,14 @@ public class SvgFileScribe {
 	}
 
 	public void debounceSave(Context context, Uri uri,
-			LinkedList<CompoundPath> paths, PointF drawOffset,
+			PathManager pathManager,
 			final int STROKE_WIDTH,
 			int delayMs) {
 		this.debounceSaveTask.cancel();
 		this.debounceSaveTask = new TimerTask() {
 			@Override
 			public void run() {
-				debounceSaveTaskRun(context, uri, paths, drawOffset, STROKE_WIDTH);
+				debounceSaveTaskRun(context, uri, pathManager, STROKE_WIDTH);
 			}
 		};
 		new Timer().schedule(this.debounceSaveTask, delayMs);
@@ -254,8 +255,8 @@ public class SvgFileScribe {
 
 	// Default delayMs.
 	public void debounceSave(Context context, Uri uri,
-			LinkedList<CompoundPath> paths, PointF drawOffset,
+			PathManager pathManager,
 			final int STROKE_WIDTH) {
-		this.debounceSave(context, uri, paths, drawOffset, STROKE_WIDTH, 60000);
+		this.debounceSave(context, uri, pathManager, STROKE_WIDTH, 60000);
 	}
 }
