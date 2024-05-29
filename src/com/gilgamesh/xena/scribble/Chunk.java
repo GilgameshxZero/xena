@@ -7,6 +7,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
 
 // Low-level store for a bitmap and operations onto the bitmap.
@@ -28,7 +30,8 @@ public class Chunk {
 	static {
 		PAINT_ERASE = new Paint();
 		PAINT_ERASE.setAntiAlias(true);
-		PAINT_ERASE.setColor(Color.WHITE);
+		PAINT_ERASE.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OUT));
+		PAINT_ERASE.setColor(Color.TRANSPARENT);
 		PAINT_ERASE.setStyle(Paint.Style.STROKE);
 		PAINT_ERASE.setStrokeJoin(Paint.Join.ROUND);
 		PAINT_ERASE.setStrokeCap(Paint.Cap.ROUND);
@@ -38,7 +41,8 @@ public class Chunk {
 	public final int OFFSET_X;
 	public final int OFFSET_Y;
 
-	// Bitmap of the chunk.
+	// Unloadable/reloadable resources of this chunk for rendering. TODO: unload
+	// at some point.
 	private Bitmap bitmap;
 	private Canvas canvas;
 
@@ -55,7 +59,7 @@ public class Chunk {
 		this.OFFSET_Y = offsetY;
 		this.bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		this.canvas = new Canvas(this.bitmap);
-		this.canvas.drawColor(Color.WHITE);
+		this.canvas.drawRect(0, 0, width, height, Chunk.PAINT_ERASE);
 	}
 
 	// Adding a path will render it onto the bitmap. A path may be added again to
