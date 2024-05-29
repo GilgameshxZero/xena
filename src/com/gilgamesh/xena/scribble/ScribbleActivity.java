@@ -295,7 +295,7 @@ public class ScribbleActivity extends Activity
 				this.pathManager.setViewportOffset(
 						new PointF(this.pathManager.getViewportOffset().x,
 								this.pathManager.getViewportOffset().y
-										- this.imageView.getHeight()));
+										- this.imageView.getHeight() * 0.9f));
 				this.svgFileScribe.debounceSave(this, this.svgUri, this.pathManager);
 				this.drawBitmapToView(true);
 				break;
@@ -303,7 +303,7 @@ public class ScribbleActivity extends Activity
 				this.pathManager.setViewportOffset(
 						new PointF(
 								this.pathManager.getViewportOffset().x
-										- this.imageView.getWidth() / 2,
+										- this.imageView.getWidth() * 0.5f,
 								this.pathManager.getViewportOffset().y));
 				this.svgFileScribe.debounceSave(this, this.svgUri, this.pathManager);
 				this.drawBitmapToView(true);
@@ -312,7 +312,7 @@ public class ScribbleActivity extends Activity
 				this.pathManager.setViewportOffset(
 						new PointF(this.pathManager.getViewportOffset().x,
 								this.pathManager.getViewportOffset().y
-										+ this.imageView.getHeight()));
+										+ this.imageView.getHeight() * 0.9f));
 				this.svgFileScribe.debounceSave(this, this.svgUri, this.pathManager);
 				this.drawBitmapToView(true);
 				break;
@@ -320,7 +320,7 @@ public class ScribbleActivity extends Activity
 				this.pathManager.setViewportOffset(
 						new PointF(
 								this.pathManager.getViewportOffset().x
-										+ this.imageView.getWidth() / 2,
+										+ this.imageView.getWidth() * 0.5f,
 								this.pathManager.getViewportOffset().y));
 				this.svgFileScribe.debounceSave(this, this.svgUri, this.pathManager);
 				this.drawBitmapToView(true);
