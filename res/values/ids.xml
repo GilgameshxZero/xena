@@ -5,4 +5,8 @@
 	<item name="activity_file_picker_button_load_pdf" type="id" />
 
 	<item name="activity_scribble_image_view" type="id" />
+	<item name="activity_scribble_button_up" type="id" />
+	<item name="activity_scribble_button_right" type="id" />
+	<item name="activity_scribble_button_down" type="id" />
+	<item name="activity_scribble_button_left" type="id" />
 </resources>
