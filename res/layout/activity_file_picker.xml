@@ -4,7 +4,7 @@
 	android:layout_width="match_parent" android:layout_height="match_parent"
 	android:gravity="center"
 	android:background="@android:color/white">
-	<Button android:id="@+id/activity_file_picker_button_create_new"
+	<Button android:id="@+id/activity_file_picker_button_load_svg"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_margin="8dp"
@@ -12,16 +12,7 @@
 		android:textSize="32dp"
 		android:background="@drawable/button"
 		android:onClick="onClick"
-		android:text="CREATE NEW SVG" />
-	<Button android:id="@+id/activity_file_picker_button_load_existing"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_margin="8dp"
-		android:padding="16dp"
-		android:textSize="32dp"
-		android:background="@drawable/button"
-		android:onClick="onClick"
-		android:text="LOAD EXISTING SVG" />
+		android:text="LOAD SVG" />
 	<Button android:id="@+id/activity_file_picker_button_load_pdf"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"

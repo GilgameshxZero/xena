@@ -1,6 +1,7 @@
 package com.gilgamesh.xena.filesystem;
 
 import com.gilgamesh.xena.scribble.ScribbleActivity;
+
 import com.gilgamesh.xena.R;
 import com.gilgamesh.xena.XenaApplication;
 
@@ -14,9 +15,12 @@ import android.view.View;
 public class FilePickerActivity extends Activity
 		implements View.OnClickListener {
 	static private enum INTENT_REQUEST {
-		CREATE_NEW,
-		LOAD_EXISTING
+		LOAD_SVG,
+		LOAD_PDF,
+		LOAD_PDF_SVG,
 	}
+
+	private Uri uri;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -27,35 +31,60 @@ public class FilePickerActivity extends Activity
 	@Override
 	public void onClick(View v) {
 		switch (v.getId()) {
-			case R.id.activity_file_picker_button_create_new:
+			case R.id.activity_file_picker_button_load_svg:
 				this.startActivityForResult(
 						new Intent(Intent.ACTION_CREATE_DOCUMENT)
 								.addCategory(Intent.CATEGORY_OPENABLE).setType("image/svg+xml"),
-						INTENT_REQUEST.CREATE_NEW.ordinal());
-				break;
-			case R.id.activity_file_picker_button_load_existing:
-				this.startActivityForResult(
-						new Intent(Intent.ACTION_OPEN_DOCUMENT)
-								.addCategory(Intent.CATEGORY_OPENABLE).setType("image/svg+xml"),
-						INTENT_REQUEST.LOAD_EXISTING.ordinal());
+						INTENT_REQUEST.LOAD_SVG.ordinal());
 				break;
 			case R.id.activity_file_picker_button_load_pdf:
-				Log.e(XenaApplication.TAG,
-						"FilePickerActivity::onClick: PDF not implemented.");
+				this.startActivityForResult(
+						new Intent(Intent.ACTION_OPEN_DOCUMENT)
+								.addCategory(Intent.CATEGORY_OPENABLE)
+								.setType("application/pdf"),
+						INTENT_REQUEST.LOAD_PDF.ordinal());
 				break;
 		}
 	}
 
+	@Override
 	protected void onActivityResult(int requestCode, int resultCode,
 			Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+
 		if (resultCode != RESULT_OK) {
 			return;
 		}
-		Uri uri = data.getData();
 		Log.v(XenaApplication.TAG,
-				"FilePickerActivity::onActivityResult: Picked " + uri.toString());
-		this.startActivity(
-				new Intent(this, ScribbleActivity.class).setAction(Intent.ACTION_RUN)
-						.addCategory(Intent.CATEGORY_DEFAULT).setData(uri));
+				"FilePickerActivity::onActivityResult: Picked "
+						+ data.getData().toString());
+
+		switch (INTENT_REQUEST.values()[requestCode]) {
+			case LOAD_SVG:
+				this.uri = data.getData();
+				this.startActivity(
+						new Intent(this, ScribbleActivity.class)
+								.setAction(Intent.ACTION_RUN)
+								.addCategory(Intent.CATEGORY_DEFAULT).setData(uri));
+				break;
+			case LOAD_PDF:
+				this.uri = data.getData();
+				String[] segments = this.uri.getPath().split("/");
+				this.startActivityForResult(
+						new Intent(Intent.ACTION_CREATE_DOCUMENT)
+								.addCategory(Intent.CATEGORY_OPENABLE)
+								.setType("image/svg+xml")
+								.putExtra(Intent.EXTRA_TITLE,
+										segments[segments.length - 1] + ".svg"),
+						INTENT_REQUEST.LOAD_PDF_SVG.ordinal());
+				break;
+			case LOAD_PDF_SVG:
+				this.startActivity(
+						new Intent(this, ScribbleActivity.class)
+								.setAction(Intent.ACTION_RUN)
+								.addCategory(Intent.CATEGORY_DEFAULT).setData(data.getData())
+								.putExtra(ScribbleActivity.EXTRA_PDF_URI, this.uri.toString()));
+				break;
+		}
 	}
 }

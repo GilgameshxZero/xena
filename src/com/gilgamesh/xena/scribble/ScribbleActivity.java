@@ -1,9 +1,11 @@
 package com.gilgamesh.xena.scribble;
 
+import com.gilgamesh.xena.algorithm.Geometry;
 import com.gilgamesh.xena.filesystem.SvgFileScribe;
+import com.gilgamesh.xena.pdf.PdfReader;
 import com.gilgamesh.xena.R;
 import com.gilgamesh.xena.XenaApplication;
-import com.gilgamesh.xena.algorithm.Geometry;
+
 import com.onyx.android.sdk.data.note.TouchPoint;
 import com.onyx.android.sdk.pen.data.TouchPointList;
 import com.onyx.android.sdk.pen.RawInputCallback;
@@ -23,6 +25,8 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.PointF;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -31,26 +35,41 @@ import android.view.View;
 import android.widget.ImageView;
 
 public class ScribbleActivity extends Activity {
-	private final float DRAW_MOVE_EPSILON = 3;
-	static public final Paint PAINT;
+	static private final float DRAW_MOVE_EPSILON = 3;
+	static private final Paint PAINT_TENTATIVE_LINE;
 	static {
-		PAINT = new Paint();
-		PAINT.setAntiAlias(true);
-		PAINT.setColor(Color.BLACK);
-		PAINT.setStyle(Paint.Style.STROKE);
-		PAINT.setStrokeJoin(Paint.Join.ROUND);
-		PAINT.setStrokeCap(Paint.Cap.ROUND);
-		PAINT.setStrokeWidth(Chunk.STROKE_WIDTH);
+		PAINT_TENTATIVE_LINE = new Paint();
+		PAINT_TENTATIVE_LINE.setAntiAlias(true);
+		PAINT_TENTATIVE_LINE.setColor(Color.BLACK);
+		PAINT_TENTATIVE_LINE.setStyle(Paint.Style.STROKE);
+		PAINT_TENTATIVE_LINE.setStrokeJoin(Paint.Join.ROUND);
+		PAINT_TENTATIVE_LINE.setStrokeCap(Paint.Cap.ROUND);
+		PAINT_TENTATIVE_LINE.setStrokeWidth(Chunk.STROKE_WIDTH);
 	}
+	static private final Paint PAINT_TRANSPARENT;
+	static {
+		PAINT_TRANSPARENT = new Paint();
+		PAINT_TRANSPARENT.setAntiAlias(true);
+		PAINT_TRANSPARENT
+				.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OUT));
+		PAINT_TRANSPARENT.setColor(Color.TRANSPARENT);
+	}
+
+	static public final String EXTRA_PDF_URI = "EXTRA_PDF_URI";
 
 	private SvgFileScribe svgFileScribe = new SvgFileScribe();
 	private PathManager pathManager;
+	private PdfReader pdfReader;
+	private int currentPage = 0;
 
 	private ImageView imageView;
 	private Bitmap imageViewBitmap;
 	private Canvas imageViewCanvas;
 	private TouchHelper touchHelper;
-	private Uri uri;
+	private Uri svgUri;
+	// pdfUri is null if no PDF is loaded.
+	private Uri pdfUri;
+	private int pdfPage = 0;
 	private boolean isRawInputting = false;
 
 	private RawInputCallback rawInputCallback = new RawInputCallback() {
@@ -86,9 +105,9 @@ public class ScribbleActivity extends Activity {
 			isRawInputting = true;
 			this.debounceRedrawTask.cancel();
 			this.previousTentativeDrawPoint.set(touchPoint.x, touchPoint.y);
-			this.currentPath = pathManager.addPath(new PointF(
-					touchPoint.x - pathManager.getViewportOffset().x,
-					touchPoint.y - pathManager.getViewportOffset().y))
+			this.currentPath = pathManager
+					.addPath(new PointF(touchPoint.x - pathManager.getViewportOffset().x,
+							touchPoint.y - pathManager.getViewportOffset().y))
 					.getValue();
 		}
 
@@ -98,8 +117,7 @@ public class ScribbleActivity extends Activity {
 			// drawing it onto the chunk bitmaps here.
 			pathManager.finalizePath(this.currentPath);
 			this.debounceRedraw(DEBOUNCE_REDRAW_DELAY_MS);
-			svgFileScribe.debounceSave(ScribbleActivity.this, uri,
-					pathManager);
+			svgFileScribe.debounceSave(ScribbleActivity.this, svgUri, pathManager);
 		}
 
 		@Override
@@ -115,14 +133,11 @@ public class ScribbleActivity extends Activity {
 			}
 			if (imageView.isDirty()) {
 				Log.v(XenaApplication.TAG,
-						"ScribbleActivity::onRawDrawingTouchPointMoveReceived: ImageView is dirty, skipping draw.");
+						"ScribbleActivity::onRawDrawingTouchPointMoveReceived: ImageView is dirty, skipping.");
 			} else {
-				imageViewCanvas.drawLine(
-						previousTentativeDrawPoint.x,
-						previousTentativeDrawPoint.y,
-						touchPoint.x,
-						touchPoint.y,
-						PAINT);
+				imageViewCanvas.drawLine(previousTentativeDrawPoint.x,
+						previousTentativeDrawPoint.y, touchPoint.x, touchPoint.y,
+						PAINT_TENTATIVE_LINE);
 				imageView.postInvalidate();
 				previousTentativeDrawPoint.set(touchPoint.x, touchPoint.y);
 			}
@@ -168,8 +183,7 @@ public class ScribbleActivity extends Activity {
 				HashSet<Integer> pathIds = new HashSet<Integer>(chunk.getPathIds());
 				for (Integer pathId : pathIds) {
 					if (pathManager.getPath(pathId).isIntersectingSegment(
-							this.previousErasePoint,
-							currentErasePoint)) {
+							this.previousErasePoint, currentErasePoint)) {
 						pathManager.removePathId(pathId);
 					}
 				}
@@ -177,8 +191,7 @@ public class ScribbleActivity extends Activity {
 
 			if (initialSize != pathManager.getPathsCount()) {
 				drawBitmapToView(true);
-				svgFileScribe.debounceSave(ScribbleActivity.this, uri,
-						pathManager);
+				svgFileScribe.debounceSave(ScribbleActivity.this, svgUri, pathManager);
 			}
 			this.previousErasePoint.set(currentErasePoint);
 		}
@@ -230,31 +243,18 @@ public class ScribbleActivity extends Activity {
 		}
 	};
 
+	// Switching orientiation may rebuild the activity.
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		this.setContentView(R.layout.activity_scribble);
-		this.uri = getIntent().getData();
+		this.parseUri();
 
 		this.imageView = findViewById(R.id.activity_scribble_image_view);
 		this.imageView.post(new Runnable() {
 			@Override
 			public void run() {
-				pathManager = new PathManager(
-						new Point(imageView.getWidth(), imageView.getHeight()));
-				SvgFileScribe.loadPathsFromSvg(ScribbleActivity.this, uri, pathManager);
-				imageViewBitmap = Bitmap.createBitmap(imageView.getWidth(),
-						imageView.getHeight(),
-						Bitmap.Config.ARGB_8888);
-				imageViewCanvas = new Canvas(imageViewBitmap);
-				imageView.setImageBitmap(imageViewBitmap);
-				drawBitmapToView(true);
-
-				touchHelper
-						.setLimitRect(
-								new Rect(0, 0, imageView.getWidth(), imageView.getHeight()),
-								new ArrayList<>())
-						.openRawDrawing().setRawDrawingEnabled(true);
+				initDrawing();
 			}
 		});
 		this.imageView.setOnTouchListener(imageViewOnTouchListener);
@@ -273,7 +273,7 @@ public class ScribbleActivity extends Activity {
 	@Override
 	protected void onPause() {
 		// onPause will be called when "back" is pressed as well.
-		this.svgFileScribe.debounceSave(ScribbleActivity.this, uri,
+		this.svgFileScribe.debounceSave(ScribbleActivity.this, svgUri,
 				this.pathManager, 0);
 		this.touchHelper.setRawDrawingEnabled(false);
 		super.onPause();
@@ -285,11 +285,59 @@ public class ScribbleActivity extends Activity {
 		super.onDestroy();
 	}
 
+	private void parseUri() {
+		Uri pickedUri = this.getIntent().getData();
+		this.svgUri = pickedUri;
+		String pdfUriString = this.getIntent().getStringExtra(EXTRA_PDF_URI);
+		if (pdfUriString != null) {
+			this.pdfUri = Uri.parse(pdfUriString);
+			this.pdfReader = new PdfReader(this, this.pdfUri);
+			Log.v(XenaApplication.TAG,
+					"ScribbleActivity::parseUri: Got 2 URIs: " + this.svgUri.toString()
+							+ " and "
+							+ this.pdfUri.toString() + ".");
+		} else {
+			Log.v(XenaApplication.TAG,
+					"ScribbleActivity::parseUri: Got 1 URI: " + this.svgUri.toString()
+							+ ".");
+		}
+	}
+
+	private void initDrawing() {
+		this.pathManager = new PathManager(
+				new Point(this.imageView.getWidth(), this.imageView.getHeight()));
+		SvgFileScribe.loadPathsFromSvg(ScribbleActivity.this, this.svgUri,
+				this.pathManager);
+
+		this.imageViewBitmap = Bitmap.createBitmap(this.imageView.getWidth(),
+				this.imageView.getHeight(),
+				Bitmap.Config.ARGB_8888);
+		this.imageViewCanvas = new Canvas(this.imageViewBitmap);
+		this.imageView.setImageBitmap(this.imageViewBitmap);
+		drawBitmapToView(true);
+
+		this.touchHelper
+				.setLimitRect(
+						new Rect(0, 0, this.imageView.getWidth(),
+								this.imageView.getHeight()),
+						new ArrayList<>())
+				.openRawDrawing().setRawDrawingEnabled(true);
+	}
+
 	private void drawBitmapToView(boolean force) {
 		if (!force && imageView.isDirty()) {
 			Log.v(XenaApplication.TAG,
-					"ScribbleActivity::drawBitmapToView: ImageView is dirty, skipping draw.");
+					"ScribbleActivity::drawBitmapToView: ImageView is dirty, skipping.");
 			return;
+		}
+		this.imageViewCanvas.drawRect(0, 0, imageView.getWidth(),
+				imageView.getHeight(),
+				PAINT_TRANSPARENT);
+		if (this.pdfReader != null) {
+			this.imageViewCanvas.drawBitmap(
+					this.pdfReader.getBitmapForPage(this.currentPage),
+					pathManager.getViewportOffset().x, pathManager.getViewportOffset().y,
+					null);
 		}
 		for (Chunk chunk : pathManager.getVisibleChunks()) {
 			this.imageViewCanvas.drawBitmap(chunk.getBitmap(),
