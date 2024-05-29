@@ -11,8 +11,8 @@ import android.graphics.RectF;
 
 // Path which has accessible coordinates, and other utilities for drawing and detection.
 public class CompoundPath {
-	static public final float SHORT_DISTANCE_EPS = 4;
-	static public final float BOUNDS_AREA_EPS = 16;
+	static public final float SHORT_DISTANCE_EPS = 8;
+	static public final float BOUNDS_AREA_EPS = 64;
 
 	static public abstract class Callback {
 		public abstract void onPointAdded(CompoundPath that, PointF previousPoint,
