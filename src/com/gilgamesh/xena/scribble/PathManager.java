@@ -93,10 +93,10 @@ public class PathManager {
 		CompoundPath path = this.paths.get(pathId);
 		for (int chunkCoordinateX = (int) Math
 				.floor(path.bounds.left / CHUNK_SIZE.x); chunkCoordinateX <= (int) Math
-						.floor(path.bounds.right / CHUNK_SIZE.y); chunkCoordinateX++) {
+						.floor(path.bounds.right / CHUNK_SIZE.x); chunkCoordinateX++) {
 			for (int chunkCoordinateY = (int) Math
 					.floor(
-							path.bounds.top / CHUNK_SIZE.x); chunkCoordinateY <= (int) Math
+							path.bounds.top / CHUNK_SIZE.y); chunkCoordinateY <= (int) Math
 									.floor(
 											path.bounds.bottom / CHUNK_SIZE.y); chunkCoordinateY++) {
 				Chunk chunk = chunks
