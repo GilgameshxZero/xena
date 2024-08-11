@@ -57,7 +57,7 @@ public class Chunk {
 		this.pathManager = pathManager;
 		this.OFFSET_X = offsetX;
 		this.OFFSET_Y = offsetY;
-		this.bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ALPHA_8);
+		this.bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		this.canvas = new Canvas(this.bitmap);
 		this.canvas.drawRect(0, 0, width, height, Chunk.PAINT_ERASE);
 	}

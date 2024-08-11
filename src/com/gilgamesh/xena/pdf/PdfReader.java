@@ -71,27 +71,35 @@ public class PdfReader {
 								+ page.getWidth()
 								+ "x"
 								+ page.getHeight() + ".");
-				Bitmap bitmap = Bitmap.createBitmap(
-						Math.round(page.getWidth() * this.pointScale.x),
-						Math.round(page.getHeight() * this.pointScale.y),
-						Bitmap.Config.ARGB_8888);
-				page.render(bitmap, null, null, Page.RENDER_MODE_FOR_DISPLAY);
-				int cPixels = bitmap.getWidth() * bitmap.getHeight();
-				int pixels[] = new int[cPixels];
-				bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(),
-						bitmap.getHeight());
 				this.pages[pageIdx].bitmap = Bitmap.createBitmap(
 						Math.round(page.getWidth() * this.pointScale.x),
 						Math.round(page.getHeight() * this.pointScale.y),
-						Bitmap.Config.ALPHA_8);
-				for (int i = 0; i < cPixels; i++) {
-					Color color = Color.valueOf(pixels[i]);
-					pixels[i] = (int) ((1 - (color.red() + color.green() + color.blue())
-							/ 3)
-							* color.alpha() * 255) << 24;
-				}
-				this.pages[pageIdx].bitmap.setPixels(pixels, 0, bitmap.getWidth(), 0, 0,
-						bitmap.getWidth(), bitmap.getHeight());
+						Bitmap.Config.ARGB_8888);
+				page.render(this.pages[pageIdx].bitmap, null, null,
+						Page.RENDER_MODE_FOR_DISPLAY);
+				// Bitmap bitmap = Bitmap.createBitmap(
+				// Math.round(page.getWidth() * this.pointScale.x),
+				// Math.round(page.getHeight() * this.pointScale.y),
+				// Bitmap.Config.ARGB_8888);
+				// page.render(bitmap, null, null, Page.RENDER_MODE_FOR_DISPLAY);
+				// int cPixels = bitmap.getWidth() * bitmap.getHeight();
+				// int pixels[] = new int[cPixels];
+				// bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0,
+				// bitmap.getWidth(),
+				// bitmap.getHeight());
+				// this.pages[pageIdx].bitmap = Bitmap.createBitmap(
+				// Math.round(page.getWidth() * this.pointScale.x),
+				// Math.round(page.getHeight() * this.pointScale.y),
+				// Bitmap.Config.ALPHA_8);
+				// for (int i = 0; i < cPixels; i++) {
+				// Color color = Color.valueOf(pixels[i]);
+				// pixels[i] = (int) ((1 - (color.red() + color.green() + color.blue())
+				// / 3)
+				// * color.alpha() * 255) << 24;
+				// }
+				// this.pages[pageIdx].bitmap.setPixels(pixels, 0, bitmap.getWidth(), 0,
+				// 0,
+				// bitmap.getWidth(), bitmap.getHeight());
 				page.close();
 				renderer.close();
 			} catch (IOException e) {
