@@ -8,13 +8,13 @@
 		android:layout_alignParentLeft="true"
 		android:layout_alignParentTop="true"
 	/>
-	<Button android:id="@+id/activity_scribble_button_up"
+	<!-- <Button android:id="@+id/activity_scribble_button_up"
 		android:layout_width="48dp"
 		android:layout_height="48dp"
 		android:layout_alignParentLeft="true"
 		android:layout_centerVertical="true"
 		android:background="@drawable/button"
-		android:onClick="onClick" />
+		android:onClick="onClick" /> -->
 	<!-- <Button android:id="@+id/activity_scribble_button_right"
 		android:layout_width="48dp"
 		android:layout_height="48dp"
@@ -22,13 +22,13 @@
 		android:layout_centerVertical="true"
 		android:background="@drawable/button"
 		android:onClick="onClick" /> -->
-	<Button android:id="@+id/activity_scribble_button_down"
+	<!-- <Button android:id="@+id/activity_scribble_button_down"
 		android:layout_width="48dp"
 		android:layout_height="48dp"
 		android:layout_alignParentRight="true"
 		android:layout_centerVertical="true"
 		android:background="@drawable/button"
-		android:onClick="onClick" />
+		android:onClick="onClick" /> -->
 	<!-- <Button android:id="@+id/activity_scribble_button_left"
 		android:layout_width="48dp"
 		android:layout_height="48dp"
