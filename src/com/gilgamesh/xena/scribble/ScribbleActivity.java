@@ -538,7 +538,7 @@ public class ScribbleActivity extends Activity
 
 		this.scribbleViewBitmap = Bitmap.createBitmap(this.scribbleView.getWidth(),
 				this.scribbleView.getHeight(),
-				Bitmap.Config.ALPHA_8);
+				Bitmap.Config.ARGB_8888);
 		this.scribbleViewCanvas = new Canvas(this.scribbleViewBitmap);
 		this.scribbleView.setImageBitmap(this.scribbleViewBitmap);
 		drawBitmapToView(true);
