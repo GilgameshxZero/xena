@@ -33,7 +33,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.ImageView;
 
 public class ScribbleActivity extends Activity
 		implements View.OnClickListener {
@@ -59,15 +58,13 @@ public class ScribbleActivity extends Activity
 
 	static public final String EXTRA_PDF_URI = "EXTRA_PDF_URI";
 
-	private final int FOREVER_MS = 1000000000;
-
 	private SvgFileScribe svgFileScribe = new SvgFileScribe();
 	private PathManager pathManager;
 	private PdfReader pdfReader;
 
-	private ImageView imageView;
-	private Bitmap imageViewBitmap;
-	private Canvas imageViewCanvas;
+	private ScribbleView scribbleView;
+	private Bitmap scribbleViewBitmap;
+	private Canvas scribbleViewCanvas;
 	private TouchHelper touchHelper;
 	private Uri svgUri;
 	// pdfUri is null if no PDF is loaded.
@@ -249,35 +246,35 @@ public class ScribbleActivity extends Activity
 
 		@Override
 		public void onRawDrawingTouchPointMoveReceived(TouchPoint touchPoint) {
-			// Log.v(XenaApplication.TAG,
-			// "ScribbleActivity::onRawDrawingTouchPointMoveReceived");
-
 			if (!isDrawing) {
 				return;
 			}
 
-			PointF lastPoint = this.currentPath.points
-					.get(this.currentPath.points.size() - 1);
+			PointF lastPoint = currentPath.points
+					.get(currentPath.points.size() - 1);
 			PointF newPoint = new PointF(
 					touchPoint.x - pathManager.getViewportOffset().x,
 					touchPoint.y - pathManager.getViewportOffset().y);
-			if (this.currentPath.points.size() > 1
+
+			if (currentPath.points.size() > 1
 					&& Geometry.distance(lastPoint, newPoint) < DRAW_MOVE_EPSILON) {
 				return;
 			}
-			if (imageView.isDirty()) {
-				// Log.v(XenaApplication.TAG,
-				// "ScribbleActivity::onRawDrawingTouchPointMoveReceived: ImageView is
-				// dirty, skipping.");
+			currentPath.addPoint(newPoint);
+
+			// Log.v(XenaApplication.TAG,
+			// "ScribbleActivity::onRawDrawingTouchPointMoveReceived "
+			// + scribbleView.isDrawing());
+
+			if (scribbleView.isDrawing()) {
+				// Log.v(XenaApplication.TAG, "Dirty ScribbleView.");
 			} else {
-				imageViewCanvas.drawLine(previousTentativeDrawPoint.x,
+				scribbleViewCanvas.drawLine(previousTentativeDrawPoint.x,
 						previousTentativeDrawPoint.y, touchPoint.x, touchPoint.y,
 						PAINT_TENTATIVE_LINE);
-				imageView.postInvalidate();
+				scribbleView.postInvalidate();
 				previousTentativeDrawPoint.set(touchPoint.x, touchPoint.y);
 			}
-
-			this.currentPath.addPoint(newPoint);
 		}
 
 		@Override
@@ -368,12 +365,12 @@ public class ScribbleActivity extends Activity
 		}
 	};
 
-	private View.OnTouchListener imageViewOnTouchListener = new View.OnTouchListener() {
+	private View.OnTouchListener scribbleViewOnTouchListener = new View.OnTouchListener() {
 		private final int FLICK_LOWER_BOUND_MS = 80;
 		private final int FLICK_UPPER_BOUND_MS = 220;
 
 		private PointF previousPoint = new PointF();
-		private long actionDownTime = 0;
+		private long actionDownTimeMs = 0;
 
 		@Override
 		public boolean onTouch(View v, MotionEvent event) {
@@ -385,8 +382,8 @@ public class ScribbleActivity extends Activity
 			}
 
 			PointF touchPoint = new PointF(event.getX(), event.getY());
-			long eventDurationMs = (System.nanoTime() - this.actionDownTime)
-					/ 1000000;
+			long eventDurationMs = (System.currentTimeMillis()
+					- this.actionDownTimeMs);
 
 			switch (event.getAction()) {
 				case MotionEvent.ACTION_DOWN:
@@ -394,17 +391,15 @@ public class ScribbleActivity extends Activity
 					// draw/erase event will cancel panning in that case.
 
 					if (isPanning) {
-						Log.v(XenaApplication.TAG,
-								"ScribbleActivity::onTouch:RESET "
-										+ pathManager.getViewportOffset());
+						Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:RESET "
+								+ pathManager.getViewportOffset());
 					} else {
-						Log.v(XenaApplication.TAG,
-								"ScribbleActivity::onTouch:DOWN "
-										+ pathManager.getViewportOffset());
+						Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:DOWN "
+								+ pathManager.getViewportOffset());
 
 						isPanning = true;
 
-						this.actionDownTime = System.nanoTime();
+						this.actionDownTimeMs = System.currentTimeMillis();
 					}
 
 					panBeginOffset = pathManager.getViewportOffset();
@@ -430,8 +425,8 @@ public class ScribbleActivity extends Activity
 					this.previousPoint.x = touchPoint.x;
 					this.previousPoint.y = touchPoint.y;
 
-					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:MOVE "
-							+ pathManager.getViewportOffset());
+					// Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:MOVE "
+					// + pathManager.getViewportOffset());
 
 					drawBitmapToView(false);
 
@@ -453,15 +448,11 @@ public class ScribbleActivity extends Activity
 
 						// Determine flick direction.
 						int direction = panBeginOffset.y < pathManager.getViewportOffset().y
-								+ touchPoint.y
-								- this.previousPoint.y
-										? 1
-										: -1;
+								+ touchPoint.y - this.previousPoint.y ? 1 : -1;
 
-						pathManager.setViewportOffset(
-								new PointF(panBeginOffset.x,
-										panBeginOffset.y
-												+ direction * imageView.getHeight() * 0.9f));
+						pathManager
+								.setViewportOffset(new PointF(panBeginOffset.x, panBeginOffset.y
+										+ direction * scribbleView.getHeight() * 0.9f));
 					} else {
 						Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:UP");
 					}
@@ -482,16 +473,16 @@ public class ScribbleActivity extends Activity
 		this.setContentView(R.layout.activity_scribble);
 		this.parseUri();
 
-		this.imageView = findViewById(R.id.activity_scribble_image_view);
-		this.imageView.post(new Runnable() {
+		this.scribbleView = findViewById(R.id.activity_scribble_scribble_view);
+		this.scribbleView.post(new Runnable() {
 			@Override
 			public void run() {
 				initDrawing();
 			}
 		});
-		this.imageView.setOnTouchListener(imageViewOnTouchListener);
+		this.scribbleView.setOnTouchListener(scribbleViewOnTouchListener);
 
-		this.touchHelper = TouchHelper.create(imageView, rawInputCallback)
+		this.touchHelper = TouchHelper.create(scribbleView, rawInputCallback)
 				.setStrokeWidth(Chunk.STROKE_WIDTH)
 				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL);
 	}
@@ -519,42 +510,6 @@ public class ScribbleActivity extends Activity
 
 	@Override
 	public void onClick(View v) {
-		switch (v.getId()) {
-			case R.id.activity_scribble_button_down:
-				this.pathManager.setViewportOffset(
-						new PointF(this.pathManager.getViewportOffset().x,
-								this.pathManager.getViewportOffset().y
-										- this.imageView.getHeight() * 0.9f));
-				this.svgFileScribe.debounceSave(this, this.svgUri, this.pathManager);
-				this.drawBitmapToView(true);
-				break;
-			case R.id.activity_scribble_button_right:
-				this.pathManager.setViewportOffset(
-						new PointF(
-								this.pathManager.getViewportOffset().x
-										- this.imageView.getWidth() * 0.5f,
-								this.pathManager.getViewportOffset().y));
-				this.svgFileScribe.debounceSave(this, this.svgUri, this.pathManager);
-				this.drawBitmapToView(true);
-				break;
-			case R.id.activity_scribble_button_up:
-				this.pathManager.setViewportOffset(
-						new PointF(this.pathManager.getViewportOffset().x,
-								this.pathManager.getViewportOffset().y
-										+ this.imageView.getHeight() * 0.9f));
-				this.svgFileScribe.debounceSave(this, this.svgUri, this.pathManager);
-				this.drawBitmapToView(true);
-				break;
-			case R.id.activity_scribble_button_left:
-				this.pathManager.setViewportOffset(
-						new PointF(
-								this.pathManager.getViewportOffset().x
-										+ this.imageView.getWidth() * 0.5f,
-								this.pathManager.getViewportOffset().y));
-				this.svgFileScribe.debounceSave(this, this.svgUri, this.pathManager);
-				this.drawBitmapToView(true);
-				break;
-		}
 	}
 
 	private void parseUri() {
@@ -577,53 +532,56 @@ public class ScribbleActivity extends Activity
 
 	private void initDrawing() {
 		this.pathManager = new PathManager(
-				new Point(this.imageView.getWidth(), this.imageView.getHeight()));
+				new Point(this.scribbleView.getWidth(), this.scribbleView.getHeight()));
 		SvgFileScribe.loadPathsFromSvg(ScribbleActivity.this, this.svgUri,
 				this.pathManager);
 
-		this.imageViewBitmap = Bitmap.createBitmap(this.imageView.getWidth(),
-				this.imageView.getHeight(),
-				Bitmap.Config.ARGB_8888);
-		this.imageViewCanvas = new Canvas(this.imageViewBitmap);
-		this.imageView.setImageBitmap(this.imageViewBitmap);
+		this.scribbleViewBitmap = Bitmap.createBitmap(this.scribbleView.getWidth(),
+				this.scribbleView.getHeight(),
+				Bitmap.Config.ALPHA_8);
+		this.scribbleViewCanvas = new Canvas(this.scribbleViewBitmap);
+		this.scribbleView.setImageBitmap(this.scribbleViewBitmap);
 		drawBitmapToView(true);
 
 		this.touchHelper
 				.setLimitRect(
-						new Rect(0, 0, this.imageView.getWidth(),
-								this.imageView.getHeight()),
+						new Rect(0, 0, this.scribbleView.getWidth(),
+								this.scribbleView.getHeight()),
 						new ArrayList<>())
 				.openRawDrawing().setRawDrawingEnabled(true);
 	}
 
 	private void drawBitmapToView(boolean force) {
-		if (!force && imageView.isDirty()) {
-			// Log.v(XenaApplication.TAG,
-			// "ScribbleActivity::drawBitmapToView: ImageView is dirty, skipping.");
+		if (!force && scribbleView.isDrawing()) {
+			// Log.v(XenaApplication.TAG, "Dirty ScribbleView.");
 			return;
 		}
-		this.imageViewCanvas.drawRect(0, 0, imageView.getWidth(),
-				imageView.getHeight(),
+
+		this.scribbleViewCanvas.drawRect(0, 0, scribbleView.getWidth(),
+				scribbleView.getHeight(),
 				PAINT_TRANSPARENT);
+
 		if (this.pdfReader != null) {
 			ArrayList<PageBitmap> pages = this.pdfReader.getBitmapsForViewport(
 					new RectF(-this.pathManager.getViewportOffset().x,
 							-this.pathManager.getViewportOffset().y,
 							-this.pathManager.getViewportOffset().x
-									+ this.imageView.getWidth(),
+									+ this.scribbleView.getWidth(),
 							-this.pathManager.getViewportOffset().y
-									+ this.imageView.getHeight()));
+									+ this.scribbleView.getHeight()));
 			for (PageBitmap page : pages) {
-				this.imageViewCanvas.drawBitmap(page.bitmap,
+				this.scribbleViewCanvas.drawBitmap(page.bitmap,
 						page.location.left + this.pathManager.getViewportOffset().x,
 						page.location.top + this.pathManager.getViewportOffset().y, null);
 			}
 		}
+
 		for (Chunk chunk : pathManager.getVisibleChunks()) {
-			this.imageViewCanvas.drawBitmap(chunk.getBitmap(),
+			this.scribbleViewCanvas.drawBitmap(chunk.getBitmap(),
 					chunk.OFFSET_X + pathManager.getViewportOffset().x,
 					chunk.OFFSET_Y + pathManager.getViewportOffset().y, null);
 		}
-		this.imageView.postInvalidate();
+
+		this.scribbleView.postInvalidate();
 	}
 }

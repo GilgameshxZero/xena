@@ -3,37 +3,10 @@
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
 	android:background="@android:color/white">
-	<ImageView android:id="@+id/activity_scribble_image_view"
+	<com.gilgamesh.xena.scribble.ScribbleView
+		android:id="@+id/activity_scribble_scribble_view"
 		android:layout_width="match_parent" android:layout_height="match_parent"
 		android:layout_alignParentLeft="true"
 		android:layout_alignParentTop="true"
 	/>
-	<!-- <Button android:id="@+id/activity_scribble_button_up"
-		android:layout_width="48dp"
-		android:layout_height="48dp"
-		android:layout_alignParentLeft="true"
-		android:layout_centerVertical="true"
-		android:background="@drawable/button"
-		android:onClick="onClick" /> -->
-	<!-- <Button android:id="@+id/activity_scribble_button_right"
-		android:layout_width="48dp"
-		android:layout_height="48dp"
-		android:layout_alignParentRight="true"
-		android:layout_centerVertical="true"
-		android:background="@drawable/button"
-		android:onClick="onClick" /> -->
-	<!-- <Button android:id="@+id/activity_scribble_button_down"
-		android:layout_width="48dp"
-		android:layout_height="48dp"
-		android:layout_alignParentRight="true"
-		android:layout_centerVertical="true"
-		android:background="@drawable/button"
-		android:onClick="onClick" /> -->
-	<!-- <Button android:id="@+id/activity_scribble_button_left"
-		android:layout_width="48dp"
-		android:layout_height="48dp"
-		android:layout_alignParentLeft="true"
-		android:layout_centerVertical="true"
-		android:background="@drawable/button"
-		android:onClick="onClick" /> -->
 </RelativeLayout>
