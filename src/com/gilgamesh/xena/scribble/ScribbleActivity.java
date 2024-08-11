@@ -59,6 +59,8 @@ public class ScribbleActivity extends Activity
 
 	static public final String EXTRA_PDF_URI = "EXTRA_PDF_URI";
 
+	private final int FOREVER_MS = 1000000000;
+
 	private SvgFileScribe svgFileScribe = new SvgFileScribe();
 	private PathManager pathManager;
 	private PdfReader pdfReader;
@@ -70,10 +72,34 @@ public class ScribbleActivity extends Activity
 	private Uri svgUri;
 	// pdfUri is null if no PDF is loaded.
 	private Uri pdfUri;
-	private boolean isRawInputting = false;
+
+	private boolean isDrawing = false;
+	private boolean isErasing = false;
+	private boolean isRedrawing = false;
+	private boolean isInputCooldown = false;
+	private boolean isPanning = false;
+	private PointF panBeginOffset = new PointF();
+
+	public void redraw() {
+		this.isRedrawing = false;
+		this.drawBitmapToView(true);
+		this.touchHelper.setRawDrawingEnabled(false).setRawDrawingEnabled(true);
+	}
 
 	private RawInputCallback rawInputCallback = new RawInputCallback() {
 		private final int DEBOUNCE_REDRAW_DELAY_MS = 1000;
+		private final int DEBOUNCE_INPUT_COOLDOWN_DELAY_MS = 200;
+
+		// Drawing end/begin pairs may fire within milliseconds. In this case,
+		// ignore both events. We accomplish this with a debounce on the end events.
+		private final int DEBOUNCE_END_DRAW_DELAY_MS = 10;
+
+		// The erasing events are a little broken. The end erase event is not
+		// guaranteed, and sometimes without lifting the eraser there are multiple
+		// begin/end events created. Thus, we only interpret an erase event ending
+		// if no erase-related events have been received within a certain time.
+		// Before then, we erase all points received.
+		private final int DEBOUNCE_END_ERASE_DELAY_MS = 150;
 
 		private PointF previousErasePoint = new PointF();
 		private PointF previousTentativeDrawPoint = new PointF();
@@ -86,24 +112,129 @@ public class ScribbleActivity extends Activity
 			}
 		};
 
-		private void debounceRedraw(int delayMs) {
+		private void cancelRedraw() {
+			isRedrawing = false;
 			this.debounceRedrawTask.cancel();
-			this.debounceRedrawTask = new TimerTask() {
+		}
+
+		private void debounceRedraw(int delayMs) {
+			this.cancelRedraw();
+			isRedrawing = true;
+			TimerTask task = new TimerTask() {
 				@Override
 				public void run() {
 					Log.v(XenaApplication.TAG, "ScribbleActivity::debounceRedrawTask");
-					isRawInputting = false;
-					drawBitmapToView(true);
-					touchHelper.setRawDrawingEnabled(false).setRawDrawingEnabled(true);
+
+					redraw();
 				}
 			};
-			new Timer().schedule(this.debounceRedrawTask, delayMs);
+			new Timer().schedule(task, delayMs);
+			this.debounceRedrawTask = task;
+		}
+
+		// Debounce cooldown for input end operations to prevent panning; implements
+		// palm rejection.
+		private TimerTask debounceInputCooldownTask = new TimerTask() {
+			@Override
+			public void run() {
+			}
+		};
+
+		private void debounceInputCooldown(int delayMs) {
+			this.debounceInputCooldownTask.cancel();
+			isInputCooldown = true;
+			TimerTask task = new TimerTask() {
+				@Override
+				public void run() {
+					Log.v(XenaApplication.TAG,
+							"ScribbleActivity::debounceInputCooldownTask");
+
+					isInputCooldown = false;
+				}
+			};
+			new Timer().schedule(task, delayMs);
+			this.debounceInputCooldownTask = task;
+		}
+
+		// Debounce for erroneous draw end/begin pairs.
+		private TimerTask debounceEndDrawTask = new TimerTask() {
+			@Override
+			public void run() {
+			}
+		};
+
+		private void debounceEndDraw(int delayMs) {
+			this.debounceEndDrawTask.cancel();
+			TimerTask task = new TimerTask() {
+				@Override
+				public void run() {
+					Log.v(XenaApplication.TAG, "ScribbleActivity::debounceEndDrawTask");
+
+					// The new path has already been loaded by the PathManager. Conclude
+					// it by drawing it onto the chunk bitmaps here.
+					isDrawing = false;
+					debounceRedraw(DEBOUNCE_REDRAW_DELAY_MS);
+					debounceInputCooldown(DEBOUNCE_INPUT_COOLDOWN_DELAY_MS);
+
+					pathManager.finalizePath(currentPath);
+					svgFileScribe.debounceSave(ScribbleActivity.this, svgUri,
+							pathManager);
+				}
+			};
+			new Timer().schedule(task, delayMs);
+			this.debounceEndDrawTask = task;
+		}
+
+		// Sometimes, the end erase event is never received, so debounce it.
+		private TimerTask debounceEndEraseTask = new TimerTask() {
+			@Override
+			public void run() {
+			}
+		};
+
+		private void debounceEndErase(int delayMs) {
+			this.debounceEndEraseTask.cancel();
+			// Split into a few steps in case of multi-threading errors.
+			TimerTask task = new TimerTask() {
+				@Override
+				public void run() {
+					Log.v(XenaApplication.TAG, "ScribbleActivity::debounceEndEraseTask");
+
+					isErasing = false;
+					debounceInputCooldown(DEBOUNCE_INPUT_COOLDOWN_DELAY_MS);
+				}
+			};
+			new Timer().schedule(task, delayMs);
+			this.debounceEndEraseTask = task;
 		}
 
 		@Override
 		public void onBeginRawDrawing(boolean b, TouchPoint touchPoint) {
-			isRawInputting = true;
-			this.debounceRedrawTask.cancel();
+			// If currently panning, that means there were erroneous panning events
+			// fired. Undo them, and unset panning.
+			if (isPanning) {
+				if (panBeginOffset != pathManager.getViewportOffset()) {
+					pathManager.setViewportOffset(panBeginOffset);
+					drawBitmapToView(true);
+				}
+
+				Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:UNDO "
+						+ pathManager.getViewportOffset());
+
+				isPanning = false;
+			}
+
+			this.debounceEndDrawTask.cancel();
+
+			// If currently drawing, treat this event the same as a move event.
+			if (isDrawing) {
+				this.onRawDrawingTouchPointMoveReceived(touchPoint);
+				return;
+			}
+
+			Log.v(XenaApplication.TAG, "ScribbleActivity::onBeginRawDrawing");
+			this.cancelRedraw();
+			isDrawing = true;
 			this.previousTentativeDrawPoint.set(touchPoint.x, touchPoint.y);
 			this.currentPath = pathManager
 					.addPath(new PointF(touchPoint.x - pathManager.getViewportOffset().x,
@@ -113,15 +244,18 @@ public class ScribbleActivity extends Activity
 
 		@Override
 		public void onEndRawDrawing(boolean b, TouchPoint touchPoint) {
-			// The new path has already been loaded by the PathManager. Conclude it by
-			// drawing it onto the chunk bitmaps here.
-			pathManager.finalizePath(this.currentPath);
-			this.debounceRedraw(DEBOUNCE_REDRAW_DELAY_MS);
-			svgFileScribe.debounceSave(ScribbleActivity.this, svgUri, pathManager);
+			this.debounceEndDraw(DEBOUNCE_END_DRAW_DELAY_MS);
 		}
 
 		@Override
 		public void onRawDrawingTouchPointMoveReceived(TouchPoint touchPoint) {
+			// Log.v(XenaApplication.TAG,
+			// "ScribbleActivity::onRawDrawingTouchPointMoveReceived");
+
+			if (!isDrawing) {
+				return;
+			}
+
 			PointF lastPoint = this.currentPath.points
 					.get(this.currentPath.points.size() - 1);
 			PointF newPoint = new PointF(
@@ -153,8 +287,22 @@ public class ScribbleActivity extends Activity
 
 		@Override
 		public void onBeginRawErasing(boolean b, TouchPoint touchPoint) {
-			isRawInputting = true;
-			this.debounceRedrawTask.cancel();
+			if (isErasing) {
+				// This should be interpreted as an erase move event.
+				this.onRawErasingTouchPointMoveReceived(touchPoint);
+				return;
+			}
+
+			Log.v(XenaApplication.TAG, "ScribbleActivity::onBeginRawErasing");
+
+			// This is the beginning of an erase move sequence.
+			this.debounceEndErase(DEBOUNCE_END_ERASE_DELAY_MS);
+			isPanning = false;
+			isErasing = true;
+
+			this.cancelRedraw();
+			redraw();
+
 			this.previousErasePoint.set(
 					touchPoint.x - pathManager.getViewportOffset().x,
 					touchPoint.y - pathManager.getViewportOffset().y);
@@ -162,18 +310,27 @@ public class ScribbleActivity extends Activity
 
 		@Override
 		public void onEndRawErasing(boolean b, TouchPoint touchPoint) {
-			// Delay the raw input release since the touch events come a little later
-			// after onEndRawErasing.
-			new Timer().schedule(new TimerTask() {
-				@Override
-				public void run() {
-					isRawInputting = false;
-				}
-			}, 50);
+			if (!isErasing) {
+				return;
+			}
+
+			// Process this event as a move event.
+			this.onRawErasingTouchPointMoveReceived(touchPoint);
 		}
 
 		@Override
 		public void onRawErasingTouchPointMoveReceived(TouchPoint touchPoint) {
+			// Log.v(XenaApplication.TAG,
+			// "ScribbleActivity::onRawErasingTouchPointMoveReceived");
+
+			// Some events come after onEndRawErasing; ignore those events.
+			if (!isErasing) {
+				return;
+			}
+
+			this.debounceEndErase(DEBOUNCE_END_ERASE_DELAY_MS);
+
+			// Actual logic to handle erasing.
 			int initialSize = pathManager.getPathsCount();
 			PointF currentErasePoint = new PointF(
 					touchPoint.x - pathManager.getViewportOffset().x,
@@ -212,31 +369,103 @@ public class ScribbleActivity extends Activity
 	};
 
 	private View.OnTouchListener imageViewOnTouchListener = new View.OnTouchListener() {
-		private PointF previousPoint = new PointF(0, 0);
+		private final int FLICK_LOWER_BOUND_MS = 80;
+		private final int FLICK_UPPER_BOUND_MS = 220;
+
+		private PointF previousPoint = new PointF();
+		private long actionDownTime = 0;
 
 		@Override
 		public boolean onTouch(View v, MotionEvent event) {
-			if (isRawInputting) {
+			if (isDrawing || isErasing || isInputCooldown) {
 				return false;
 			}
+			if (isRedrawing) {
+				redraw();
+			}
+
 			PointF touchPoint = new PointF(event.getX(), event.getY());
+			long eventDurationMs = (System.nanoTime() - this.actionDownTime)
+					/ 1000000;
+
 			switch (event.getAction()) {
 				case MotionEvent.ACTION_DOWN:
-					previousPoint.x = touchPoint.x;
-					previousPoint.y = touchPoint.y;
+					// Sometimes, this fires slightly before a draw/erase event. The
+					// draw/erase event will cancel panning in that case.
+
+					if (isPanning) {
+						Log.v(XenaApplication.TAG,
+								"ScribbleActivity::onTouch:RESET "
+										+ pathManager.getViewportOffset());
+					} else {
+						Log.v(XenaApplication.TAG,
+								"ScribbleActivity::onTouch:DOWN "
+										+ pathManager.getViewportOffset());
+
+						isPanning = true;
+
+						this.actionDownTime = System.nanoTime();
+					}
+
+					panBeginOffset = pathManager.getViewportOffset();
+					this.previousPoint.x = touchPoint.x;
+					this.previousPoint.y = touchPoint.y;
+
 					break;
 				case MotionEvent.ACTION_MOVE:
+					if (!isPanning) {
+						break;
+					}
+
+					// Don't process until we exit flick range.
+					if (eventDurationMs <= FLICK_UPPER_BOUND_MS) {
+						break;
+					}
+
 					pathManager.setViewportOffset(new PointF(
 							pathManager.getViewportOffset().x + touchPoint.x
-									- previousPoint.x,
+									- this.previousPoint.x,
 							pathManager.getViewportOffset().y + touchPoint.y
-									- previousPoint.y));
-					previousPoint.x = touchPoint.x;
-					previousPoint.y = touchPoint.y;
+									- this.previousPoint.y));
+					this.previousPoint.x = touchPoint.x;
+					this.previousPoint.y = touchPoint.y;
+
+					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:MOVE "
+							+ pathManager.getViewportOffset());
+
 					drawBitmapToView(false);
+
 					// No need to reset raw input capture here, for some reason.
 					break;
 				case MotionEvent.ACTION_UP:
+					if (!isPanning) {
+						Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:IGNORE");
+						break;
+					}
+
+					// Note: ACTION_UP is not guaranteed to fire after ACTION_DOWN.
+					isPanning = false;
+
+					// Detect flicks.
+					if (eventDurationMs >= FLICK_LOWER_BOUND_MS
+							&& eventDurationMs <= FLICK_UPPER_BOUND_MS) {
+						Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:FLICK");
+
+						// Determine flick direction.
+						int direction = panBeginOffset.y < pathManager.getViewportOffset().y
+								+ touchPoint.y
+								- this.previousPoint.y
+										? 1
+										: -1;
+
+						pathManager.setViewportOffset(
+								new PointF(panBeginOffset.x,
+										panBeginOffset.y
+												+ direction * imageView.getHeight() * 0.9f));
+					} else {
+						Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:UP");
+					}
+
 					svgFileScribe.debounceSave(ScribbleActivity.this, svgUri,
 							pathManager);
 					drawBitmapToView(true);
@@ -246,7 +475,7 @@ public class ScribbleActivity extends Activity
 		}
 	};
 
-	// Switching orientiation may rebuild the activity.
+	// Switching orientation may rebuild the activity.
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);

@@ -4,4 +4,8 @@ Android SVG editor optimized for e-ink note-taking tablets, such as the Onyx Boo
 
 ## Resources
 
-* <https://www.hanshq.net/command-line-android.html>
+1. <https://www.hanshq.net/command-line-android.html>
+
+## Todo
+
+1. Make app robust against multithreading.

@@ -181,7 +181,8 @@ logcat:
 		BatteryStatsService:S SWEpdcManager:S PowerManager:S \
 		FirebaseMessaging:S KernelCpuSpeedReader:S \
 		CouchHolder:S CouchbaseLite/NETWORK:S \
-		CouchbaseLite/REPLICATOR:S BufferQueueProducer:S
+		CouchbaseLite/REPLICATOR:S BufferQueueProducer:S \
+		SELinux:S
 
 # ------------------------------------------------------------------------------
 !else

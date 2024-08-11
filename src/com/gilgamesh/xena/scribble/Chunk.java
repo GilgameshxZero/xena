@@ -35,7 +35,7 @@ public class Chunk {
 		PAINT_ERASE.setStyle(Paint.Style.STROKE);
 		PAINT_ERASE.setStrokeJoin(Paint.Join.ROUND);
 		PAINT_ERASE.setStrokeCap(Paint.Cap.ROUND);
-		PAINT_ERASE.setStrokeWidth(STROKE_WIDTH + 1);
+		PAINT_ERASE.setStrokeWidth(STROKE_WIDTH + 2);
 	}
 
 	public final int OFFSET_X;
