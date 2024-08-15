@@ -12,7 +12,6 @@ import android.graphics.PointF;
 import android.graphics.RectF;
 import android.graphics.pdf.PdfRenderer;
 import android.graphics.pdf.PdfRenderer.Page;
-import android.graphics.Color;
 import android.net.Uri;
 import android.util.DisplayMetrics;
 import android.util.Log;
