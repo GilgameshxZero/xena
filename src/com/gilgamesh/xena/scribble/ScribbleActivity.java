@@ -170,6 +170,7 @@ public class ScribbleActivity extends Activity
 					// The new path has already been loaded by the PathManager. Conclude
 					// it by drawing it onto the chunk bitmaps here.
 					isDrawing = false;
+					scribbleView.clearTentativePoints();
 					debounceRedraw(DEBOUNCE_REDRAW_DELAY_MS);
 					debounceInputCooldown(DEBOUNCE_INPUT_COOLDOWN_DELAY_MS);
 
@@ -233,6 +234,7 @@ public class ScribbleActivity extends Activity
 			this.cancelRedraw();
 			isDrawing = true;
 			this.previousTentativeDrawPoint.set(touchPoint.x, touchPoint.y);
+			scribbleView.addTentativePoint(touchPoint.x, touchPoint.y);
 			this.currentPath = pathManager
 					.addPath(new PointF(touchPoint.x - pathManager.getViewportOffset().x,
 							touchPoint.y - pathManager.getViewportOffset().y))
@@ -262,9 +264,10 @@ public class ScribbleActivity extends Activity
 			}
 			currentPath.addPoint(newPoint);
 
+			// touchHelper.setStrokeWidth(4 + touchPoint.pressure / 4096 * 8);
 			// Log.v(XenaApplication.TAG,
 			// "ScribbleActivity::onRawDrawingTouchPointMoveReceived "
-			// + scribbleView.isDrawing());
+			// + touchPoint);
 
 			if (scribbleView.isDrawing()) {
 				// Log.v(XenaApplication.TAG, "Dirty ScribbleView.");
@@ -272,6 +275,7 @@ public class ScribbleActivity extends Activity
 				scribbleViewCanvas.drawLine(previousTentativeDrawPoint.x,
 						previousTentativeDrawPoint.y, touchPoint.x, touchPoint.y,
 						PAINT_TENTATIVE_LINE);
+				// scribbleView.addTentativePoint(touchPoint.x, touchPoint.y);
 				scribbleView.postInvalidate();
 				previousTentativeDrawPoint.set(touchPoint.x, touchPoint.y);
 			}
@@ -377,9 +381,6 @@ public class ScribbleActivity extends Activity
 			if (isDrawing || isErasing || isInputCooldown) {
 				return false;
 			}
-			if (isRedrawing) {
-				redraw();
-			}
 
 			PointF touchPoint = new PointF(event.getX(), event.getY());
 			long eventDurationMs = (System.currentTimeMillis()
@@ -428,6 +429,9 @@ public class ScribbleActivity extends Activity
 					// Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:MOVE "
 					// + pathManager.getViewportOffset());
 
+					if (isRedrawing) {
+						redraw();
+					}
 					drawBitmapToView(false);
 
 					// No need to reset raw input capture here, for some reason.
