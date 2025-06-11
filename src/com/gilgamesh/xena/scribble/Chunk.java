@@ -15,7 +15,7 @@ import android.graphics.RectF;
 // Chunk stores some path IDs which are in the chunk, as well as a bitmap rendering of all paths in the chunk. The chunk also stores the offset of its top-left corner in the viewport to enable rendering.
 // Each bitmap/chunk requires around 11MB of memory for 1872x1404 space.
 public class Chunk {
-	static public final int STROKE_WIDTH = 4;
+	static public final int STROKE_WIDTH = 5;
 	static public final Paint PAINT;
 	static {
 		PAINT = new Paint();

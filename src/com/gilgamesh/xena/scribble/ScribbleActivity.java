@@ -264,7 +264,8 @@ public class ScribbleActivity extends Activity
 			}
 			currentPath.addPoint(newPoint);
 
-			// touchHelper.setStrokeWidth(4 + touchPoint.pressure / 4096 * 8);
+			// touchHelper
+			// .setStrokeWidth((float) (3.5 + touchPoint.pressure / 4096 * 3.5));
 			// Log.v(XenaApplication.TAG,
 			// "ScribbleActivity::onRawDrawingTouchPointMoveReceived "
 			// + touchPoint);
