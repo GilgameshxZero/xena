@@ -1,10 +1,8 @@
 package com.gilgamesh.xena.scribble;
 
-import com.gilgamesh.xena.XenaApplication;
 import com.gilgamesh.xena.algorithm.Geometry;
 
 import java.util.ArrayList;
-import android.util.Log;
 
 import android.graphics.Path;
 import android.graphics.Point;
