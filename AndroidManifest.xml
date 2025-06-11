@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	package="com.gilgamesh.xena" android:versionName="@string/xena_version">
+
 	<uses-sdk android:targetSdkVersion="34" />
+
 	<application android:label="Xena" android:name=".XenaApplication">
 		<activity android:name=".filesystem.FilePickerActivity"
 			android:exported="true"
