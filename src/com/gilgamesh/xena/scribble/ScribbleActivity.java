@@ -36,7 +36,9 @@ import android.view.View;
 
 public class ScribbleActivity extends Activity
 		implements View.OnClickListener {
-	static private final float DRAW_MOVE_EPSILON = 3;
+	static private final float FLICK_MOVE_RATIO = 0.8f;
+	static private final float TOUCH_BORDER_INVALID_RATIO = 0.15f;
+	static private final float DRAW_MOVE_EPSILON = 3f;
 	static private final Paint PAINT_TENTATIVE_LINE;
 	static {
 		PAINT_TENTATIVE_LINE = new Paint();
@@ -252,8 +254,7 @@ public class ScribbleActivity extends Activity
 				return;
 			}
 
-			PointF lastPoint = currentPath.points
-					.get(currentPath.points.size() - 1);
+			PointF lastPoint = currentPath.points.get(currentPath.points.size() - 1);
 			PointF newPoint = new PointF(
 					touchPoint.x - pathManager.getViewportOffset().x,
 					touchPoint.y - pathManager.getViewportOffset().y);
@@ -319,8 +320,7 @@ public class ScribbleActivity extends Activity
 			// Process this event as a move event.
 			this.onRawErasingTouchPointMoveReceived(touchPoint);
 
-			Log.v(XenaApplication.TAG,
-					"ScribbleActivity::onEndRawErasing");
+			Log.v(XenaApplication.TAG, "ScribbleActivity::onEndRawErasing");
 		}
 
 		@Override
@@ -400,13 +400,24 @@ public class ScribbleActivity extends Activity
 						Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:RESET "
 								+ pathManager.getViewportOffset());
 					} else {
-						// TODO: Only count actions that don't start near the border.
-						Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:DOWN "
-								+ pathManager.getViewportOffset());
+						RectF bounds = new RectF(
+								scribbleView.getWidth()
+										* ScribbleActivity.TOUCH_BORDER_INVALID_RATIO,
+								scribbleView.getHeight()
+										* ScribbleActivity.TOUCH_BORDER_INVALID_RATIO,
+								scribbleView.getWidth()
+										* (1 - ScribbleActivity.TOUCH_BORDER_INVALID_RATIO),
+								scribbleView.getHeight()
+										* (1 - ScribbleActivity.TOUCH_BORDER_INVALID_RATIO));
+						if (bounds.contains(touchPoint.x, touchPoint.y)) {
+							// Only count actions that don't start near the border.
+							Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:DOWN "
+									+ pathManager.getViewportOffset());
 
-						isPanning = true;
+							isPanning = true;
 
-						this.actionDownTimeMs = System.currentTimeMillis();
+							this.actionDownTimeMs = System.currentTimeMillis();
+						}
 					}
 
 					panBeginOffset = pathManager.getViewportOffset();
@@ -462,7 +473,8 @@ public class ScribbleActivity extends Activity
 
 						pathManager
 								.setViewportOffset(new PointF(panBeginOffset.x, panBeginOffset.y
-										+ direction * scribbleView.getHeight() * 0.9f));
+										+ direction * scribbleView.getHeight()
+												* ScribbleActivity.FLICK_MOVE_RATIO));
 					} else {
 						Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:UP");
 					}
@@ -499,7 +511,10 @@ public class ScribbleActivity extends Activity
 
 	@Override
 	protected void onResume() {
-		this.touchHelper.setStrokeWidth(Chunk.STROKE_WIDTH)
+		this.touchHelper.setRawDrawingEnabled(false).setLimitRect(
+				new Rect(0, 0, this.scribbleView.getWidth(),
+						this.scribbleView.getHeight()),
+				new ArrayList<>()).setStrokeWidth(Chunk.STROKE_WIDTH)
 				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
 				.setRawDrawingEnabled(true);
 		super.onResume();
