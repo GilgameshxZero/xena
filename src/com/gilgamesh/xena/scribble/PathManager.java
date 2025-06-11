@@ -154,8 +154,16 @@ public class PathManager {
 	}
 
 	public void setZoomScale(float zoomScale) {
+		// Also update the viewport offset so that scale functions according to the
+		// center of the screen.
+		PointF newViewportOffset = new PointF(
+				this.viewportOffset.x - this.CHUNK_SIZE.x / this.zoomScale / 2
+						+ this.CHUNK_SIZE.x / zoomScale / 2,
+				this.viewportOffset.y - this.CHUNK_SIZE.y / this.zoomScale / 2
+						+ this.CHUNK_SIZE.y / zoomScale / 2);
+
 		this.zoomScale = zoomScale;
-		this.updateCurrentChunk();
+		this.setViewportOffset(newViewportOffset);
 	}
 
 	public ArrayList<Chunk> getVisibleChunks() {
@@ -166,9 +174,9 @@ public class PathManager {
 						this.currentChunk.y + j);
 				Chunk chunk = chunks.get(chunkCoordinate);
 				if (chunk == null) {
-					chunk = new Chunk(this, CHUNK_SIZE.x,
-							CHUNK_SIZE.y, chunkCoordinate.x * CHUNK_SIZE.x,
-							chunkCoordinate.y * CHUNK_SIZE.y);
+					chunk = new Chunk(this, this.CHUNK_SIZE.x,
+							this.CHUNK_SIZE.y, chunkCoordinate.x * this.CHUNK_SIZE.x,
+							chunkCoordinate.y * this.CHUNK_SIZE.y);
 					chunks.put(chunkCoordinate, chunk);
 				}
 				visibleChunks.add(chunk);

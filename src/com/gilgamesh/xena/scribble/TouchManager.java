@@ -96,7 +96,7 @@ public class TouchManager implements View.OnTouchListener {
 										- this.previousPoint.y)
 										/ this.scribbleActivity.pathManager.getZoomScale());
 				this.scribbleActivity.pathManager.setViewportOffset(newOffset);
-				this.scribbleActivity.updateTextView(newOffset);
+				this.scribbleActivity.updateTextView();
 			}
 				this.previousPoint.x = touchPoint.x;
 				this.previousPoint.y = touchPoint.y;
@@ -138,7 +138,7 @@ public class TouchManager implements View.OnTouchListener {
 												* TouchManager.FLICK_MOVE_RATIO
 												/ this.scribbleActivity.pathManager.getZoomScale());
 						this.scribbleActivity.pathManager.setViewportOffset(newOffset);
-						this.scribbleActivity.updateTextView(newOffset);
+						this.scribbleActivity.updateTextView();
 					}
 				} else {
 					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:UP");
@@ -184,8 +184,7 @@ public class TouchManager implements View.OnTouchListener {
 				ScribbleActivity.PAINT_TENTATIVE_LINE.setStrokeWidth(
 						Chunk.STROKE_WIDTH
 								* this.scribbleActivity.pathManager.getZoomScale());
-				this.scribbleActivity.updateTextView(
-						this.scribbleActivity.pathManager.getViewportOffset());
+				this.scribbleActivity.updateTextView();
 				break;
 		}
 		return true;
