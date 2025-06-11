@@ -1,6 +1,7 @@
 package com.gilgamesh.xena.scribble;
 
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,7 +17,7 @@ public class PathManager {
 	private final PathManager that = this;
 
 	// Size of one chunk is one viewport, always.
-	private final Point CHUNK_SIZE;
+	public final Point CHUNK_SIZE;
 
 	// Maps ID -> Compound path.
 	private HashMap<Integer, CompoundPath> paths = new HashMap<Integer, CompoundPath>();
@@ -30,6 +31,8 @@ public class PathManager {
 	private PointF viewportOffset = new PointF(0, 0);
 
 	private Point currentChunk = new Point(0, 0);
+
+	private float zoomScale = 1;
 
 	public PathManager(Point chunkSize) {
 		this.CHUNK_SIZE = chunkSize;
@@ -129,10 +132,15 @@ public class PathManager {
 
 	public void setViewportOffset(PointF offset) {
 		this.viewportOffset = offset;
+		this.updateCurrentChunk();
+	}
 
-		// Load chunks.
-		Point newChunk = new Point((int) -Math.floor(offset.x / CHUNK_SIZE.x),
-				(int) -Math.floor(offset.y / CHUNK_SIZE.y));
+	private void updateCurrentChunk() {
+		Point newChunk = new Point(
+				(int) -Math
+						.floor(this.viewportOffset.x / CHUNK_SIZE.x),
+				(int) -Math
+						.floor(this.viewportOffset.y / CHUNK_SIZE.y));
 		if (!newChunk.equals(this.currentChunk)) {
 			Log.v(XenaApplication.TAG,
 					"PathManager::setViewportOffset: Moved into new chunk "
@@ -141,21 +149,29 @@ public class PathManager {
 		}
 	}
 
-	public Chunk[] getVisibleChunks() {
-		Chunk[] visibleChunks = new Chunk[4];
-		Point[] chunkCoordinates = new Point[] {
-				new Point(this.currentChunk),
-				new Point(this.currentChunk.x - 1, this.currentChunk.y),
-				new Point(this.currentChunk.x, this.currentChunk.y - 1),
-				new Point(this.currentChunk.x - 1, this.currentChunk.y - 1)
-		};
-		for (int i = 0; i < 4; i++) {
-			visibleChunks[i] = chunks.get(chunkCoordinates[i]);
-			if (visibleChunks[i] == null) {
-				visibleChunks[i] = new Chunk(this, CHUNK_SIZE.x,
-						CHUNK_SIZE.y, chunkCoordinates[i].x * CHUNK_SIZE.x,
-						chunkCoordinates[i].y * CHUNK_SIZE.y);
-				chunks.put(chunkCoordinates[i], visibleChunks[i]);
+	public float getZoomScale() {
+		return this.zoomScale;
+	}
+
+	public void setZoomScale(float zoomScale) {
+		this.zoomScale = zoomScale;
+		this.updateCurrentChunk();
+	}
+
+	public ArrayList<Chunk> getVisibleChunks() {
+		ArrayList<Chunk> visibleChunks = new ArrayList<Chunk>();
+		for (int i = -1; i < Math.ceil(1 / this.zoomScale); i++) {
+			for (int j = -1; j < Math.ceil(1 / this.zoomScale); j++) {
+				Point chunkCoordinate = new Point(this.currentChunk.x + i,
+						this.currentChunk.y + j);
+				Chunk chunk = chunks.get(chunkCoordinate);
+				if (chunk == null) {
+					chunk = new Chunk(this, CHUNK_SIZE.x,
+							CHUNK_SIZE.y, chunkCoordinate.x * CHUNK_SIZE.x,
+							chunkCoordinate.y * CHUNK_SIZE.y);
+					chunks.put(chunkCoordinate, chunk);
+				}
+				visibleChunks.add(chunk);
 			}
 		}
 		return visibleChunks;

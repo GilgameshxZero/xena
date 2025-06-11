@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.gilgamesh.xena" android:versionName="@string/xena_version">
+	package="com.gilgamesh.xena"
+	android:versionName="@string/xena_version">
 
 	<uses-sdk android:targetSdkVersion="34" />
 
@@ -14,7 +15,8 @@
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 		</activity>
-		<activity android:name=".scribble.ScribbleActivity" android:exported="true"
+		<activity android:name=".scribble.ScribbleActivity"
+			android:exported="true"
 			android:launchMode="singleTop"
 			android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
 			<intent-filter>
