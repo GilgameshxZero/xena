@@ -27,4 +27,11 @@ public class Geometry {
 		return (float) Math
 				.sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
 	}
+
+	static public float distanceToLine(PointF a, PointF b, PointF c) {
+		return Math
+				.abs((c.y - b.y) * a.x - (c.x - b.x) * a.y + c.x * b.y - c.y * b.x)
+				/ (float) Math
+						.sqrt((c.y - b.y) * (c.y - b.y) + (c.x - b.x) * (c.x - b.x));
+	}
 }

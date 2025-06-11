@@ -3,6 +3,7 @@
 	<item name="activity_file_picker" type="id" />
 	<item name="activity_file_picker_button_load_svg" type="id" />
 	<item name="activity_file_picker_button_load_pdf" type="id" />
+	<item name="activity_file_picker_text_version" type="id" />
 
 	<item name="activity_scribble_scribble_view" type="id" />
 </resources>

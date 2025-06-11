@@ -9,6 +9,10 @@ Android SVG editor optimized for e-ink note-taking tablets, such as the Onyx Boo
 
 Dependencies are automatically installed by `make`. The first time running `make`, there may be Android licenses to manually accept.
 
+The JDK is used by VSCode Java extensions. Without the JDK, formatting will fail.
+
+`JAVA_HOME` should be set to either the JDK path in this project, or a system-wide JDK installation. It may be overridden with `java.jdt.ls.java.home` for just this project. Unfortunately, this setting is relative to not this project path, and may not be set in VC.
+
 ## Connecting with `adb`
 
 `adb` is required to run apps on any attached devices. To attach to a LAN device over TCP/IP:

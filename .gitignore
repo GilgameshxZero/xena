@@ -1,6 +1,10 @@
 android/
 bin/
 java/
-lib/
+# Libraries are committed because they are relatively small and Onyx support is not reliable.
+# lib/
 obj/
 priv/
+
+# Makefile artifacts.
+**.tmp

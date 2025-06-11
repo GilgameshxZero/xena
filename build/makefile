@@ -40,11 +40,10 @@ PACKAGE_NAME = com.gilgamesh.$(PROJECT_NAME)
 MAIN_CLASS = filesystem.FilePickerActivity
 ROOT_DIR = $(MAKEDIR)\..^\
 # All library files to be declared here.
-LIB_NAME_MARKER_VERSION = 1.6.47.2
 LIB_NAMES = \
-repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-base/$(LIB_NAME_MARKER_VERSION):onyxsdk-base-$(LIB_NAME_MARKER_VERSION):aar \
-repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-device/1.2.24:onyxsdk-device-1.2.24:aar \
-repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-pen/1.4.7:onyxsdk-pen-1.4.7:aar \
+repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-base/1.7.6:onyxsdk-base-1.7.6:aar \
+repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-device/1.2.30:onyxsdk-device-1.2.30:aar \
+repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-pen/1.4.11:onyxsdk-pen-1.4.11:aar \
 repo1.maven.org/maven2/io/reactivex/rxjava2/rxjava/2.2.21:rxjava-2.2.21:jar \
 repo1.maven.org/maven2/io/reactivex/rxjava2/rxandroid/2.1.1:rxandroid-2.1.1:aar \
 repo1.maven.org/maven2/org/reactivestreams/reactive-streams/1.0.4:reactive-streams-1.0.4:jar
@@ -61,8 +60,8 @@ PLATFORM_DIR = $(ADK_DIR)platforms\android-$(BUILD_ANDROID_VERSION)^\
 # Default/build target only compiles and links, but does not run.
 _default: build
 
-# Download and extract JDK 17.
-$(JDK_DIR)bin\jar.exe:
+# Download and extract JDK.
+$(JDK_DIR).make:
 	@IF EXIST $(ROOT_DIR)java RD /Q /S $(ROOT_DIR)java
 	@MD $(ROOT_DIR)java
 	@ECHO Downloading $(JDK_DOWNLOAD_URI)...
@@ -73,9 +72,10 @@ $(JDK_DIR)bin\jar.exe:
 	@ECHO Extracting to $(JDK_DIR)...
 	@TAR -xf $(ROOT_DIR)java\jdk.zip -C $(ROOT_DIR)java
 	@DEL $(ROOT_DIR)java\jdk.zip
+	@COPY NUL $(JDK_DIR).make
 
 # Download and extract all relevant Android development tools.
-$(BUILD_TOOLS_DIR)aapt.exe: $(JDK_DIR)bin\jar.exe
+$(ADK_DIR).make: $(JDK_DIR).make
 	@IF EXIST $(ROOT_DIR)android RD /Q /S $(ROOT_DIR)android
 	@MD $(ROOT_DIR)android
 	@ECHO Downloading $(ADK_CMD_DOWNLOAD_URI)...
@@ -94,14 +94,15 @@ $(BUILD_TOOLS_DIR)aapt.exe: $(JDK_DIR)bin\jar.exe
 		"platforms;android-$(BUILD_ANDROID_VERSION)" \
 		"build-tools;$(BUILD_ANDROID_VERSION).0.0" \
 		"platform-tools"
+	@COPY NUL $(ADK_DIR).make
 
 # Use the provided `adb`.
-adb: $(BUILD_TOOLS_DIR)aapt.exe
+adb: $(ADK_DIR).make
 	@CALL SET "JAVA_HOME=$(JDK_DIR)" && $(PLATFORM_TOOLS_DIR)adb $(ARGS)
 
 # All libraries are made together. The last file is specified as target to track
 # dependency, since tracking a directory is not possible.
-$(ROOT_DIR)lib\reactive-streams-1.0.4.jar: $(JDK_DIR)bin\jar.exe
+$(ROOT_DIR)lib\.make: $(JDK_DIR).make
 	@IF EXIST $(ROOT_DIR)lib RD /Q /S $(ROOT_DIR)lib
 	@MD $(ROOT_DIR)lib
 	@FOR %%I IN ($(LIB_NAMES)) DO @( \
@@ -119,9 +120,10 @@ $(ROOT_DIR)lib\reactive-streams-1.0.4.jar: $(JDK_DIR)bin\jar.exe
 			) \
 		) \
 	)
+	@COPY NUL $(ROOT_DIR)lib\.make
 
 # Create R.java.
-$(ROOT_DIR)src\$(PACKAGE_PATH)\R.java: $(BUILD_TOOLS_DIR)aapt.exe $(ROOT_DIR)res\layout\* $(ROOT_DIR)res\values\* $(ROOT_DIR)res\drawable\*
+$(ROOT_DIR)src\$(PACKAGE_PATH)\R.java: $(ADK_DIR).make $(ROOT_DIR)res\layout\* $(ROOT_DIR)res\values\* $(ROOT_DIR)res\drawable\*
 	@ECHO Creating $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java...
 	@IF NOT EXIST $(ROOT_DIR)obj MD $(ROOT_DIR)obj
 	@CALL $(BUILD_TOOLS_DIR)aapt.exe package -f -m \
@@ -130,7 +132,7 @@ $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java: $(BUILD_TOOLS_DIR)aapt.exe $(ROOT_DIR)res
 		-M "$(ROOT_DIR)AndroidManifest.xml" \
 		-I $(PLATFORM_DIR)android.jar
 
-$(ROOT_DIR)priv\$(PROJECT_NAME).debug.keystore:
+$(ROOT_DIR)priv\$(PROJECT_NAME).debug.keystore: $(JDK_DIR).make
 	@ECHO Creating $(ROOT_DIR)priv\$(PROJECT_NAME).debug.keystore...
 	@CALL "$(JDK_DIR)bin\keytool" -genkey -validity 10000 \
 		-dname "CN=AndroidDebug, O=Android, C=US" \
@@ -139,9 +141,9 @@ $(ROOT_DIR)priv\$(PROJECT_NAME).debug.keystore:
 		-alias android_debug_key -keyalg RSA -keysize 2048
 
 # Compile target: .java to .class.
-$(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class: $(ROOT_DIR)lib\reactive-streams-1.0.4.jar $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java $(ROOT_DIR)src\$(PACKAGE_PATH)\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\filesystem\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\scribble\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\pdf\*.java
+$(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class: $(JDK_DIR).make $(ROOT_DIR)lib\.make $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java $(ROOT_DIR)src\$(PACKAGE_PATH)\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\filesystem\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\scribble\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\pdf\*.java
 	@ECHO Compiling to .class...
-	@DIR /A-D /S /B $(ROOT_DIR)src\*.java > src.txt
+	@DIR /A-D /S /B $(ROOT_DIR)src\*.java > src.tmp
 	@CALL "$(JDK_DIR)bin\javac" \
 		-source $(JAVA_SOURCE_VERSION) \
 		-target $(JAVA_SOURCE_VERSION) \
@@ -149,11 +151,11 @@ $(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class: $(ROOT_DIR)lib\reactive-streams-1.0.4.ja
 		-cp "$(PLATFORM_DIR)android.jar";"$(ROOT_DIR)lib\*" \
 		-sourcepath "$(ROOT_DIR)src" \
 		-Xlint:deprecation \
-		@src.txt
-	@DEL src.txt
+		@src.tmp
+	@DEL src.tmp
 
 # Build target. R.class is used as dependency alias for compilation.
-$(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk: $(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class $(ROOT_DIR)priv\$(PROJECT_NAME).$(BUILD_NAME).keystore $(ROOT_DIR)AndroidManifest.xml
+$(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk: $(ADK_DIR).make $(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class $(ROOT_DIR)priv\$(PROJECT_NAME).$(BUILD_NAME).keystore $(ROOT_DIR)AndroidManifest.xml
 	@ECHO Building to $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk...
 	@IF NOT EXIST $(ROOT_DIR)bin MD $(ROOT_DIR)bin
 # Generate APK.
@@ -163,15 +165,15 @@ $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk: $(ROOT_DIR)obj\$(PACKAGE_PATH)
 		-S "$(ROOT_DIR)res" \
 		-I $(PLATFORM_DIR)/android.jar
 # Convert to DEX.
-	@DIR /A-D /S /B $(ROOT_DIR)obj\*.class > obj.txt
+	@DIR /A-D /S /B $(ROOT_DIR)obj\*.class > obj.tmp
 	@CALL SET "JAVA_HOME=$(JDK_DIR)" && $(BUILD_TOOLS_DIR)d8.bat \
 		--lib "$(PLATFORM_DIR)android.jar" \
 		--min-api 34 \
 		--$(BUILD_NAME) \
 		--output $(ROOT_DIR)bin \
-		@obj.txt \
+		@obj.tmp \
 		$(ROOT_DIR)lib\*.jar
-	@DEL obj.txt
+	@DEL obj.tmp
 # For some reason, aapt add only works for classes.dex in the current directory
 	@MOVE "$(ROOT_DIR)bin\classes.dex" . >NUL
 	@CALL SET "JAVA_HOME=$(JDK_DIR)" && $(BUILD_TOOLS_DIR)aapt.exe add \
@@ -203,11 +205,13 @@ $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk: $(ROOT_DIR)obj\$(PACKAGE_PATH)
 
 build: $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk
 
-# Build and run.
+# Build and install. App may not run if timings are off.
 run: $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk
 	@ECHO Uninstalling from device...
 	@CALL $(PLATFORM_TOOLS_DIR)adb.exe uninstall $(PACKAGE_NAME) &
 	@CALL $(PLATFORM_TOOLS_DIR)adb.exe install -r $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk
+	@ECHO Cooling down after install...
+	@TIMEOUT /T 2 >NUL
 	@CALL $(PLATFORM_TOOLS_DIR)adb.exe shell am start $(PACKAGE_NAME)/$(PACKAGE_NAME).$(MAIN_CLASS)
 
 # Clean target removes all intermediates.

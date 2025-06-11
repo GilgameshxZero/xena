@@ -79,7 +79,7 @@ public class ScribbleActivity extends Activity
 
 	public void redraw() {
 		this.isRedrawing = false;
-		this.drawBitmapToView(true);
+		this.drawBitmapToView(true, true);
 		this.touchHelper.setRawDrawingEnabled(false).setRawDrawingEnabled(true);
 	}
 
@@ -213,7 +213,7 @@ public class ScribbleActivity extends Activity
 			if (isPanning) {
 				if (panBeginOffset != pathManager.getViewportOffset()) {
 					pathManager.setViewportOffset(panBeginOffset);
-					drawBitmapToView(true);
+					drawBitmapToView(true, true);
 				}
 
 				Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:UNDO "
@@ -264,8 +264,6 @@ public class ScribbleActivity extends Activity
 			}
 			currentPath.addPoint(newPoint);
 
-			// touchHelper
-			// .setStrokeWidth((float) (3.5 + touchPoint.pressure / 4096 * 3.5));
 			// Log.v(XenaApplication.TAG,
 			// "ScribbleActivity::onRawDrawingTouchPointMoveReceived "
 			// + touchPoint);
@@ -273,6 +271,8 @@ public class ScribbleActivity extends Activity
 			if (scribbleView.isDrawing()) {
 				// Log.v(XenaApplication.TAG, "Dirty ScribbleView.");
 			} else {
+				// Draw line for the purposes of screenshare, which does not capture any
+				// raw drawing activities.
 				scribbleViewCanvas.drawLine(previousTentativeDrawPoint.x,
 						previousTentativeDrawPoint.y, touchPoint.x, touchPoint.y,
 						PAINT_TENTATIVE_LINE);
@@ -318,18 +318,21 @@ public class ScribbleActivity extends Activity
 
 			// Process this event as a move event.
 			this.onRawErasingTouchPointMoveReceived(touchPoint);
+
+			Log.v(XenaApplication.TAG,
+					"ScribbleActivity::onEndRawErasing");
 		}
 
 		@Override
 		public void onRawErasingTouchPointMoveReceived(TouchPoint touchPoint) {
-			// Log.v(XenaApplication.TAG,
-			// "ScribbleActivity::onRawErasingTouchPointMoveReceived");
-
-			// Some events come after onEndRawErasing; ignore those events.
+			// Some events come after onEndRawErasing; instead of ignoring those
+			// events, we restart erasing at this time.
 			if (!isErasing) {
-				return;
+				this.onBeginRawErasing(false, touchPoint);
 			}
 
+			// Log.v(XenaApplication.TAG,
+			// "ScribbleActivity::onRawErasingTouchPointMoveReceived");
 			this.debounceEndErase(DEBOUNCE_END_ERASE_DELAY_MS);
 
 			// Actual logic to handle erasing.
@@ -350,9 +353,10 @@ public class ScribbleActivity extends Activity
 			}
 
 			if (initialSize != pathManager.getPathsCount()) {
-				drawBitmapToView(true);
+				drawBitmapToView(true, true);
 				svgFileScribe.debounceSave(ScribbleActivity.this, svgUri, pathManager);
 			}
+
 			this.previousErasePoint.set(currentErasePoint);
 		}
 
@@ -396,6 +400,7 @@ public class ScribbleActivity extends Activity
 						Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:RESET "
 								+ pathManager.getViewportOffset());
 					} else {
+						// TODO: Only count actions that don't start near the border.
 						Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:DOWN "
 								+ pathManager.getViewportOffset());
 
@@ -433,7 +438,7 @@ public class ScribbleActivity extends Activity
 					if (isRedrawing) {
 						redraw();
 					}
-					drawBitmapToView(false);
+					drawBitmapToView(false, true);
 
 					// No need to reset raw input capture here, for some reason.
 					break;
@@ -464,7 +469,7 @@ public class ScribbleActivity extends Activity
 
 					svgFileScribe.debounceSave(ScribbleActivity.this, svgUri,
 							pathManager);
-					drawBitmapToView(true);
+					drawBitmapToView(true, true);
 					break;
 			}
 			return true;
@@ -494,7 +499,9 @@ public class ScribbleActivity extends Activity
 
 	@Override
 	protected void onResume() {
-		this.touchHelper.setRawDrawingEnabled(true);
+		this.touchHelper.setStrokeWidth(Chunk.STROKE_WIDTH)
+				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
+				.setRawDrawingEnabled(true);
 		super.onResume();
 	}
 
@@ -546,7 +553,7 @@ public class ScribbleActivity extends Activity
 				Bitmap.Config.ARGB_8888);
 		this.scribbleViewCanvas = new Canvas(this.scribbleViewBitmap);
 		this.scribbleView.setImageBitmap(this.scribbleViewBitmap);
-		drawBitmapToView(true);
+		drawBitmapToView(true, true);
 
 		this.touchHelper
 				.setLimitRect(
@@ -556,7 +563,7 @@ public class ScribbleActivity extends Activity
 				.openRawDrawing().setRawDrawingEnabled(true);
 	}
 
-	private void drawBitmapToView(boolean force) {
+	private void drawBitmapToView(boolean force, boolean invalidate) {
 		if (!force && scribbleView.isDrawing()) {
 			// Log.v(XenaApplication.TAG, "Dirty ScribbleView.");
 			return;
@@ -587,6 +594,8 @@ public class ScribbleActivity extends Activity
 					chunk.OFFSET_Y + pathManager.getViewportOffset().y, null);
 		}
 
-		this.scribbleView.postInvalidate();
+		if (invalidate) {
+			this.scribbleView.postInvalidate();
+		}
 	}
 }

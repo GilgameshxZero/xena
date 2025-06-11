@@ -1,6 +1,3 @@
 {
-	"recommendations": [
-		"redhat.java",
-		"redhat.vscode-xml"
-	]
+	"recommendations": ["redhat.java", "redhat.vscode-xml"]
 }
