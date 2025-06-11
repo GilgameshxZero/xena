@@ -22,4 +22,9 @@
 		android:background="@drawable/button"
 		android:onClick="onClick"
 		android:text="LOAD PDF" />
+	<TextView
+		android:id="@+id/activity_file_picker_text_version"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="@string/xena_version" />
 </LinearLayout>

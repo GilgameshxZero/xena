@@ -4,11 +4,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.PointF;
 import android.widget.ImageView;
 import android.util.AttributeSet;
-
-import java.util.ArrayList;
 
 import android.content.Context;
 

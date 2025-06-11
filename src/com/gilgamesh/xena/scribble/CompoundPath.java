@@ -1,8 +1,10 @@
 package com.gilgamesh.xena.scribble;
 
+import com.gilgamesh.xena.XenaApplication;
 import com.gilgamesh.xena.algorithm.Geometry;
 
 import java.util.ArrayList;
+import android.util.Log;
 
 import android.graphics.Path;
 import android.graphics.Point;
@@ -11,8 +13,7 @@ import android.graphics.RectF;
 
 // Path which has accessible coordinates, and other utilities for drawing and detection.
 public class CompoundPath {
-	static public final float SHORT_DISTANCE_EPS = 8;
-	static public final float BOUNDS_AREA_EPS = 64;
+	static public final float SHORT_DISTANCE_EPS = 16;
 
 	static public abstract class Callback {
 		public abstract void onPointAdded(CompoundPath that, PointF previousPoint,
@@ -44,32 +45,36 @@ public class CompoundPath {
 	}
 
 	public boolean isIntersectingSegment(PointF start, PointF end) {
-		// If this path is small enough, erase it if it is within some distance of
-		// the segment ends.
-		if (this.bounds.width()
-				* this.bounds.height() < CompoundPath.BOUNDS_AREA_EPS
-				&& Geometry.distance(start,
-						this.points.get(0)) < CompoundPath.SHORT_DISTANCE_EPS
-				&& Geometry.distance(end,
-						this.points.get(0)) < CompoundPath.SHORT_DISTANCE_EPS) {
-			return true;
-		}
-
 		// Quick check to see if we even need to iterate through the whole path.
-		if (!(this.bounds.contains(start.x, start.y)
-				|| this.bounds.contains(end.x, end.y)
+		RectF expandedBounds = new RectF(
+				this.bounds.left - CompoundPath.SHORT_DISTANCE_EPS,
+				this.bounds.top - CompoundPath.SHORT_DISTANCE_EPS,
+				this.bounds.right + CompoundPath.SHORT_DISTANCE_EPS,
+				this.bounds.bottom + CompoundPath.SHORT_DISTANCE_EPS);
+		if (!(expandedBounds.contains(start.x, start.y)
+				|| expandedBounds.contains(end.x, end.y)
 				|| Geometry.isSegmentsIntersecting(
-						new PointF(this.bounds.left, this.bounds.top),
-						new PointF(this.bounds.right, this.bounds.bottom), start, end)
+						new PointF(this.bounds.left - CompoundPath.SHORT_DISTANCE_EPS,
+								this.bounds.top - CompoundPath.SHORT_DISTANCE_EPS),
+						new PointF(this.bounds.right + CompoundPath.SHORT_DISTANCE_EPS,
+								this.bounds.bottom + CompoundPath.SHORT_DISTANCE_EPS),
+						start, end)
 				|| Geometry.isSegmentsIntersecting(
-						new PointF(this.bounds.right, this.bounds.top),
-						new PointF(this.bounds.left, this.bounds.bottom), start, end))) {
+						new PointF(this.bounds.right + CompoundPath.SHORT_DISTANCE_EPS,
+								this.bounds.top - CompoundPath.SHORT_DISTANCE_EPS),
+						new PointF(this.bounds.left - CompoundPath.SHORT_DISTANCE_EPS,
+								this.bounds.bottom + CompoundPath.SHORT_DISTANCE_EPS),
+						start, end))) {
 			return false;
 		}
 
 		for (int i = 0; i < points.size() - 1; i++) {
 			if (Geometry.isSegmentsIntersecting(points.get(i), points.get(i + 1),
-					start, end)) {
+					start, end)
+					|| Geometry.distance(points.get(i),
+							start) < CompoundPath.SHORT_DISTANCE_EPS
+					|| Geometry.distance(points.get(i),
+							end) < CompoundPath.SHORT_DISTANCE_EPS) {
 				return true;
 			}
 		}
