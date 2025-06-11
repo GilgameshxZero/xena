@@ -33,12 +33,14 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.TextView;
 
 public class ScribbleActivity extends Activity
 		implements View.OnClickListener {
 	static private final float FLICK_MOVE_RATIO = 0.8f;
-	static private final float TOUCH_BORDER_INVALID_RATIO = 0.15f;
+	static private final float TOUCH_BORDER_INVALID_RATIO = 0.1f;
 	static private final float DRAW_MOVE_EPSILON = 3f;
+	static private final float ZOOM_STEP = 2f;
 	static private final Paint PAINT_TENTATIVE_LINE;
 	static {
 		PAINT_TENTATIVE_LINE = new Paint();
@@ -71,6 +73,7 @@ public class ScribbleActivity extends Activity
 	private Uri svgUri;
 	// pdfUri is null if no PDF is loaded.
 	private Uri pdfUri;
+	private TextView textView;
 
 	private boolean isDrawing = false;
 	private boolean isErasing = false;
@@ -215,6 +218,7 @@ public class ScribbleActivity extends Activity
 			if (isPanning) {
 				if (panBeginOffset != pathManager.getViewportOffset()) {
 					pathManager.setViewportOffset(panBeginOffset);
+					updateTextView(panBeginOffset);
 					drawBitmapToView(true, true);
 				}
 
@@ -238,8 +242,11 @@ public class ScribbleActivity extends Activity
 			this.previousTentativeDrawPoint.set(touchPoint.x, touchPoint.y);
 			scribbleView.addTentativePoint(touchPoint.x, touchPoint.y);
 			this.currentPath = pathManager
-					.addPath(new PointF(touchPoint.x - pathManager.getViewportOffset().x,
-							touchPoint.y - pathManager.getViewportOffset().y))
+					.addPath(new PointF(
+							touchPoint.x / pathManager.getZoomScale()
+									- pathManager.getViewportOffset().x,
+							touchPoint.y / pathManager.getZoomScale()
+									- pathManager.getViewportOffset().y))
 					.getValue();
 		}
 
@@ -256,8 +263,10 @@ public class ScribbleActivity extends Activity
 
 			PointF lastPoint = currentPath.points.get(currentPath.points.size() - 1);
 			PointF newPoint = new PointF(
-					touchPoint.x - pathManager.getViewportOffset().x,
-					touchPoint.y - pathManager.getViewportOffset().y);
+					touchPoint.x / pathManager.getZoomScale()
+							- pathManager.getViewportOffset().x,
+					touchPoint.y / pathManager.getZoomScale()
+							- pathManager.getViewportOffset().y);
 
 			if (currentPath.points.size() > 1
 					&& Geometry.distance(lastPoint, newPoint) < DRAW_MOVE_EPSILON) {
@@ -307,8 +316,10 @@ public class ScribbleActivity extends Activity
 			redraw();
 
 			this.previousErasePoint.set(
-					touchPoint.x - pathManager.getViewportOffset().x,
-					touchPoint.y - pathManager.getViewportOffset().y);
+					touchPoint.x / pathManager.getZoomScale()
+							- pathManager.getViewportOffset().x,
+					touchPoint.y / pathManager.getZoomScale()
+							- pathManager.getViewportOffset().y);
 		}
 
 		@Override
@@ -338,8 +349,10 @@ public class ScribbleActivity extends Activity
 			// Actual logic to handle erasing.
 			int initialSize = pathManager.getPathsCount();
 			PointF currentErasePoint = new PointF(
-					touchPoint.x - pathManager.getViewportOffset().x,
-					touchPoint.y - pathManager.getViewportOffset().y);
+					touchPoint.x / pathManager.getZoomScale()
+							- pathManager.getViewportOffset().x,
+					touchPoint.y / pathManager.getZoomScale()
+							- pathManager.getViewportOffset().y);
 
 			for (Chunk chunk : pathManager.getVisibleChunks()) {
 				// Copy so that concurrent read/writes don't happen.
@@ -377,9 +390,11 @@ public class ScribbleActivity extends Activity
 	private View.OnTouchListener scribbleViewOnTouchListener = new View.OnTouchListener() {
 		private final int FLICK_LOWER_BOUND_MS = 80;
 		private final int FLICK_UPPER_BOUND_MS = 220;
+		private final float ZOOM_DISTANCE_BOUND = 128;
 
 		private PointF previousPoint = new PointF();
 		private long actionDownTimeMs = 0;
+		private float zoomBeginDistance;
 
 		@Override
 		public boolean onTouch(View v, MotionEvent event) {
@@ -435,20 +450,24 @@ public class ScribbleActivity extends Activity
 						break;
 					}
 
-					pathManager.setViewportOffset(new PointF(
-							pathManager.getViewportOffset().x + touchPoint.x
-									- this.previousPoint.x,
-							pathManager.getViewportOffset().y + touchPoint.y
-									- this.previousPoint.y));
+				{
+					PointF newOffset = new PointF(
+							pathManager.getViewportOffset().x + (touchPoint.x
+									- this.previousPoint.x) / pathManager.getZoomScale(),
+							pathManager.getViewportOffset().y + (touchPoint.y
+									- this.previousPoint.y) / pathManager.getZoomScale());
+					pathManager.setViewportOffset(newOffset);
+					updateTextView(newOffset);
+				}
 					this.previousPoint.x = touchPoint.x;
 					this.previousPoint.y = touchPoint.y;
 
 					// Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:MOVE "
 					// + pathManager.getViewportOffset());
 
-					if (isRedrawing) {
-						redraw();
-					}
+					// if (isRedrawing) {
+					// redraw();
+					// }
 					drawBitmapToView(false, true);
 
 					// No need to reset raw input capture here, for some reason.
@@ -470,11 +489,14 @@ public class ScribbleActivity extends Activity
 						// Determine flick direction.
 						int direction = panBeginOffset.y < pathManager.getViewportOffset().y
 								+ touchPoint.y - this.previousPoint.y ? 1 : -1;
-
-						pathManager
-								.setViewportOffset(new PointF(panBeginOffset.x, panBeginOffset.y
-										+ direction * scribbleView.getHeight()
-												* ScribbleActivity.FLICK_MOVE_RATIO));
+						{
+							PointF newOffset = new PointF(panBeginOffset.x, panBeginOffset.y
+									+ direction * scribbleView.getHeight()
+											* ScribbleActivity.FLICK_MOVE_RATIO
+											/ pathManager.getZoomScale());
+							pathManager.setViewportOffset(newOffset);
+							updateTextView(newOffset);
+						}
 					} else {
 						Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:UP");
 					}
@@ -482,6 +504,39 @@ public class ScribbleActivity extends Activity
 					svgFileScribe.debounceSave(ScribbleActivity.this, svgUri,
 							pathManager);
 					drawBitmapToView(true, true);
+					break;
+				// Deprecated events may still be used by Boox API.
+				case MotionEvent.ACTION_POINTER_DOWN:
+				case MotionEvent.ACTION_POINTER_2_DOWN:
+					this.zoomBeginDistance = Geometry.distance(touchPoint,
+							new PointF(event.getX(1), event.getY(1)));
+					Log.v(XenaApplication.TAG,
+							"ScribbleActivity::onTouch:ACTION_POINTER_DOWN "
+									+ this.zoomBeginDistance);
+					break;
+				case MotionEvent.ACTION_POINTER_UP:
+				case MotionEvent.ACTION_POINTER_2_UP:
+					float zoomEndDistance = Geometry.distance(touchPoint,
+							new PointF(event.getX(1), event.getY(1)));
+					Log.v(XenaApplication.TAG,
+							"ScribbleActivity::onTouch:ACTION_POINTER_UP "
+									+ zoomEndDistance);
+
+					if (this.zoomBeginDistance - zoomEndDistance >= ZOOM_DISTANCE_BOUND) {
+						// Zoom out.
+						pathManager.setZoomScale(
+								pathManager.getZoomScale() / ScribbleActivity.ZOOM_STEP);
+					} else if (zoomEndDistance
+							- this.zoomBeginDistance >= ZOOM_DISTANCE_BOUND) {
+						// Zoom in.
+						pathManager.setZoomScale(
+								pathManager.getZoomScale() * ScribbleActivity.ZOOM_STEP);
+					}
+					touchHelper.setStrokeWidth(
+							Chunk.STROKE_WIDTH * pathManager.getZoomScale());
+					PAINT_TENTATIVE_LINE.setStrokeWidth(
+							Chunk.STROKE_WIDTH * pathManager.getZoomScale());
+					updateTextView(pathManager.getViewportOffset());
 					break;
 			}
 			return true;
@@ -504,6 +559,8 @@ public class ScribbleActivity extends Activity
 		});
 		this.scribbleView.setOnTouchListener(scribbleViewOnTouchListener);
 
+		this.textView = findViewById(R.id.activity_scribble_text_view);
+
 		this.touchHelper = TouchHelper.create(scribbleView, rawInputCallback)
 				.setStrokeWidth(Chunk.STROKE_WIDTH)
 				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL);
@@ -514,9 +571,13 @@ public class ScribbleActivity extends Activity
 		this.touchHelper.setRawDrawingEnabled(false).setLimitRect(
 				new Rect(0, 0, this.scribbleView.getWidth(),
 						this.scribbleView.getHeight()),
-				new ArrayList<>()).setStrokeWidth(Chunk.STROKE_WIDTH)
+				new ArrayList<>())
 				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
 				.setRawDrawingEnabled(true);
+		if (this.pathManager != null) {
+			this.touchHelper
+					.setStrokeWidth(Chunk.STROKE_WIDTH * this.pathManager.getZoomScale());
+		}
 		super.onResume();
 	}
 
@@ -570,6 +631,8 @@ public class ScribbleActivity extends Activity
 		this.scribbleView.setImageBitmap(this.scribbleViewBitmap);
 		drawBitmapToView(true, true);
 
+		this.updateTextView(this.pathManager.getViewportOffset());
+
 		this.touchHelper
 				.setLimitRect(
 						new Rect(0, 0, this.scribbleView.getWidth(),
@@ -589,28 +652,73 @@ public class ScribbleActivity extends Activity
 				PAINT_TRANSPARENT);
 
 		if (this.pdfReader != null) {
-			ArrayList<PageBitmap> pages = this.pdfReader.getBitmapsForViewport(
+			for (PageBitmap page : this.pdfReader.getBitmapsForViewport(
 					new RectF(-this.pathManager.getViewportOffset().x,
 							-this.pathManager.getViewportOffset().y,
 							-this.pathManager.getViewportOffset().x
-									+ this.scribbleView.getWidth(),
+									+ this.scribbleView.getWidth()
+											/ this.pathManager.getZoomScale(),
 							-this.pathManager.getViewportOffset().y
-									+ this.scribbleView.getHeight()));
-			for (PageBitmap page : pages) {
+									+ this.scribbleView.getHeight()
+											/ this.pathManager.getZoomScale()))) {
+				Log.v("XENA",
+						"" + new Rect(0, 0,
+								Math.round(page.location.right - page.location.left),
+								Math.round(page.location.bottom - page.location.top)) + " "
+								+ new RectF(
+										page.location.left * this.pathManager.getZoomScale()
+												+ this.pathManager.getViewportOffset().x,
+										page.location.top * this.pathManager.getZoomScale()
+												+ this.pathManager.getViewportOffset().y,
+										page.location.right * this.pathManager.getZoomScale()
+												+ this.pathManager.getViewportOffset().x,
+										page.location.bottom * this.pathManager.getZoomScale()
+												+ this.pathManager.getViewportOffset().y));
 				this.scribbleViewCanvas.drawBitmap(page.bitmap,
-						page.location.left + this.pathManager.getViewportOffset().x,
-						page.location.top + this.pathManager.getViewportOffset().y, null);
+						new Rect(0, 0, Math.round(page.location.right - page.location.left),
+								Math.round(page.location.bottom - page.location.top)),
+						new RectF(
+								(page.location.left
+										+ this.pathManager.getViewportOffset().x)
+										* this.pathManager.getZoomScale(),
+								(page.location.top
+										+ this.pathManager.getViewportOffset().y)
+										* this.pathManager.getZoomScale(),
+								(page.location.right
+										+ this.pathManager.getViewportOffset().x)
+										* this.pathManager.getZoomScale(),
+								(page.location.bottom
+										+ this.pathManager.getViewportOffset().y)
+										* this.pathManager.getZoomScale()),
+						null);
 			}
 		}
 
-		for (Chunk chunk : pathManager.getVisibleChunks()) {
+		for (Chunk chunk : this.pathManager.getVisibleChunks()) {
 			this.scribbleViewCanvas.drawBitmap(chunk.getBitmap(),
-					chunk.OFFSET_X + pathManager.getViewportOffset().x,
-					chunk.OFFSET_Y + pathManager.getViewportOffset().y, null);
+					new Rect(0, 0, this.pathManager.CHUNK_SIZE.x,
+							this.pathManager.CHUNK_SIZE.y),
+					new RectF((this.pathManager.getViewportOffset().x
+							+ chunk.OFFSET_X) * this.pathManager.getZoomScale(),
+							(this.pathManager.getViewportOffset().y
+									+ chunk.OFFSET_Y) * this.pathManager.getZoomScale(),
+							(this.pathManager.getViewportOffset().x
+									+ chunk.OFFSET_X + this.pathManager.CHUNK_SIZE.x)
+									* this.pathManager.getZoomScale(),
+							(this.pathManager.getViewportOffset().y
+									+ chunk.OFFSET_Y + this.pathManager.CHUNK_SIZE.y)
+									* this.pathManager.getZoomScale()),
+					null);
 		}
 
 		if (invalidate) {
 			this.scribbleView.postInvalidate();
 		}
+	}
+
+	private void updateTextView(PointF coordinate) {
+		this.textView.setText(Math.round(coordinate.x) + ", "
+				+ Math.round(coordinate.y) + " | "
+				+ Math.round(this.pathManager.getZoomScale() * 100) + "%");
 	}
 }

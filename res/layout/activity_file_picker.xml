@@ -10,7 +10,7 @@
 		android:layout_margin="8dp"
 		android:padding="16dp"
 		android:textSize="32dp"
-		android:background="@drawable/button"
+		android:background="@drawable/contrast"
 		android:onClick="onClick"
 		android:text="LOAD SVG" />
 	<Button android:id="@+id/activity_file_picker_button_load_pdf"
@@ -19,12 +19,14 @@
 		android:layout_margin="8dp"
 		android:padding="16dp"
 		android:textSize="32dp"
-		android:background="@drawable/button"
+		android:background="@drawable/contrast"
 		android:onClick="onClick"
 		android:text="LOAD PDF" />
 	<TextView
-		android:id="@+id/activity_file_picker_text_version"
+		android:id="@+id/activity_file_picker_text_view"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
+		android:textColor="@android:color/black"
+		android:textSize="16dp"
 		android:text="@string/xena_version" />
 </LinearLayout>
