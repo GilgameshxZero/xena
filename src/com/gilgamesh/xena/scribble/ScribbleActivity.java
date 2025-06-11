@@ -55,8 +55,8 @@ public class ScribbleActivity extends Activity
 	SvgFileScribe svgFileScribe = new SvgFileScribe();
 	PathManager pathManager;
 	private PdfReader pdfReader;
-	PenManager scribblePenManager;
-	TouchManager scribbleTouchManager;
+	PenManager penManager;
+	TouchManager touchManager;
 
 	// General aliases.
 	ScribbleView scribbleView;
@@ -89,8 +89,8 @@ public class ScribbleActivity extends Activity
 		this.setContentView(R.layout.activity_scribble);
 		this.parseUri();
 
-		this.scribbleTouchManager = new TouchManager(this);
-		this.scribblePenManager = new PenManager(this);
+		this.touchManager = new TouchManager(this);
+		this.penManager = new PenManager(this);
 
 		this.scribbleView = findViewById(R.id.activity_scribble_scribble_view);
 		this.scribbleView.post(new Runnable() {
@@ -99,12 +99,12 @@ public class ScribbleActivity extends Activity
 				initDrawing();
 			}
 		});
-		this.scribbleView.setOnTouchListener(this.scribbleTouchManager);
+		this.scribbleView.setOnTouchListener(this.touchManager);
 
 		this.textView = findViewById(R.id.activity_scribble_text_view);
 
 		// TouchHelper must be initialized onCreate, since it is used in `onResume`.
-		this.touchHelper = TouchHelper.create(scribbleView, this.scribblePenManager)
+		this.touchHelper = TouchHelper.create(scribbleView, this.penManager)
 				.setStrokeWidth(Chunk.STROKE_WIDTH)
 				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL);
 	}
@@ -174,7 +174,7 @@ public class ScribbleActivity extends Activity
 		this.scribbleView.setImageBitmap(this.scribbleViewBitmap);
 		drawBitmapToView(true, true);
 
-		this.updateTextView(this.pathManager.getViewportOffset());
+		this.updateTextView();
 
 		this.touchHelper
 				.setLimitRect(
@@ -259,9 +259,10 @@ public class ScribbleActivity extends Activity
 		}
 	}
 
-	void updateTextView(PointF coordinate) {
-		this.textView.setText(Math.round(coordinate.x) + ", "
-				+ Math.round(coordinate.y) + " | "
+	void updateTextView() {
+		PointF viewportOffset = this.pathManager.getViewportOffset();
+		this.textView.setText(Math.round(viewportOffset.x) + ", "
+				+ Math.round(viewportOffset.y) + " | "
 				+ Math.round(this.pathManager.getZoomScale() * 100) + "%");
 	}
 }

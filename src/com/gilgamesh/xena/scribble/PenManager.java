@@ -157,7 +157,7 @@ public class PenManager extends RawInputCallback {
 				this.scribbleActivity.pathManager
 						.setViewportOffset(this.scribbleActivity.panBeginOffset);
 				this.scribbleActivity
-						.updateTextView(this.scribbleActivity.panBeginOffset);
+						.updateTextView();
 				this.scribbleActivity.drawBitmapToView(true, true);
 			}
 
