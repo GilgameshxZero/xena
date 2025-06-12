@@ -24,7 +24,12 @@ import android.util.Log;
 import android.util.Xml;
 
 public class SvgFileScribe {
+	static public abstract class Callback {
+		public abstract void onDebounceSaveUpdate(boolean isSaved);
+	}
+
 	static final public float COORDINATE_SCALE_FACTOR = 8;
+	static final public int DEBOUNCE_SAVE_MS = 8000;
 
 	static public void loadPathsFromSvg(Context context,
 			Uri uri, PathManager pathManager) {
@@ -123,11 +128,18 @@ public class SvgFileScribe {
 		}
 	}
 
+	private boolean isSaved = true;
+	private Callback callback;
+
 	private TimerTask debounceSaveTask = new TimerTask() {
 		@Override
 		public void run() {
 		}
 	};
+
+	public SvgFileScribe(Callback callback) {
+		this.callback = callback;
+	}
 
 	private void debounceSaveTaskRun(Context context, Uri uri,
 			PathManager pathManager) {
@@ -223,9 +235,11 @@ public class SvgFileScribe {
 				outputStreamWriter.write(stringBuilder.toString());
 				outputStreamWriter.write(
 						"</svg>\n");
+
 				Log.v(XenaApplication.TAG,
 						"SvgFileScribe::debounceSaveTaskRun: Saved to "
 								+ uri.toString() + ".");
+				this.isSaved = true;
 			} catch (IOException e) {
 				Log.e(XenaApplication.TAG,
 						"SvgFileScribe::debounceSaveTaskRun: Failed to write to file: "
@@ -248,14 +262,23 @@ public class SvgFileScribe {
 			@Override
 			public void run() {
 				debounceSaveTaskRun(context, uri, pathManager);
+				callback.onDebounceSaveUpdate(isSaved);
 			}
 		};
 		new Timer().schedule(this.debounceSaveTask, delayMs);
+		this.isSaved = false;
+		this.callback.onDebounceSaveUpdate(isSaved);
 	}
 
 	// Default delayMs.
 	public void debounceSave(Context context, Uri uri,
 			PathManager pathManager) {
-		this.debounceSave(context, uri, pathManager, 60000);
+		this.debounceSave(context, uri, pathManager,
+				SvgFileScribe.DEBOUNCE_SAVE_MS);
+	}
+
+	// Returns true iff no pending save task.
+	public boolean getIsSaved() {
+		return this.isSaved;
 	}
 }

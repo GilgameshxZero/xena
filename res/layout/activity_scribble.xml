@@ -10,7 +10,18 @@
 		android:layout_alignParentTop="true"
 	/>
 	<TextView
-		android:id="@+id/activity_scribble_text_view"
+		android:id="@+id/activity_scribble_text_view_path"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignParentLeft="true"
+		android:layout_alignParentBottom="true"
+		android:layout_margin="4dp"
+		android:padding="4dp"
+		android:textColor="@android:color/black"
+		android:textSize="16dp"
+		android:background="@drawable/contrast" />
+	<TextView
+		android:id="@+id/activity_scribble_text_view_status"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_alignParentRight="true"
