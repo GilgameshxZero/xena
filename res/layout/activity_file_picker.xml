@@ -2,31 +2,49 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:id="@+id/activity_file_picker" android:orientation="vertical"
 	android:layout_width="match_parent" android:layout_height="match_parent"
-	android:gravity="center"
+	android:gravity="top"
 	android:background="@android:color/white">
-	<Button android:id="@+id/activity_file_picker_button_load_svg"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_margin="8dp"
-		android:padding="16dp"
-		android:textSize="32dp"
-		android:background="@drawable/contrast"
-		android:onClick="onClick"
-		android:text="LOAD SVG" />
-	<Button android:id="@+id/activity_file_picker_button_load_pdf"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_margin="8dp"
-		android:padding="16dp"
-		android:textSize="32dp"
-		android:background="@drawable/contrast"
-		android:onClick="onClick"
-		android:text="LOAD PDF" />
-	<TextView
-		android:id="@+id/activity_file_picker_text_view"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:textColor="@android:color/black"
-		android:textSize="16dp"
-		android:text="@string/xena_version" />
+	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		android:orientation="horizontal"
+		android:layout_width="match_parent" android:layout_height="wrap_content"
+		android:gravity="center"
+		android:background="@android:color/white">
+		<EditText
+			android:id="@+id/activity_file_picker_edit_text"
+			android:layout_weight="1"
+			android:layout_height="wrap_content"
+			android:layout_width="fill_parent"
+			android:layout_marginTop="16dp"
+			android:layout_marginRight="0dp"
+			android:layout_marginBottom="16dp"
+			android:layout_marginLeft="16dp"
+			android:textSize="20dp"
+			android:background="@drawable/contrast"
+			android:padding="8dp"
+			android:inputType="textNoSuggestions" />
+		<Button android:id="@+id/activity_file_picker_button"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_margin="16dp"
+			android:padding="8dp"
+			android:textSize="20dp"
+			android:background="@drawable/contrast"
+			android:onClick="onClick"
+			android:text="START" />
+	</LinearLayout>
+	<ScrollView
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content">
+		<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+			android:id="@+id/activity_file_picker_layout_listing"
+			android:orientation="vertical"
+			android:layout_width="match_parent" android:layout_height="fill_parent"
+			android:gravity="top"
+			android:background="@android:color/white"
+			android:layout_marginTop="0dp"
+			android:layout_marginRight="16dp"
+			android:layout_marginBottom="12dp"
+			android:layout_marginLeft="16dp">
+		</LinearLayout>
+	</ScrollView>
 </LinearLayout>

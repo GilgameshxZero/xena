@@ -26,6 +26,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.io.File;
 
 public class ScribbleActivity extends Activity
 		implements View.OnClickListener {
@@ -48,11 +49,12 @@ public class ScribbleActivity extends Activity
 				.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OUT));
 		PAINT_TRANSPARENT.setColor(Color.TRANSPARENT);
 	}
-
-	static public final String EXTRA_PDF_URI = "EXTRA_PDF_URI";
+	static public final String EXTRA_SVG_PATH = "EXTRA_SVG_PATH";
+	static public final String EXTRA_PDF_PATH = "EXTRA_PDF_PATH";
+	static private final int TEXT_VIEW_PATH_SUFFIX_LENGTH = 32;
 
 	// Managers.
-	SvgFileScribe svgFileScribe = new SvgFileScribe();
+	SvgFileScribe svgFileScribe;
 	PathManager pathManager;
 	private PdfReader pdfReader;
 	PenManager penManager;
@@ -66,7 +68,8 @@ public class ScribbleActivity extends Activity
 	Uri svgUri;
 	// pdfUri is null if no PDF is loaded.
 	private Uri pdfUri;
-	private TextView textView;
+	private TextView textViewPath;
+	private TextView textViewStatus;
 
 	// State is package-private.
 	boolean isDrawing = false;
@@ -87,6 +90,22 @@ public class ScribbleActivity extends Activity
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		this.setContentView(R.layout.activity_scribble);
+
+		this.textViewPath = findViewById(R.id.activity_scribble_text_view_path);
+		this.textViewStatus = findViewById(R.id.activity_scribble_text_view_status);
+
+		this.svgFileScribe = new SvgFileScribe(new SvgFileScribe.Callback() {
+			@Override
+			public void onDebounceSaveUpdate(boolean isSaved) {
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						updateTextViewPath(isSaved);
+					}
+				});
+			}
+		});
+
 		this.parseUri();
 
 		this.touchManager = new TouchManager(this);
@@ -100,8 +119,6 @@ public class ScribbleActivity extends Activity
 			}
 		});
 		this.scribbleView.setOnTouchListener(this.touchManager);
-
-		this.textView = findViewById(R.id.activity_scribble_text_view);
 
 		// TouchHelper must be initialized onCreate, since it is used in `onResume`.
 		this.touchHelper = TouchHelper.create(scribbleView, this.penManager)
@@ -144,19 +161,24 @@ public class ScribbleActivity extends Activity
 	}
 
 	private void parseUri() {
-		Uri pickedUri = this.getIntent().getData();
-		this.svgUri = pickedUri;
-		String pdfUriString = this.getIntent().getStringExtra(EXTRA_PDF_URI);
-		if (pdfUriString != null) {
-			this.pdfUri = Uri.parse(pdfUriString);
+		String svgPath = this.getIntent().getStringExtra(EXTRA_SVG_PATH);
+		String pdfPath = this.getIntent().getStringExtra(EXTRA_PDF_PATH);
+		this.svgUri = Uri.fromFile(new File(svgPath));
+
+		this.updateTextViewPath(true);
+
+		if (pdfPath != null) {
+			this.pdfUri = Uri.fromFile(new File(pdfPath));
 			this.pdfReader = new PdfReader(this, this.pdfUri);
 			Log.v(XenaApplication.TAG,
-					"ScribbleActivity::parseUri: Got 2 URIs: " + this.svgUri.toString()
+					"ScribbleActivity::parseUri: Received 2 URIs: "
+							+ this.svgUri.toString()
 							+ " and "
 							+ this.pdfUri.toString() + ".");
 		} else {
 			Log.v(XenaApplication.TAG,
-					"ScribbleActivity::parseUri: Got 1 URI: " + this.svgUri.toString()
+					"ScribbleActivity::parseUri: Received 1 URI: "
+							+ this.svgUri.toString()
 							+ ".");
 		}
 	}
@@ -174,7 +196,7 @@ public class ScribbleActivity extends Activity
 		this.scribbleView.setImageBitmap(this.scribbleViewBitmap);
 		drawBitmapToView(true, true);
 
-		this.updateTextView();
+		this.updateTextViewStatus();
 
 		this.touchHelper
 				.setLimitRect(
@@ -259,10 +281,18 @@ public class ScribbleActivity extends Activity
 		}
 	}
 
-	void updateTextView() {
+	void updateTextViewStatus() {
 		PointF viewportOffset = this.pathManager.getViewportOffset();
-		this.textView.setText(Math.round(viewportOffset.x) + ", "
+		this.textViewStatus.setText(Math.round(viewportOffset.x) + ", "
 				+ Math.round(viewportOffset.y) + " | "
 				+ Math.round(this.pathManager.getZoomScale() * 100) + "%");
+	}
+
+	void updateTextViewPath(boolean isSaved) {
+		String uriString = this.svgUri.toString();
+		this.textViewPath.setText(
+				(isSaved ? "CLEAN" : "DIRTY") + " | ..."
+						+ uriString.substring(uriString.length()
+								- ScribbleActivity.TEXT_VIEW_PATH_SUFFIX_LENGTH));
 	}
 }
