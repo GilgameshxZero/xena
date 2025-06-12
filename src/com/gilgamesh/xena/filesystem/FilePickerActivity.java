@@ -7,9 +7,11 @@ import com.gilgamesh.xena.XenaApplication;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Paint;
 import android.os.Bundle;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -26,17 +28,25 @@ import java.util.Comparator;
 
 public class FilePickerActivity extends Activity
 		implements View.OnClickListener {
+	private static final String SHARED_PREFERENCES_EDIT_TEXT_CACHE = "SHARED_PREFERENCES_EDIT_TEXT_CACHE";
+
 	private EditText editText;
 	private LinearLayout layoutListing;
+	private SharedPreferences sharedPreferences;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		this.setContentView(R.layout.activity_file_picker);
 
+		this.sharedPreferences = PreferenceManager
+				.getDefaultSharedPreferences(this);
+
 		this.editText = findViewById(R.id.activity_file_picker_edit_text);
 		this.editText
-				.setText(Environment.getExternalStorageDirectory().toString() + "/");
+				.setText(this.sharedPreferences
+						.getString(FilePickerActivity.SHARED_PREFERENCES_EDIT_TEXT_CACHE,
+								Environment.getExternalStorageDirectory().toString() + "/"));
 		this.editText.addTextChangedListener(new TextWatcher() {
 			@Override
 			public void onTextChanged(CharSequence s, int start, int before,
@@ -64,37 +74,7 @@ public class FilePickerActivity extends Activity
 
 		switch (v.getId()) {
 			case R.id.activity_file_picker_button:
-				int extensionSeparator = path.lastIndexOf('.');
-				String extension = extensionSeparator == -1 ? ""
-						: path.substring(extensionSeparator + 1);
-				Log.v(XenaApplication.TAG,
-						"FilePickerActivity::onClick: Extension: " + extension);
-
-				if (extension.equals("svg")) {
-					this.startActivity(
-							new Intent(this, ScribbleActivity.class)
-									.setAction(Intent.ACTION_RUN)
-									.addCategory(Intent.CATEGORY_DEFAULT)
-									.putExtra(ScribbleActivity.EXTRA_SVG_PATH,
-											path));
-				} else if (extension.equals("pdf")) {
-					this.startActivity(
-							new Intent(this, ScribbleActivity.class)
-									.setAction(Intent.ACTION_RUN)
-									.addCategory(Intent.CATEGORY_DEFAULT)
-									.putExtra(ScribbleActivity.EXTRA_SVG_PATH,
-											path + ".svg")
-									.putExtra(ScribbleActivity.EXTRA_PDF_PATH,
-											path));
-				} else {
-					this.startActivity(
-							new Intent(this, ScribbleActivity.class)
-									.setAction(Intent.ACTION_RUN)
-									.addCategory(Intent.CATEGORY_DEFAULT)
-									.putExtra(ScribbleActivity.EXTRA_SVG_PATH,
-											path + ".svg"));
-				}
-
+				this.maybeStartScribbleActivity(true);
 				break;
 			default:
 				TextView textView = (TextView) v;
@@ -110,8 +90,49 @@ public class FilePickerActivity extends Activity
 					this.editText.setText(path + "/" + text);
 				}
 				this.editText.setSelection(editText.getText().length());
+				this.maybeStartScribbleActivity(false);
 
 				break;
+		}
+	}
+
+	private void maybeStartScribbleActivity(boolean forceStart) {
+		String path = this.editText.getText().toString();
+
+		SharedPreferences.Editor editor = this.sharedPreferences.edit();
+		editor.putString(FilePickerActivity.SHARED_PREFERENCES_EDIT_TEXT_CACHE,
+				path);
+		editor.commit();
+
+		int extensionSeparator = path.lastIndexOf('.');
+		String extension = extensionSeparator == -1 ? ""
+				: path.substring(extensionSeparator + 1);
+		Log.v(XenaApplication.TAG,
+				"FilePickerActivity::onClick: Extension: " + extension);
+
+		if (extension.equals("svg")) {
+			this.startActivity(
+					new Intent(this, ScribbleActivity.class)
+							.setAction(Intent.ACTION_RUN)
+							.addCategory(Intent.CATEGORY_DEFAULT)
+							.putExtra(ScribbleActivity.EXTRA_SVG_PATH,
+									path));
+		} else if (extension.equals("pdf")) {
+			this.startActivity(
+					new Intent(this, ScribbleActivity.class)
+							.setAction(Intent.ACTION_RUN)
+							.addCategory(Intent.CATEGORY_DEFAULT)
+							.putExtra(ScribbleActivity.EXTRA_SVG_PATH,
+									path + ".svg")
+							.putExtra(ScribbleActivity.EXTRA_PDF_PATH,
+									path));
+		} else if (forceStart) {
+			this.startActivity(
+					new Intent(this, ScribbleActivity.class)
+							.setAction(Intent.ACTION_RUN)
+							.addCategory(Intent.CATEGORY_DEFAULT)
+							.putExtra(ScribbleActivity.EXTRA_SVG_PATH,
+									path + ".svg"));
 		}
 	}
 
