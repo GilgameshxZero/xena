@@ -8,6 +8,13 @@ import com.gilgamesh.xena.scribble.PathManager;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
+import android.content.Context;
+import android.graphics.PointF;
+import android.graphics.RectF;
+import android.net.Uri;
+import android.util.Log;
+import android.util.Xml;
+
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -15,13 +22,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import android.content.Context;
-import android.graphics.PointF;
-import android.graphics.RectF;
-import android.net.Uri;
-import android.util.Log;
-import android.util.Xml;
+import java.nio.file.Paths;
+import java.nio.file.Files;
 
 public class SvgFileScribe {
 	static public abstract class Callback {
@@ -144,6 +146,7 @@ public class SvgFileScribe {
 	private void debounceSaveTaskRun(Context context, Uri uri,
 			PathManager pathManager) {
 		try {
+			Files.createDirectories(Paths.get(uri.getPath()).getParent());
 			OutputStreamWriter outputStreamWriter = new OutputStreamWriter(
 					context.getContentResolver().openOutputStream(uri, "wt"));
 			try {

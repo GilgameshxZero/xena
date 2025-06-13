@@ -217,7 +217,6 @@ run: $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk
 # Clean target removes all intermediates.
 clean:
 	@IF EXIST $(ROOT_DIR)bin RD /Q /S $(ROOT_DIR)bin
-	@IF EXIST $(ROOT_DIR)lib RD /Q /S $(ROOT_DIR)lib
 	@IF EXIST $(ROOT_DIR)java RD /Q /S $(ROOT_DIR)java
 	@IF EXIST $(ROOT_DIR)obj RD /Q /S $(ROOT_DIR)obj
 	@IF EXIST $(ROOT_DIR)priv\$(PROJECT_NAME).debug.keystore \
