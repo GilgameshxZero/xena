@@ -104,11 +104,12 @@ public class TouchManager implements View.OnTouchListener {
 				// Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:MOVE "
 				// + pathManager.getViewportOffset());
 
-				if (this.scribbleActivity.isRedrawing) {
-					this.scribbleActivity.redraw();
-				} else {
-					this.scribbleActivity.drawBitmapToView(false, true);
-				}
+				// Do not redraw while dragging.
+				// if (this.scribbleActivity.isRedrawing) {
+				// 	this.scribbleActivity.redraw();
+				// } else {
+				// 	this.scribbleActivity.drawBitmapToView(false, true);
+				// }
 
 				// No need to reset raw input capture here, for some reason.
 				break;

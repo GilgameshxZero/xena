@@ -96,6 +96,12 @@ public class FilePickerActivity extends Activity
 		}
 	}
 
+	@Override
+	protected void onResume() {
+		this.updateListing();
+		super.onResume();
+	}
+
 	private void maybeStartScribbleActivity(boolean forceStart) {
 		String path = this.editText.getText().toString();
 
@@ -146,6 +152,9 @@ public class FilePickerActivity extends Activity
 		this.addToListing("../", true);
 
 		File[] files = new File(path).listFiles();
+		if (files == null) {
+			return;
+		}
 		ArrayList<File> filesList = new ArrayList<File>();
 		for (File file : files) {
 			filesList.add(file);
