@@ -76,6 +76,7 @@ public class ScribbleActivity extends Activity
 	private Uri pdfUri;
 	private TextView textViewPath;
 	private TextView textViewStatus;
+	private View drawEraseToggle;
 
 	// State is package-private.
 	boolean isDrawing = false;
@@ -83,6 +84,7 @@ public class ScribbleActivity extends Activity
 	boolean isRedrawing = false;
 	boolean isInputCooldown = false;
 	boolean isPanning = false;
+	boolean isPenEraseMode = false;
 	PointF panBeginOffset = new PointF();
 
 	public void redraw() {
@@ -99,6 +101,8 @@ public class ScribbleActivity extends Activity
 
 		this.textViewPath = findViewById(R.id.activity_scribble_text_view_path);
 		this.textViewStatus = findViewById(R.id.activity_scribble_text_view_status);
+		this.drawEraseToggle = findViewById(
+				R.id.activity_scribble_draw_erase_toggle);
 
 		this.svgFileScribe = new SvgFileScribe(new SvgFileScribe.Callback() {
 			@Override
@@ -150,7 +154,8 @@ public class ScribbleActivity extends Activity
 	@Override
 	protected void onPause() {
 		// onPause will be called when "back" is pressed as well.
-		// Do not resave if already saved—avoids friction where file has been processed/moved elsewhere already.
+		// Do not resave if already saved—avoids friction where file has been
+		// processed/moved elsewhere already.
 		if (!this.svgFileScribe.getIsSaved()) {
 			this.svgFileScribe.debounceSave(ScribbleActivity.this, svgUri,
 					this.pathManager, 0);
@@ -167,6 +172,32 @@ public class ScribbleActivity extends Activity
 
 	@Override
 	public void onClick(View v) {
+		switch (v.getId()) {
+			case R.id.activity_scribble_text_view_path:
+				Log.v(XenaApplication.TAG,
+						"ScribbleActivity::onClick:activity_scribble_text_view_path.");
+				this.svgFileScribe.debounceSave(ScribbleActivity.this, svgUri,
+						this.pathManager, 0);
+				break;
+			case R.id.activity_scribble_text_view_status:
+				Log.v(XenaApplication.TAG,
+						"ScribbleActivity::onClick:activity_scribble_text_view_status.");
+				this.pathManager.setZoomScale(1);
+				this.touchHelper.setStrokeWidth(Chunk.STROKE_WIDTH);
+				ScribbleActivity.PAINT_TENTATIVE_LINE
+						.setStrokeWidth(Chunk.STROKE_WIDTH);
+				this.updateTextViewStatus();
+				this.drawBitmapToView(true, true);
+				break;
+			case R.id.activity_scribble_draw_erase_toggle:
+				Log.v(XenaApplication.TAG,
+						"ScribbleActivity::onClick:activity_scribble_draw_erase_toggle.");
+				this.isPenEraseMode = !this.isPenEraseMode;
+				this.drawEraseToggle
+						.setBackgroundResource(this.isPenEraseMode ? R.drawable.border_clear
+								: R.drawable.border_fill);
+				break;
+		}
 	}
 
 	private void parseUri() {
@@ -207,11 +238,15 @@ public class ScribbleActivity extends Activity
 
 		this.updateTextViewStatus();
 
+		ArrayList<Rect> exclusions = new ArrayList<Rect>();
+		exclusions.add(
+				new Rect(this.drawEraseToggle.getLeft(), this.drawEraseToggle.getTop(),
+						this.drawEraseToggle.getRight(), this.drawEraseToggle.getBottom()));
 		this.touchHelper
 				.setLimitRect(
 						new Rect(0, 0, this.scribbleView.getWidth(),
 								this.scribbleView.getHeight()),
-						new ArrayList<>())
+						exclusions)
 				.openRawDrawing().setRawDrawingEnabled(true);
 	}
 

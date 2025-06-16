@@ -19,7 +19,7 @@
 			android:layout_marginBottom="16dp"
 			android:layout_marginLeft="16dp"
 			android:textSize="20dp"
-			android:background="@drawable/contrast"
+			android:background="@drawable/border_clear"
 			android:padding="8dp"
 			android:inputType="textNoSuggestions" />
 		<Button android:id="@+id/activity_file_picker_button"
@@ -28,7 +28,7 @@
 			android:layout_margin="16dp"
 			android:padding="8dp"
 			android:textSize="20dp"
-			android:background="@drawable/contrast"
+			android:background="@drawable/border_clear"
 			android:onClick="onClick"
 			android:text="START" />
 	</LinearLayout>
