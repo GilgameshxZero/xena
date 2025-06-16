@@ -335,8 +335,8 @@ public class ScribbleActivity extends Activity
 
 	void updateTextViewStatus() {
 		PointF viewportOffset = this.pathManager.getViewportOffset();
-		this.textViewStatus.setText(Math.round(viewportOffset.x) + ", "
-				+ Math.round(viewportOffset.y) + " | "
+		this.textViewStatus.setText(-Math.round(viewportOffset.x) + ", "
+				+ -Math.round(viewportOffset.y) + " | "
 				+ Math.round(this.pathManager.getZoomScale() * 100) + "%");
 	}
 
