@@ -86,7 +86,15 @@ public class ScribbleActivity extends Activity
 	boolean isInputCooldown = false;
 	boolean isPanning = false;
 	boolean isPenEraseMode = false;
-	boolean isTouchDrawMode = false;
+
+	static public enum PenTouchMode {
+		DEFAULT,
+		FORCE_DRAW,
+		FORCE_PAN
+	};
+
+	PenTouchMode penTouchMode = PenTouchMode.DEFAULT;
+
 	PointF panBeginOffset = new PointF();
 
 	public void redraw() {
@@ -211,11 +219,20 @@ public class ScribbleActivity extends Activity
 			case R.id.activity_scribble_draw_pan_toggle:
 				Log.v(XenaApplication.TAG,
 						"ScribbleActivity::onClick:activity_scribble_draw_pan_toggle.");
-				this.isTouchDrawMode = !this.isTouchDrawMode;
-				this.drawPanToggle
-						.setBackgroundResource(
-								this.isTouchDrawMode ? R.drawable.solid_filled
-										: R.drawable.solid_empty);
+				switch (this.penTouchMode) {
+					case DEFAULT:
+						this.penTouchMode = PenTouchMode.FORCE_DRAW;
+						this.drawPanToggle.setBackgroundResource(R.drawable.solid_filled);
+						break;
+					case FORCE_DRAW:
+						this.penTouchMode = PenTouchMode.FORCE_PAN;
+						this.drawPanToggle.setBackgroundResource(R.drawable.solid_empty);
+						break;
+					case FORCE_PAN:
+						this.penTouchMode = PenTouchMode.DEFAULT;
+						this.drawPanToggle.setBackgroundResource(R.drawable.dotted_empty);
+						break;
+				}
 				break;
 		}
 	}

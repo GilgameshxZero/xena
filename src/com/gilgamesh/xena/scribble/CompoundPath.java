@@ -35,7 +35,8 @@ public class CompoundPath {
 	public ArrayList<Point> containingChunks = new ArrayList<Point>();
 
 	public CompoundPath(PointF point, Callback callback) {
-		this.points.add(new PointF(point));
+		// PointF constructor only available in API version 30.
+		this.points.add(new PointF(point.x, point.y));
 		this.path.moveTo(point.x, point.y);
 		this.bounds.set(point.x, point.y, point.x, point.y);
 		this.callback = callback;
@@ -82,7 +83,7 @@ public class CompoundPath {
 	public void addPoint(PointF point) {
 		this.callback.onPointAdded(this, this.points.get(this.points.size() - 1),
 				point);
-		this.points.add(new PointF(point));
+		this.points.add(new PointF(point.x, point.y));
 		this.path.lineTo(point.x, point.y);
 		this.bounds.union(point.x, point.y);
 	}

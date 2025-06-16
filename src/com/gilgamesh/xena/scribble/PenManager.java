@@ -10,6 +10,7 @@ import com.onyx.android.sdk.pen.RawInputCallback;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.util.Log;
+import android.view.MotionEvent;
 
 import java.util.HashSet;
 import java.util.Timer;
@@ -150,13 +151,19 @@ public class PenManager extends RawInputCallback {
 
 	@Override
 	public void onBeginRawDrawing(boolean b, TouchPoint touchPoint) {
+		if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_PAN) {
+			this.scribbleActivity.touchManager.onTouchInner(
+					MotionEvent.ACTION_DOWN, touchPoint.x, touchPoint.y, 0, 0);
+			return;
+		}
+
 		if (this.scribbleActivity.isPenEraseMode) {
 			this.onBeginRawErasing(b, touchPoint);
 			return;
 		}
 
-		if (this.scribbleActivity.isTouchDrawMode) {
-			this.scribbleActivity.touchHelper.setRawDrawingEnabled(false);
+		if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_DRAW) {
+			// this.scribbleActivity.touchHelper.setRawDrawingEnabled(false);
 		}
 
 		// If currently panning, that means there were erroneous panning events
@@ -202,13 +209,19 @@ public class PenManager extends RawInputCallback {
 
 	@Override
 	public void onEndRawDrawing(boolean b, TouchPoint touchPoint) {
+		if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_PAN) {
+			this.scribbleActivity.touchManager.onTouchInner(
+					MotionEvent.ACTION_UP, touchPoint.x, touchPoint.y, 0, 0);
+			return;
+		}
+
 		if (this.scribbleActivity.isPenEraseMode) {
 			this.onEndRawErasing(b, touchPoint);
 			return;
 		}
 
-		if (this.scribbleActivity.isTouchDrawMode) {
-			this.scribbleActivity.touchHelper.setRawDrawingEnabled(false);
+		if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_DRAW) {
+			// this.scribbleActivity.touchHelper.setRawDrawingEnabled(false);
 		}
 
 		this.debounceEndDraw(DEBOUNCE_END_DRAW_DELAY_MS);
@@ -216,6 +229,12 @@ public class PenManager extends RawInputCallback {
 
 	@Override
 	public void onRawDrawingTouchPointMoveReceived(TouchPoint touchPoint) {
+		if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_PAN) {
+			this.scribbleActivity.touchManager.onTouchInner(
+					MotionEvent.ACTION_MOVE, touchPoint.x, touchPoint.y, 0, 0);
+			return;
+		}
+
 		if (this.scribbleActivity.isPenEraseMode) {
 			this.onRawErasingTouchPointMoveReceived(touchPoint);
 			return;
@@ -239,9 +258,9 @@ public class PenManager extends RawInputCallback {
 		}
 		currentPath.addPoint(newPoint);
 
-		// Log.v(XenaApplication.TAG,
-		// "ScribbleActivity::onRawDrawingTouchPointMoveReceived "
-		// + touchPoint);
+		Log.v(XenaApplication.TAG,
+				"ScribbleActivity::onRawDrawingTouchPointMoveReceived "
+						+ touchPoint);
 
 		this.scribbleActivity.scribbleViewCanvas.drawLine(
 				previousTentativeDrawPoint.x,

@@ -30,21 +30,27 @@ public class TouchManager implements View.OnTouchListener {
 	}
 
 	@Override
-	@SuppressWarnings("deprecation")
 	public boolean onTouch(View v, MotionEvent event) {
-		if (!this.scribbleActivity.isTouchDrawMode
+		return this.onTouchInner(event.getAction(), event.getX(), event.getY(),
+				event.getX(1), event.getY(1));
+	}
+
+	@SuppressWarnings("deprecation")
+	public boolean onTouchInner(int eventAction, float eventX0, float eventY0,
+			float eventX1, float eventY1) {
+		if (this.scribbleActivity.penTouchMode != ScribbleActivity.PenTouchMode.FORCE_DRAW
 				&& (this.scribbleActivity.isDrawing || this.scribbleActivity.isErasing
 						|| this.scribbleActivity.isInputCooldown)) {
 			return false;
 		}
 
-		PointF touchPoint = new PointF(event.getX(), event.getY());
+		PointF touchPoint = new PointF(eventX0, eventY0);
 		long eventDurationMs = (System.currentTimeMillis()
 				- this.actionDownTimeMs);
 
-		switch (event.getAction()) {
+		switch (eventAction) {
 			case MotionEvent.ACTION_DOWN:
-				if (this.scribbleActivity.isTouchDrawMode) {
+				if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_DRAW) {
 					this.scribbleActivity.penManager.onBeginRawDrawing(false,
 							new TouchPoint(touchPoint.x, touchPoint.y));
 					break;
@@ -84,7 +90,7 @@ public class TouchManager implements View.OnTouchListener {
 
 				break;
 			case MotionEvent.ACTION_MOVE:
-				if (this.scribbleActivity.isTouchDrawMode) {
+				if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_DRAW) {
 					this.scribbleActivity.penManager.onRawDrawingTouchPointMoveReceived(
 							new TouchPoint(touchPoint.x, touchPoint.y));
 					break;
@@ -128,7 +134,7 @@ public class TouchManager implements View.OnTouchListener {
 				// No need to reset raw input capture here, for some reason.
 				break;
 			case MotionEvent.ACTION_UP:
-				if (this.scribbleActivity.isTouchDrawMode) {
+				if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_DRAW) {
 					this.scribbleActivity.penManager.onEndRawDrawing(false,
 							new TouchPoint(touchPoint.x, touchPoint.y));
 					break;
@@ -174,7 +180,7 @@ public class TouchManager implements View.OnTouchListener {
 			case MotionEvent.ACTION_POINTER_DOWN:
 			case MotionEvent.ACTION_POINTER_2_DOWN:
 				this.zoomBeginDistance = Geometry.distance(touchPoint,
-						new PointF(event.getX(1), event.getY(1)));
+						new PointF(eventX1, eventY1));
 				Log.v(XenaApplication.TAG,
 						"ScribbleActivity::onTouch:ACTION_POINTER_DOWN "
 								+ this.zoomBeginDistance);
@@ -182,7 +188,7 @@ public class TouchManager implements View.OnTouchListener {
 			case MotionEvent.ACTION_POINTER_UP:
 			case MotionEvent.ACTION_POINTER_2_UP:
 				float zoomEndDistance = Geometry.distance(touchPoint,
-						new PointF(event.getX(1), event.getY(1)));
+						new PointF(eventX1, eventY1));
 				Log.v(XenaApplication.TAG,
 						"ScribbleActivity::onTouch:ACTION_POINTER_UP "
 								+ zoomEndDistance);

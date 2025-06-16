@@ -45,6 +45,6 @@
 		android:layout_alignParentLeft="true"
 		android:layout_alignParentTop="true"
 		android:layout_margin="4dp"
-		android:background="@drawable/solid_empty"
+		android:background="@drawable/dotted_empty"
 		android:onClick="onClick" />
 </RelativeLayout>
