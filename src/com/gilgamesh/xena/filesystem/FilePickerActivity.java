@@ -149,7 +149,8 @@ public class FilePickerActivity extends Activity
 
 		switch (v.getId()) {
 			case R.id.activity_file_picker_button_date:
-				this.editText.setText(this.editText.getText()
+				path = path.substring(0, path.lastIndexOf('/'));
+				this.editText.setText(path + "/"
 						+ new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
 				this.maybeStartScribbleActivity(true);
 				break;

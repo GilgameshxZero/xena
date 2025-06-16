@@ -155,6 +155,10 @@ public class PenManager extends RawInputCallback {
 			return;
 		}
 
+		if (this.scribbleActivity.isTouchDrawMode) {
+			this.scribbleActivity.touchHelper.setRawDrawingEnabled(false);
+		}
+
 		// If currently panning, that means there were erroneous panning events
 		// fired. Undo them, and unset panning.
 		if (this.scribbleActivity.isPanning) {
@@ -201,6 +205,10 @@ public class PenManager extends RawInputCallback {
 		if (this.scribbleActivity.isPenEraseMode) {
 			this.onEndRawErasing(b, touchPoint);
 			return;
+		}
+
+		if (this.scribbleActivity.isTouchDrawMode) {
+			this.scribbleActivity.touchHelper.setRawDrawingEnabled(false);
 		}
 
 		this.debounceEndDraw(DEBOUNCE_END_DRAW_DELAY_MS);
