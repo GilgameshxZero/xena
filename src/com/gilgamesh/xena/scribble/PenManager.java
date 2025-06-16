@@ -140,6 +140,7 @@ public class PenManager extends RawInputCallback {
 				Log.v(XenaApplication.TAG, "ScribbleActivity::debounceEndEraseTask");
 
 				scribbleActivity.isErasing = false;
+				scribbleActivity.touchHelper.setRawDrawingEnabled(true);
 				debounceInputCooldown(DEBOUNCE_INPUT_COOLDOWN_DELAY_MS);
 			}
 		};
@@ -149,6 +150,11 @@ public class PenManager extends RawInputCallback {
 
 	@Override
 	public void onBeginRawDrawing(boolean b, TouchPoint touchPoint) {
+		if (this.scribbleActivity.isPenEraseMode) {
+			this.onBeginRawErasing(b, touchPoint);
+			return;
+		}
+
 		// If currently panning, that means there were erroneous panning events
 		// fired. Undo them, and unset panning.
 		if (this.scribbleActivity.isPanning) {
@@ -192,11 +198,21 @@ public class PenManager extends RawInputCallback {
 
 	@Override
 	public void onEndRawDrawing(boolean b, TouchPoint touchPoint) {
+		if (this.scribbleActivity.isPenEraseMode) {
+			this.onEndRawErasing(b, touchPoint);
+			return;
+		}
+
 		this.debounceEndDraw(DEBOUNCE_END_DRAW_DELAY_MS);
 	}
 
 	@Override
 	public void onRawDrawingTouchPointMoveReceived(TouchPoint touchPoint) {
+		if (this.scribbleActivity.isPenEraseMode) {
+			this.onRawErasingTouchPointMoveReceived(touchPoint);
+			return;
+		}
+
 		if (!this.scribbleActivity.isDrawing) {
 			return;
 		}
@@ -237,6 +253,10 @@ public class PenManager extends RawInputCallback {
 	@Override
 	public void onRawDrawingTouchPointListReceived(
 			TouchPointList touchPointList) {
+		if (this.scribbleActivity.isPenEraseMode) {
+			this.onRawErasingTouchPointListReceived(touchPointList);
+			return;
+		}
 	}
 
 	@Override
@@ -248,6 +268,8 @@ public class PenManager extends RawInputCallback {
 		}
 
 		Log.v(XenaApplication.TAG, "ScribbleActivity::onBeginRawErasing");
+
+		this.scribbleActivity.touchHelper.setRawDrawingEnabled(false);
 
 		// This is the beginning of an erase move sequence.
 		this.debounceEndErase(DEBOUNCE_END_ERASE_DELAY_MS);
