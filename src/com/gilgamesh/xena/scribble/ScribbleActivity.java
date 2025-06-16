@@ -194,8 +194,8 @@ public class ScribbleActivity extends Activity
 						"ScribbleActivity::onClick:activity_scribble_draw_erase_toggle.");
 				this.isPenEraseMode = !this.isPenEraseMode;
 				this.drawEraseToggle
-						.setBackgroundResource(this.isPenEraseMode ? R.drawable.border_clear
-								: R.drawable.border_fill);
+						.setBackgroundResource(this.isPenEraseMode ? R.drawable.solid_empty
+								: R.drawable.solid_filled);
 				break;
 		}
 	}
@@ -226,8 +226,7 @@ public class ScribbleActivity extends Activity
 	private void initDrawing() {
 		this.pathManager = new PathManager(
 				new Point(this.scribbleView.getWidth(), this.scribbleView.getHeight()));
-		SvgFileScribe.loadPathsFromSvg(ScribbleActivity.this, this.svgUri,
-				this.pathManager);
+		SvgFileScribe.loadPathsFromSvg(this, this.svgUri, this.pathManager);
 
 		this.scribbleViewBitmap = Bitmap.createBitmap(this.scribbleView.getWidth(),
 				this.scribbleView.getHeight(),

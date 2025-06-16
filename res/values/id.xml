@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<item name="activity_file_picker" type="id" />
+	<item name="activity_file_picker_button_date" type="id" />
 	<item name="activity_file_picker_edit_text" type="id" />
-	<item name="activity_file_picker_button" type="id" />
+	<item name="activity_file_picker_button_go" type="id" />
 	<item name="activity_file_picker_layout_listing" type="id" />
 
 	<item name="activity_scribble_scribble_view" type="id" />
 	<item name="activity_scribble_text_view_path" type="id" />
 	<item name="activity_scribble_text_view_status" type="id" />
 	<item name="activity_scribble_draw_erase_toggle" type="id" />
+	<item name="activity_scribble_draw_pan_toggle" type="id" />
 </resources>
