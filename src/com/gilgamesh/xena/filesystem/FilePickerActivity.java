@@ -178,6 +178,7 @@ public class FilePickerActivity extends Activity
 
 	@Override
 	protected void onResume() {
+		// TODO: Recalculate grid.
 		if (this.LISTING_LAYOUT_PANE != null) {
 			this.updateListing();
 		}

@@ -9,8 +9,7 @@
 		android:layout_alignParentLeft="true"
 		android:layout_alignParentTop="true"
 	/>
-	<TextView
-		android:id="@+id/activity_scribble_text_view_path"
+	<TextView android:id="@+id/activity_scribble_text_view_path"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_alignParentLeft="true"
@@ -21,8 +20,7 @@
 		android:textSize="16dp"
 		android:background="@drawable/solid_empty"
 		android:onClick="onClick" />
-	<TextView
-		android:id="@+id/activity_scribble_text_view_status"
+	<TextView android:id="@+id/activity_scribble_text_view_status"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_alignParentRight="true"
