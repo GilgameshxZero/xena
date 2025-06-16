@@ -18,7 +18,7 @@ import android.util.Log;
 
 // Pages are laid out vertically, left-aligned at 0.
 public class PdfReader {
-	static final private float RENDER_SCALE = 2f;
+	static private final float RENDER_SCALE = 2f;
 
 	private PageBitmap[] pages;
 	private Context context;
