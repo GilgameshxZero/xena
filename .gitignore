@@ -1,8 +1,7 @@
 android/
 bin/
 java/
-# Libraries are committed because they are relatively small and Onyx support is not reliable.
-# lib/
+lib/
 obj/
 priv/
 
