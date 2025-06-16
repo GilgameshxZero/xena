@@ -243,19 +243,19 @@ public class PenManager extends RawInputCallback {
 		// "ScribbleActivity::onRawDrawingTouchPointMoveReceived "
 		// + touchPoint);
 
+		this.scribbleActivity.scribbleViewCanvas.drawLine(
+				previousTentativeDrawPoint.x,
+				previousTentativeDrawPoint.y, touchPoint.x, touchPoint.y,
+				ScribbleActivity.PAINT_TENTATIVE_LINE);
 		if (this.scribbleActivity.scribbleView.isDrawing()) {
 			// Log.v(XenaApplication.TAG, "Dirty ScribbleView.");
 		} else {
 			// Draw line for the purposes of screenshare, which does not capture any
 			// raw drawing activities.
-			this.scribbleActivity.scribbleViewCanvas.drawLine(
-					previousTentativeDrawPoint.x,
-					previousTentativeDrawPoint.y, touchPoint.x, touchPoint.y,
-					ScribbleActivity.PAINT_TENTATIVE_LINE);
 			// scribbleView.addTentativePoint(touchPoint.x, touchPoint.y);
 			this.scribbleActivity.scribbleView.postInvalidate();
-			previousTentativeDrawPoint.set(touchPoint.x, touchPoint.y);
 		}
+		previousTentativeDrawPoint.set(touchPoint.x, touchPoint.y);
 	}
 
 	@Override
