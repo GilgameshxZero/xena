@@ -77,6 +77,7 @@ public class ScribbleActivity extends Activity
 	private TextView textViewPath;
 	private TextView textViewStatus;
 	private View drawEraseToggle;
+	private View drawPanToggle;
 
 	// State is package-private.
 	boolean isDrawing = false;
@@ -85,6 +86,7 @@ public class ScribbleActivity extends Activity
 	boolean isInputCooldown = false;
 	boolean isPanning = false;
 	boolean isPenEraseMode = false;
+	boolean isTouchDrawMode = false;
 	PointF panBeginOffset = new PointF();
 
 	public void redraw() {
@@ -103,6 +105,8 @@ public class ScribbleActivity extends Activity
 		this.textViewStatus = findViewById(R.id.activity_scribble_text_view_status);
 		this.drawEraseToggle = findViewById(
 				R.id.activity_scribble_draw_erase_toggle);
+		this.drawPanToggle = findViewById(
+				R.id.activity_scribble_draw_pan_toggle);
 
 		this.svgFileScribe = new SvgFileScribe(new SvgFileScribe.Callback() {
 			@Override
@@ -196,6 +200,15 @@ public class ScribbleActivity extends Activity
 				this.drawEraseToggle
 						.setBackgroundResource(this.isPenEraseMode ? R.drawable.solid_empty
 								: R.drawable.solid_filled);
+				break;
+			case R.id.activity_scribble_draw_pan_toggle:
+				Log.v(XenaApplication.TAG,
+						"ScribbleActivity::onClick:activity_scribble_draw_pan_toggle.");
+				this.isTouchDrawMode = !this.isTouchDrawMode;
+				this.drawPanToggle
+						.setBackgroundResource(
+								this.isTouchDrawMode ? R.drawable.solid_filled
+										: R.drawable.solid_empty);
 				break;
 		}
 	}

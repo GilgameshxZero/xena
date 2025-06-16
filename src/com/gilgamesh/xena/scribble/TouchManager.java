@@ -2,6 +2,7 @@ package com.gilgamesh.xena.scribble;
 
 import com.gilgamesh.xena.XenaApplication;
 import com.gilgamesh.xena.algorithm.Geometry;
+import com.onyx.android.sdk.data.note.TouchPoint;
 
 import android.graphics.PointF;
 import android.graphics.RectF;
@@ -31,8 +32,9 @@ public class TouchManager implements View.OnTouchListener {
 	@Override
 	@SuppressWarnings("deprecation")
 	public boolean onTouch(View v, MotionEvent event) {
-		if (this.scribbleActivity.isDrawing || this.scribbleActivity.isErasing
-				|| this.scribbleActivity.isInputCooldown) {
+		if (!this.scribbleActivity.isTouchDrawMode
+				&& (this.scribbleActivity.isDrawing || this.scribbleActivity.isErasing
+						|| this.scribbleActivity.isInputCooldown)) {
 			return false;
 		}
 
@@ -42,6 +44,12 @@ public class TouchManager implements View.OnTouchListener {
 
 		switch (event.getAction()) {
 			case MotionEvent.ACTION_DOWN:
+				if (this.scribbleActivity.isTouchDrawMode) {
+					this.scribbleActivity.penManager.onBeginRawDrawing(false,
+							new TouchPoint(touchPoint.x, touchPoint.y));
+					break;
+				}
+
 				// Sometimes, this fires slightly before a draw/erase event. The
 				// draw/erase event will cancel panning in that case.
 
@@ -76,6 +84,12 @@ public class TouchManager implements View.OnTouchListener {
 
 				break;
 			case MotionEvent.ACTION_MOVE:
+				if (this.scribbleActivity.isTouchDrawMode) {
+					this.scribbleActivity.penManager.onRawDrawingTouchPointMoveReceived(
+							new TouchPoint(touchPoint.x, touchPoint.y));
+					break;
+				}
+
 				if (!this.scribbleActivity.isPanning) {
 					break;
 				}
@@ -106,14 +120,21 @@ public class TouchManager implements View.OnTouchListener {
 
 				// Do not redraw while dragging.
 				// if (this.scribbleActivity.isRedrawing) {
-				// 	this.scribbleActivity.redraw();
+				// this.scribbleActivity.redraw();
 				// } else {
-				// 	this.scribbleActivity.drawBitmapToView(false, true);
+				// this.scribbleActivity.drawBitmapToView(false, true);
 				// }
 
 				// No need to reset raw input capture here, for some reason.
 				break;
 			case MotionEvent.ACTION_UP:
+				if (this.scribbleActivity.isTouchDrawMode) {
+					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:FORWARD");
+					this.scribbleActivity.penManager.onEndRawDrawing(false,
+							new TouchPoint(touchPoint.x, touchPoint.y));
+					break;
+				}
+
 				if (!this.scribbleActivity.isPanning) {
 					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:IGNORE");
 					break;
@@ -186,6 +207,10 @@ public class TouchManager implements View.OnTouchListener {
 						Chunk.STROKE_WIDTH
 								* this.scribbleActivity.pathManager.getZoomScale());
 				this.scribbleActivity.updateTextViewStatus();
+				this.scribbleActivity.drawBitmapToView(true, true);
+
+				// Cancel panning by remaining finger.
+				this.scribbleActivity.isPanning = false;
 				break;
 		}
 		return true;
