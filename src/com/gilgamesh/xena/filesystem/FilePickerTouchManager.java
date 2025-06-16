@@ -8,7 +8,7 @@ import android.view.View;
 
 public class FilePickerTouchManager implements View.OnTouchListener {
 	// TODO: Better units.
-	private static final float PAGE_THRESHOLD_PX = 64;
+	static private final float PAGE_THRESHOLD_PX = 64;
 
 	private FilePickerActivity filePickerActivity;
 

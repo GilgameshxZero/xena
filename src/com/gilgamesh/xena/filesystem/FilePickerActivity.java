@@ -34,11 +34,11 @@ import java.util.Date;
 
 public class FilePickerActivity extends Activity
 		implements View.OnClickListener {
-	private static final String SHARED_PREFERENCES_EDIT_TEXT_CACHE = "SHARED_PREFERENCES_EDIT_TEXT_CACHE";
-	private static final Point MIN_PANE_SIZE_DP = new Point(256, 48);
-	private static final LayoutParams LISTING_LAYOUT_ROW = new LayoutParams(
+	static private final String SHARED_PREFERENCES_EDIT_TEXT_CACHE = "SHARED_PREFERENCES_EDIT_TEXT_CACHE";
+	static private final Point MIN_PANE_SIZE_DP = new Point(256, 48);
+	static private final LayoutParams LISTING_LAYOUT_ROW = new LayoutParams(
 			LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-	private static final int MARGIN_SIZE_DP = 4;
+	static private final int MARGIN_SIZE_DP = 4;
 
 	private Point MIN_PANE_SIZE_PX;
 	private int MARGIN_SIZE_PX;

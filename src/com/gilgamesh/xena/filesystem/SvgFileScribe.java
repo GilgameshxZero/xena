@@ -30,8 +30,8 @@ public class SvgFileScribe {
 		public abstract void onDebounceSaveUpdate(boolean isSaved);
 	}
 
-	static final public float COORDINATE_SCALE_FACTOR = 8;
-	static final public int DEBOUNCE_SAVE_MS = 8000;
+	static public final float COORDINATE_SCALE_FACTOR = 8;
+	static public final int DEBOUNCE_SAVE_MS = 8000;
 
 	static public void loadPathsFromSvg(Context context,
 			Uri uri, PathManager pathManager) {

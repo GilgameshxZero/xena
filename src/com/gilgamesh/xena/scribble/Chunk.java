@@ -24,7 +24,7 @@ public class Chunk {
 		PAINT.setStyle(Paint.Style.STROKE);
 		PAINT.setStrokeJoin(Paint.Join.ROUND);
 		PAINT.setStrokeCap(Paint.Cap.ROUND);
-		PAINT.setStrokeWidth(STROKE_WIDTH);
+		PAINT.setStrokeWidth(Chunk.STROKE_WIDTH);
 	}
 	static private final Paint PAINT_ERASE;
 	static {
@@ -35,7 +35,7 @@ public class Chunk {
 		PAINT_ERASE.setStyle(Paint.Style.STROKE);
 		PAINT_ERASE.setStrokeJoin(Paint.Join.ROUND);
 		PAINT_ERASE.setStrokeCap(Paint.Cap.ROUND);
-		PAINT_ERASE.setStrokeWidth(STROKE_WIDTH * 1.5f);
+		PAINT_ERASE.setStrokeWidth(Chunk.STROKE_WIDTH * 1.5f);
 	}
 
 	public final int OFFSET_X;
