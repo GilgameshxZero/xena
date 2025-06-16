@@ -22,8 +22,8 @@ ifdef MAKEDIR: # gmake: false; nmake: unused target
 !IFNDEF JAVA_SOURCE_VERSION
 JAVA_SOURCE_VERSION = 17
 !ENDIF
-!IFNDEF BUILD_ANDROID_VERSION
-BUILD_ANDROID_VERSION = 34
+!IFNDEF ANDROID_TARGET_VERSION
+ANDROID_TARGET_VERSION = 34
 !ENDIF
 
 !IFNDEF BUILD
@@ -52,9 +52,9 @@ JDK_DIR = $(ROOT_DIR)java\jdk-17.0.2^\
 ADK_CMD_DOWNLOAD_URI = https://dl.google.com/android/repository/commandlinetools-win-13114758_latest.zip
 # We use ADK_DIR instead of ANDROID_HOME to distinguish this project's copy of the Android tools vs. any global copy that exists.
 ADK_DIR = $(ROOT_DIR)android^\
-BUILD_TOOLS_DIR = $(ADK_DIR)build-tools\$(BUILD_ANDROID_VERSION).0.0^\
+BUILD_TOOLS_DIR = $(ADK_DIR)build-tools\$(ANDROID_TARGET_VERSION).0.0^\
 PLATFORM_TOOLS_DIR = $(ADK_DIR)platform-tools^\
-PLATFORM_DIR = $(ADK_DIR)platforms\android-$(BUILD_ANDROID_VERSION)^\
+PLATFORM_DIR = $(ADK_DIR)platforms\android-$(ANDROID_TARGET_VERSION)^\
 
 # Real targets.
 # Default/build target only compiles and links, but does not run.
@@ -91,8 +91,8 @@ $(ADK_DIR).make: $(JDK_DIR).make
 		--sdk_root=$(ADK_DIR) --licenses && \
 	"$(ADK_DIR)cmdline-tools\bin\sdkmanager" \
 		--sdk_root=$(ADK_DIR) --install \
-		"platforms;android-$(BUILD_ANDROID_VERSION)" \
-		"build-tools;$(BUILD_ANDROID_VERSION).0.0" \
+		"platforms;android-$(ANDROID_TARGET_VERSION)" \
+		"build-tools;$(ANDROID_TARGET_VERSION).0.0" \
 		"platform-tools"
 	@COPY NUL $(ADK_DIR).make
 
@@ -163,12 +163,12 @@ $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk: $(ADK_DIR).make $(ROOT_DIR)obj
 		-F "$(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).unsigned.unaligned.apk" \
 		-M "$(ROOT_DIR)AndroidManifest.xml" \
 		-S "$(ROOT_DIR)res" \
-		-I $(PLATFORM_DIR)/android.jar
+		-I $(PLATFORM_DIR)android.jar
 # Convert to DEX.
 	@DIR /A-D /S /B $(ROOT_DIR)obj\*.class > obj.tmp
 	@CALL SET "JAVA_HOME=$(JDK_DIR)" && $(BUILD_TOOLS_DIR)d8.bat \
 		--lib "$(PLATFORM_DIR)android.jar" \
-		--min-api 34 \
+		--min-api $(ANDROID_TARGET_VERSION) \
 		--$(BUILD_NAME) \
 		--output $(ROOT_DIR)bin \
 		@obj.tmp \
@@ -181,12 +181,15 @@ $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk: $(ADK_DIR).make $(ROOT_DIR)obj
 		classes.dex
 	@DEL classes.dex
 # Add shared dependencies.
-	@MKDIR lib lib\arm64-v8a
-	@COPY "$(ROOT_DIR)so" lib\arm64-v8a >NUL
+	@MKDIR lib lib\arm64-v8a lib\x86_64
+	@COPY "$(ROOT_DIR)so\arm64-v8a" lib\arm64-v8a >NUL
+	@COPY "$(ROOT_DIR)so\x86_64" lib\x86_64 >NUL
 	@CALL SET "JAVA_HOME=$(JDK_DIR)" && $(BUILD_TOOLS_DIR)aapt.exe add \
 		"$(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).unsigned.unaligned.apk" \
 		lib/arm64-v8a/libonyx_pen_touch_reader.so \
-		lib/arm64-v8a/libc++_shared.so
+		lib/arm64-v8a/libc++_shared.so \
+		lib/x86_64/libc++.so \
+		lib/x86_64/libc++_shared.so
 	@RD /Q /S lib
 # Align to 4-byte boundaries.
 	@CALL SET "JAVA_HOME=$(JDK_DIR)" && $(BUILD_TOOLS_DIR)zipalign.exe -f 4 \
@@ -216,8 +219,10 @@ run: $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk
 
 # Clean target removes all intermediates.
 clean:
+	@IF EXIST $(ROOT_DIR)android RD /Q /S $(ROOT_DIR)android
 	@IF EXIST $(ROOT_DIR)bin RD /Q /S $(ROOT_DIR)bin
 	@IF EXIST $(ROOT_DIR)java RD /Q /S $(ROOT_DIR)java
+	@IF EXIST $(ROOT_DIR)lib RD /Q /S $(ROOT_DIR)lib
 	@IF EXIST $(ROOT_DIR)obj RD /Q /S $(ROOT_DIR)obj
 	@IF EXIST $(ROOT_DIR)priv\$(PROJECT_NAME).debug.keystore \
 		DEL $(ROOT_DIR)priv\$(PROJECT_NAME).debug.keystore
