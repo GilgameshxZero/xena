@@ -178,9 +178,8 @@ public class FilePickerActivity extends Activity
 
 	@Override
 	protected void onResume() {
-		// TODO: Recalculate grid.
-		if (this.LISTING_LAYOUT_PANE != null) {
-			this.updateListing();
+		if (this.layoutListing.getWidth() != 0) {
+			this.onLayoutListingViewReady();
 		}
 		super.onResume();
 	}
@@ -226,6 +225,10 @@ public class FilePickerActivity extends Activity
 	}
 
 	void updateListing() {
+		if (this.LISTING_LAYOUT_PANE == null) {
+			return;
+		}
+
 		this.layoutListing.removeAllViews();
 
 		String path = this.editText.getText().toString();

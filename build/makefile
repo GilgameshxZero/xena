@@ -93,12 +93,20 @@ $(ADK_DIR).make: $(JDK_DIR).make
 		--sdk_root=$(ADK_DIR) --install \
 		"platforms;android-$(ANDROID_TARGET_VERSION)" \
 		"build-tools;$(ANDROID_TARGET_VERSION).0.0" \
-		"platform-tools"
+		"platform-tools" \
+		"emulator" \
+		"system-images;android-28;google_apis;x86" && \
+	"$(ADK_DIR)cmdline-tools\bin\avdmanager" \
+		--sdk_root=$(ADK_DIR) create avd -n a28-x86 -k \
+		"system-images;android-28;google_apis;x86"
 	@COPY NUL $(ADK_DIR).make
 
-# Use the provided `adb`.
+# Use the provided tools.
 adb: $(ADK_DIR).make
 	@CALL SET "JAVA_HOME=$(JDK_DIR)" && $(PLATFORM_TOOLS_DIR)adb $(ARGS)
+
+emulator: $(ADK_DIR).make
+	@CALL SET "JAVA_HOME=$(JDK_DIR)" && SET "ANDROID_SDK_ROOT=C:\Users\0\main.syncthing\xena" && $(ADK_DIR)emulator\emulator $(ARGS)
 
 # All libraries are made together. The last file is specified as target to track
 # dependency, since tracking a directory is not possible.
@@ -188,7 +196,6 @@ $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk: $(ADK_DIR).make $(ROOT_DIR)obj
 		"$(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).unsigned.unaligned.apk" \
 		lib/arm64-v8a/libonyx_pen_touch_reader.so \
 		lib/arm64-v8a/libc++_shared.so \
-		lib/x86_64/libc++.so \
 		lib/x86_64/libc++_shared.so
 	@RD /Q /S lib
 # Align to 4-byte boundaries.
@@ -218,11 +225,9 @@ run: $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk
 	@CALL $(PLATFORM_TOOLS_DIR)adb.exe shell am start $(PACKAGE_NAME)/$(PACKAGE_NAME).$(MAIN_CLASS)
 
 # Clean target removes all intermediates.
-clean:
-	@IF EXIST $(ROOT_DIR)android RD /Q /S $(ROOT_DIR)android
+shallow-clean:
 	@IF EXIST $(ROOT_DIR)bin RD /Q /S $(ROOT_DIR)bin
-	@IF EXIST $(ROOT_DIR)java RD /Q /S $(ROOT_DIR)java
-	@IF EXIST $(ROOT_DIR)lib RD /Q /S $(ROOT_DIR)lib
+	@IF EXIST $(ROOT_DIR)build/lib RD /Q /S $(ROOT_DIR)build/lib
 	@IF EXIST $(ROOT_DIR)obj RD /Q /S $(ROOT_DIR)obj
 	@IF EXIST $(ROOT_DIR)priv\$(PROJECT_NAME).debug.keystore \
 		DEL $(ROOT_DIR)priv\$(PROJECT_NAME).debug.keystore
@@ -231,17 +236,14 @@ clean:
 	@ECHO Uninstalling from device...
 	@CALL $(PLATFORM_TOOLS_DIR)adb.exe uninstall $(PACKAGE_NAME) &
 
+clean: shallow-clean
+	@IF EXIST $(ROOT_DIR)android RD /Q /S $(ROOT_DIR)android
+	@IF EXIST $(ROOT_DIR)java RD /Q /S $(ROOT_DIR)java
+	@IF EXIST $(ROOT_DIR)lib RD /Q /S $(ROOT_DIR)lib
+
 logcat:
 	@CALL $(PLATFORM_TOOLS_DIR)adb.exe shell logcat \
-		*:E XENA:V S:* \
-		IntervalStats:S ANDR-PERF-LM:S BitmapFactory:S \
-		SurfaceFlinger:S SDM:S PermissionMonitor:S \
-		ReflectUtil:S lowmemorykiller:S SWEpdcManager:S \
-		BatteryStatsService:S SWEpdcManager:S PowerManager:S \
-		FirebaseMessaging:S KernelCpuSpeedReader:S \
-		CouchHolder:S CouchbaseLite/NETWORK:S \
-		CouchbaseLite/REPLICATOR:S BufferQueueProducer:S \
-		SELinux:S
+		AndroidRuntime:I ActivityManager:I Xena:V *:S
 
 # ------------------------------------------------------------------------------
 !else
