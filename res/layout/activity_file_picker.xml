@@ -1,50 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:id="@+id/activity_file_picker" android:orientation="vertical"
-	android:layout_width="match_parent" android:layout_height="match_parent"
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/activity_file_picker"
+	android:orientation="vertical"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
 	android:gravity="top"
 	android:background="@android:color/white">
-	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	<LinearLayout
 		android:orientation="horizontal"
-		android:layout_width="match_parent" android:layout_height="wrap_content"
-		android:gravity="center"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="8dp"
+		android:layout_marginRight="8dp"
+		android:layout_marginBottom="0dp"
+		android:layout_marginLeft="8dp"
 		android:background="@android:color/white">
+		<Button
+			android:id="@+id/activity_file_picker_button_date"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_margin="8dp"
+			android:padding="8dp"
+			android:textSize="20dp"
+			android:background="@drawable/solid_empty"
+			android:onClick="onClick"
+			android:text="DATE" />
 		<EditText
 			android:id="@+id/activity_file_picker_edit_text"
 			android:layout_weight="1"
 			android:layout_height="wrap_content"
 			android:layout_width="fill_parent"
-			android:layout_marginTop="16dp"
-			android:layout_marginRight="0dp"
-			android:layout_marginBottom="16dp"
-			android:layout_marginLeft="16dp"
+			android:layout_margin="8dp"
 			android:textSize="20dp"
-			android:background="@drawable/border_clear"
+			android:background="@drawable/solid_empty"
 			android:padding="8dp"
 			android:inputType="textNoSuggestions" />
-		<Button android:id="@+id/activity_file_picker_button"
+		<Button
+			android:id="@+id/activity_file_picker_button_go"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:layout_margin="16dp"
+			android:layout_margin="8dp"
 			android:padding="8dp"
 			android:textSize="20dp"
-			android:background="@drawable/border_clear"
+			android:background="@drawable/solid_empty"
 			android:onClick="onClick"
-			android:text="START" />
+			android:text="GO" />
 	</LinearLayout>
-	<ScrollView
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content">
-		<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-			android:id="@+id/activity_file_picker_layout_listing"
-			android:orientation="vertical"
-			android:layout_width="match_parent" android:layout_height="fill_parent"
-			android:gravity="top"
-			android:background="@android:color/white"
-			android:layout_marginTop="0dp"
-			android:layout_marginRight="16dp"
-			android:layout_marginBottom="12dp"
-			android:layout_marginLeft="16dp">
-		</LinearLayout>
-	</ScrollView>
+	<LinearLayout
+		android:id="@+id/activity_file_picker_layout_listing"
+		android:orientation="vertical"
+		android:layout_weight="1"
+		android:layout_width="match_parent"
+		android:layout_height="fill_parent"
+		android:layout_marginTop="0dp"
+		android:layout_marginRight="12dp"
+		android:layout_marginBottom="12dp"
+		android:layout_marginLeft="12dp"
+		android:background="@android:color/white">
+	</LinearLayout>
 </LinearLayout>
