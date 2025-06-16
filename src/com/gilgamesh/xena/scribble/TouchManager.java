@@ -129,7 +129,6 @@ public class TouchManager implements View.OnTouchListener {
 				break;
 			case MotionEvent.ACTION_UP:
 				if (this.scribbleActivity.isTouchDrawMode) {
-					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:FORWARD");
 					this.scribbleActivity.penManager.onEndRawDrawing(false,
 							new TouchPoint(touchPoint.x, touchPoint.y));
 					break;

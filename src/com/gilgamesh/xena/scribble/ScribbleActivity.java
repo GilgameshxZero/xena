@@ -142,10 +142,17 @@ public class ScribbleActivity extends Activity
 
 	@Override
 	protected void onResume() {
+		ArrayList<Rect> exclusions = new ArrayList<Rect>();
+		exclusions.add(
+				new Rect(this.drawEraseToggle.getLeft(), this.drawEraseToggle.getTop(),
+						this.drawEraseToggle.getRight(), this.drawEraseToggle.getBottom()));
+		exclusions.add(
+				new Rect(this.drawPanToggle.getLeft(), this.drawPanToggle.getTop(),
+						this.drawPanToggle.getRight(), this.drawPanToggle.getBottom()));
 		this.touchHelper.setRawDrawingEnabled(false).setLimitRect(
 				new Rect(0, 0, this.scribbleView.getWidth(),
 						this.scribbleView.getHeight()),
-				new ArrayList<>())
+				exclusions)
 				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
 				.setRawDrawingEnabled(true);
 		if (this.pathManager != null) {
@@ -254,6 +261,9 @@ public class ScribbleActivity extends Activity
 		exclusions.add(
 				new Rect(this.drawEraseToggle.getLeft(), this.drawEraseToggle.getTop(),
 						this.drawEraseToggle.getRight(), this.drawEraseToggle.getBottom()));
+		exclusions.add(
+				new Rect(this.drawPanToggle.getLeft(), this.drawPanToggle.getTop(),
+						this.drawPanToggle.getRight(), this.drawPanToggle.getBottom()));
 		this.touchHelper
 				.setLimitRect(
 						new Rect(0, 0, this.scribbleView.getWidth(),
