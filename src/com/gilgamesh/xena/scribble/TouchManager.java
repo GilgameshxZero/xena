@@ -30,15 +30,25 @@ public class TouchManager implements View.OnTouchListener {
 	}
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public boolean onTouch(View v, MotionEvent event) {
-		return this.onTouchInner(event.getAction(), event.getX(), event.getY(),
-				event.getX(1), event.getY(1));
+		switch (event.getAction()) {
+			case MotionEvent.ACTION_POINTER_DOWN:
+			case MotionEvent.ACTION_POINTER_2_DOWN:
+			case MotionEvent.ACTION_POINTER_UP:
+			case MotionEvent.ACTION_POINTER_2_UP:
+				return this.onTouchInner(event.getAction(), event.getX(), event.getY(),
+						event.getX(1), event.getY(1));
+			default:
+				return this.onTouchInner(event.getAction(), event.getX(), event.getY(),
+						0, 0);
+		}
 	}
 
 	@SuppressWarnings("deprecation")
 	public boolean onTouchInner(int eventAction, float eventX0, float eventY0,
 			float eventX1, float eventY1) {
-		if (this.scribbleActivity.penTouchMode != ScribbleActivity.PenTouchMode.FORCE_DRAW
+		if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.DEFAULT
 				&& (this.scribbleActivity.isDrawing || this.scribbleActivity.isErasing
 						|| this.scribbleActivity.isInputCooldown)) {
 			return false;

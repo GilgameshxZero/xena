@@ -4,14 +4,18 @@ import com.gilgamesh.xena.scribble.ScribbleActivity;
 import com.gilgamesh.xena.R;
 import com.gilgamesh.xena.XenaApplication;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -34,6 +38,9 @@ import java.util.Date;
 
 public class FilePickerActivity extends Activity
 		implements View.OnClickListener {
+	static private final int REQUEST_CODE_READ_EXTERNAL_STORAGE = 1;
+	static private final int REQUEST_CODE_WRITE_EXTERNAL_STORAGE = 2;
+	static private final int REQUEST_CODE_MANAGE_EXTERNAL_STORAGE = 3;
 	static private final String SHARED_PREFERENCES_EDIT_TEXT_CACHE = "SHARED_PREFERENCES_EDIT_TEXT_CACHE";
 	static private final Point MIN_PANE_SIZE_DP = new Point(256, 48);
 	static private final LayoutParams LISTING_LAYOUT_ROW = new LayoutParams(
@@ -178,6 +185,37 @@ public class FilePickerActivity extends Activity
 
 	@Override
 	protected void onResume() {
+		try {
+			if (!Environment.isExternalStorageManager()) {
+				Log.v(XenaApplication.TAG,
+						"FilePickerActivity::onResume:MANAGE_EXTERNAL_STORAGE.");
+				startActivityForResult(
+						new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+								Uri.parse("package:" + this.getPackageName())),
+						FilePickerActivity.REQUEST_CODE_MANAGE_EXTERNAL_STORAGE);
+			}
+		} catch (NoSuchMethodError e) {
+			Log.v(XenaApplication.TAG,
+					"FilePickerActivity::onResume:MANAGE_EXTERNAL_STORAGE: "
+							+ e.toString());
+		}
+		if (checkSelfPermission(
+				Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+			Log.v(XenaApplication.TAG,
+					"FilePickerActivity::onResume:READ_EXTERNAL_STORAGE.");
+			requestPermissions(
+					new String[] { Manifest.permission.READ_EXTERNAL_STORAGE },
+					FilePickerActivity.REQUEST_CODE_READ_EXTERNAL_STORAGE);
+		}
+		if (checkSelfPermission(
+				Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+			Log.v(XenaApplication.TAG,
+					"FilePickerActivity::onResume:WRITE_EXTERNAL_STORAGE.");
+			requestPermissions(
+					new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE },
+					FilePickerActivity.REQUEST_CODE_WRITE_EXTERNAL_STORAGE);
+		}
+
 		if (this.layoutListing.getWidth() != 0) {
 			this.onLayoutListingViewReady();
 		}

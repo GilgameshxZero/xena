@@ -143,24 +143,17 @@ public class ScribbleActivity extends Activity
 		this.scribbleView.setOnTouchListener(this.touchManager);
 
 		// TouchHelper must be initialized onCreate, since it is used in `onResume`.
-		this.touchHelper = TouchHelper.create(scribbleView, this.penManager)
-				.setStrokeWidth(Chunk.STROKE_WIDTH)
-				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL);
+		this.touchHelper = TouchHelper.create(scribbleView, this.penManager);
 	}
 
 	@Override
 	protected void onResume() {
-		ArrayList<Rect> exclusions = new ArrayList<Rect>();
-		exclusions.add(
-				new Rect(this.drawEraseToggle.getLeft(), this.drawEraseToggle.getTop(),
-						this.drawEraseToggle.getRight(), this.drawEraseToggle.getBottom()));
-		exclusions.add(
-				new Rect(this.drawPanToggle.getLeft(), this.drawPanToggle.getTop(),
-						this.drawPanToggle.getRight(), this.drawPanToggle.getBottom()));
-		this.touchHelper.setRawDrawingEnabled(false).setLimitRect(
-				new Rect(0, 0, this.scribbleView.getWidth(),
-						this.scribbleView.getHeight()),
-				exclusions)
+		this.touchHelper
+				.setRawDrawingEnabled(false)
+				.setLimitRect(
+						new Rect(0, 0, this.scribbleView.getWidth(),
+								this.scribbleView.getHeight()),
+						this.getRawDrawingExclusions())
 				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
 				.setRawDrawingEnabled(true);
 		if (this.pathManager != null) {
@@ -214,7 +207,7 @@ public class ScribbleActivity extends Activity
 				this.isPenEraseMode = !this.isPenEraseMode;
 				this.drawEraseToggle
 						.setBackgroundResource(this.isPenEraseMode ? R.drawable.solid_empty
-								: R.drawable.solid_filled);
+								: R.drawable.dotted_empty);
 				break;
 			case R.id.activity_scribble_draw_pan_toggle:
 				Log.v(XenaApplication.TAG,
@@ -227,10 +220,12 @@ public class ScribbleActivity extends Activity
 					case FORCE_DRAW:
 						this.penTouchMode = PenTouchMode.FORCE_PAN;
 						this.drawPanToggle.setBackgroundResource(R.drawable.solid_empty);
+						this.touchHelper.closeRawDrawing();
 						break;
 					case FORCE_PAN:
 						this.penTouchMode = PenTouchMode.DEFAULT;
 						this.drawPanToggle.setBackgroundResource(R.drawable.dotted_empty);
+						this.openTouchHelperRawDrawing();
 						break;
 				}
 				break;
@@ -273,20 +268,7 @@ public class ScribbleActivity extends Activity
 		drawBitmapToView(true, true);
 
 		this.updateTextViewStatus();
-
-		ArrayList<Rect> exclusions = new ArrayList<Rect>();
-		exclusions.add(
-				new Rect(this.drawEraseToggle.getLeft(), this.drawEraseToggle.getTop(),
-						this.drawEraseToggle.getRight(), this.drawEraseToggle.getBottom()));
-		exclusions.add(
-				new Rect(this.drawPanToggle.getLeft(), this.drawPanToggle.getTop(),
-						this.drawPanToggle.getRight(), this.drawPanToggle.getBottom()));
-		this.touchHelper
-				.setLimitRect(
-						new Rect(0, 0, this.scribbleView.getWidth(),
-								this.scribbleView.getHeight()),
-						exclusions)
-				.openRawDrawing().setRawDrawingEnabled(true);
+		this.openTouchHelperRawDrawing();
 	}
 
 	void drawBitmapToView(boolean force, boolean invalidate) {
@@ -363,5 +345,31 @@ public class ScribbleActivity extends Activity
 				(isSaved ? "CLEAN" : "DIRTY") + " | ..."
 						+ uriString.substring(uriString.length()
 								- ScribbleActivity.TEXT_VIEW_PATH_SUFFIX_LENGTH));
+	}
+
+	ArrayList<Rect> getRawDrawingExclusions() {
+		ArrayList<Rect> exclusions = new ArrayList<Rect>();
+		exclusions.add(
+				new Rect(this.drawEraseToggle.getLeft(), this.drawEraseToggle.getTop(),
+						this.drawEraseToggle.getRight(), this.drawEraseToggle.getBottom()));
+		exclusions.add(
+				new Rect(this.drawPanToggle.getLeft(), this.drawPanToggle.getTop(),
+						this.drawPanToggle.getRight(), this.drawPanToggle.getBottom()));
+		return exclusions;
+	}
+
+	void openTouchHelperRawDrawing() {
+		float zoomScale = 1f;
+		if (this.pathManager != null) {
+			zoomScale = this.pathManager.getZoomScale();
+		}
+		this.touchHelper
+				.setLimitRect(
+						new Rect(0, 0, this.scribbleView.getWidth(),
+								this.scribbleView.getHeight()),
+						this.getRawDrawingExclusions())
+				.setStrokeWidth(Chunk.STROKE_WIDTH * zoomScale)
+				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
+				.openRawDrawing().setRawDrawingEnabled(true);
 	}
 }
