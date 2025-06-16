@@ -49,6 +49,12 @@ public class ScribbleActivity extends Activity
 				.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OUT));
 		PAINT_TRANSPARENT.setColor(Color.TRANSPARENT);
 	}
+	static private final Paint PAINT_BITMAP;
+	static {
+		PAINT_BITMAP = new Paint();
+		PAINT_BITMAP.setAntiAlias(true);
+		PAINT_BITMAP.setFilterBitmap(true);
+	}
 	static public final String EXTRA_SVG_PATH = "EXTRA_SVG_PATH";
 	static public final String EXTRA_PDF_PATH = "EXTRA_PDF_PATH";
 	static private final int TEXT_VIEW_PATH_SUFFIX_LENGTH = 32;
@@ -144,8 +150,11 @@ public class ScribbleActivity extends Activity
 	@Override
 	protected void onPause() {
 		// onPause will be called when "back" is pressed as well.
-		this.svgFileScribe.debounceSave(ScribbleActivity.this, svgUri,
-				this.pathManager, 0);
+		// Do not resave if already saved—avoids friction where file has been processed/moved elsewhere already.
+		if (!this.svgFileScribe.getIsSaved()) {
+			this.svgFileScribe.debounceSave(ScribbleActivity.this, svgUri,
+					this.pathManager, 0);
+		}
 		this.touchHelper.setRawDrawingEnabled(false);
 		super.onPause();
 	}
@@ -226,22 +235,8 @@ public class ScribbleActivity extends Activity
 							-this.pathManager.getViewportOffset().y
 									+ this.scribbleView.getHeight()
 											/ this.pathManager.getZoomScale()))) {
-				Log.v("XENA",
-						"" + new Rect(0, 0,
-								Math.round(page.location.right - page.location.left),
-								Math.round(page.location.bottom - page.location.top)) + " "
-								+ new RectF(
-										page.location.left * this.pathManager.getZoomScale()
-												+ this.pathManager.getViewportOffset().x,
-										page.location.top * this.pathManager.getZoomScale()
-												+ this.pathManager.getViewportOffset().y,
-										page.location.right * this.pathManager.getZoomScale()
-												+ this.pathManager.getViewportOffset().x,
-										page.location.bottom * this.pathManager.getZoomScale()
-												+ this.pathManager.getViewportOffset().y));
 				this.scribbleViewCanvas.drawBitmap(page.bitmap,
-						new Rect(0, 0, Math.round(page.location.right - page.location.left),
-								Math.round(page.location.bottom - page.location.top)),
+						new Rect(0, 0, page.bitmap.getWidth(), page.bitmap.getHeight()),
 						new RectF(
 								(page.location.left
 										+ this.pathManager.getViewportOffset().x)
@@ -255,7 +250,7 @@ public class ScribbleActivity extends Activity
 								(page.location.bottom
 										+ this.pathManager.getViewportOffset().y)
 										* this.pathManager.getZoomScale()),
-						null);
+						PAINT_BITMAP);
 			}
 		}
 
@@ -273,7 +268,7 @@ public class ScribbleActivity extends Activity
 							(this.pathManager.getViewportOffset().y
 									+ chunk.OFFSET_Y + this.pathManager.CHUNK_SIZE.y)
 									* this.pathManager.getZoomScale()),
-					null);
+					PAINT_BITMAP);
 		}
 
 		if (invalidate) {

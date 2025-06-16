@@ -12,7 +12,7 @@ import android.view.View;
 public class TouchManager implements View.OnTouchListener {
 	static private final float FLICK_MOVE_RATIO = 0.8f;
 	static private final float TOUCH_BORDER_INVALID_RATIO = 0.1f;
-	static private final float ZOOM_STEP = 2f;
+	static private final float ZOOM_STEP = 1.2f;
 
 	private final int FLICK_LOWER_BOUND_MS = 80;
 	private final int FLICK_UPPER_BOUND_MS = 220;

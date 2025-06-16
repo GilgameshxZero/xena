@@ -18,6 +18,8 @@ import android.util.Log;
 
 // Pages are laid out vertically, left-aligned at 0.
 public class PdfReader {
+	static final private float RENDER_SCALE = 2f;
+
 	private PageBitmap[] pages;
 	private Context context;
 	private Uri uri;
@@ -71,8 +73,8 @@ public class PdfReader {
 								+ "x"
 								+ page.getHeight() + ".");
 				this.pages[pageIdx].bitmap = Bitmap.createBitmap(
-						Math.round(page.getWidth() * this.pointScale.x),
-						Math.round(page.getHeight() * this.pointScale.y),
+						Math.round(page.getWidth() * this.pointScale.x * RENDER_SCALE),
+						Math.round(page.getHeight() * this.pointScale.y * RENDER_SCALE),
 						Bitmap.Config.ARGB_8888);
 				page.render(this.pages[pageIdx].bitmap, null, null,
 						Page.RENDER_MODE_FOR_DISPLAY);
