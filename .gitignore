@@ -7,3 +7,5 @@ priv/
 
 # Makefile artifacts.
 **.tmp
+
+.knownPackages
