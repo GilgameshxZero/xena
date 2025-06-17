@@ -19,6 +19,8 @@
 		android:textColor="@android:color/black"
 		android:textSize="16dp"
 		android:background="@drawable/solid_empty"
+		android:maxLines="1"
+		android:gravity="top"
 		android:onClick="onClick" />
 	<TextView android:id="@+id/activity_scribble_text_view_status"
 		android:layout_width="wrap_content"
@@ -30,6 +32,8 @@
 		android:textColor="@android:color/black"
 		android:textSize="16dp"
 		android:background="@drawable/solid_empty"
+		android:maxLines="1"
+		android:gravity="top"
 		android:onClick="onClick" />
 	<View android:id="@+id/activity_scribble_draw_erase_toggle"
 		android:layout_width="32dp"

@@ -25,6 +25,9 @@ JAVA_SOURCE_VERSION = 17
 !IFNDEF ANDROID_TARGET_VERSION
 ANDROID_TARGET_VERSION = 34
 !ENDIF
+!IFNDEF ANDROID_MINIMUM_VERSION
+ANDROID_MINIMUM_VERSION = 28
+!ENDIF
 
 !IFNDEF BUILD
 BUILD = 0
@@ -95,18 +98,30 @@ $(ADK_DIR).make: $(JDK_DIR).make
 		"build-tools;$(ANDROID_TARGET_VERSION).0.0" \
 		"platform-tools" \
 		"emulator" \
-		"system-images;android-28;google_apis;x86" && \
+		"system-images;android-$(ANDROID_MINIMUM_VERSION);google_apis;x86_64" && \
 	"$(ADK_DIR)cmdline-tools\bin\avdmanager" \
-		--sdk_root=$(ADK_DIR) create avd -n a28-x86 -k \
-		"system-images;android-28;google_apis;x86"
+		--sdk_root=$(ADK_DIR) create avd -n $(ANDROID_MINIMUM_VERSION)-x86_64 -k \
+		"system-images;android-$(ANDROID_MINIMUM_VERSION);google_apis;x86_64"
 	@COPY NUL $(ADK_DIR).make
 
 # Use the provided tools.
 adb: $(ADK_DIR).make
-	@CALL SET "JAVA_HOME=$(JDK_DIR)" && $(PLATFORM_TOOLS_DIR)adb $(ARGS)
+	@CALL SET "JAVA_HOME=$(JDK_DIR)" && \
+	"$(PLATFORM_TOOLS_DIR)adb" $(ARGS)
 
+sdkmanager: $(ADK_DIR).make
+	@CALL SET "JAVA_HOME=$(JDK_DIR)" && \
+	"$(ADK_DIR)cmdline-tools\bin\sdkmanager" --sdk_root=$(ADK_DIR) $(ARGS)
+
+avdmanager: $(ADK_DIR).make
+	@CALL SET "JAVA_HOME=$(JDK_DIR)" && \
+	"$(ADK_DIR)cmdline-tools\bin\avdmanager" $(ARGS)
+
+# Ensure that ~/.android/avd/<avd-name>/config.ini has the correct `image.
+# sysdir.1` relative property.
 emulator: $(ADK_DIR).make
-	@CALL SET "JAVA_HOME=$(JDK_DIR)" && SET "ANDROID_SDK_ROOT=C:\Users\0\main.syncthing\xena" && $(ADK_DIR)emulator\emulator $(ARGS)
+	@CALL SET "JAVA_HOME=$(JDK_DIR)" && \
+	"$(ADK_DIR)emulator\emulator" $(ARGS)
 
 # All libraries are made together. The last file is specified as target to track
 # dependency, since tracking a directory is not possible.

@@ -57,7 +57,7 @@ public class ScribbleActivity extends Activity
 	}
 	static public final String EXTRA_SVG_PATH = "EXTRA_SVG_PATH";
 	static public final String EXTRA_PDF_PATH = "EXTRA_PDF_PATH";
-	static private final int TEXT_VIEW_PATH_SUFFIX_LENGTH = 32;
+	static private final int TEXT_VIEW_PATH_SUFFIX_LENGTH = 24;
 
 	// Managers.
 	SvgFileScribe svgFileScribe;
@@ -341,10 +341,10 @@ public class ScribbleActivity extends Activity
 
 	void updateTextViewPath(boolean isSaved) {
 		String uriString = this.svgUri.toString();
-		this.textViewPath.setText(
-				(isSaved ? "CLEAN" : "DIRTY") + " | ..."
-						+ uriString.substring(uriString.length()
-								- ScribbleActivity.TEXT_VIEW_PATH_SUFFIX_LENGTH));
+		this.textViewPath.setText("..." + uriString.substring(uriString.length()
+				- ScribbleActivity.TEXT_VIEW_PATH_SUFFIX_LENGTH));
+		this.textViewPath.setBackgroundResource(
+				isSaved ? R.drawable.solid_empty : R.drawable.dotted_empty);
 	}
 
 	ArrayList<Rect> getRawDrawingExclusions() {
