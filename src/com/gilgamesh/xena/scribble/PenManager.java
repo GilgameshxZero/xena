@@ -20,7 +20,7 @@ public class PenManager extends RawInputCallback {
 	static private final float DRAW_MOVE_EPSILON_DP = 2f;
 	static private final float DRAW_MOVE_EPSILON_PX = PenManager.DRAW_MOVE_EPSILON_DP
 			* XenaApplication.DPI / 160;
-	private final int DEBOUNCE_REDRAW_DELAY_MS = 1000;
+	private final int DEBOUNCE_REDRAW_DELAY_MS = 64000;
 	private final int DEBOUNCE_INPUT_COOLDOWN_DELAY_MS = 200;
 
 	// Drawing end/begin pairs may fire within milliseconds. In this case,
@@ -54,7 +54,7 @@ public class PenManager extends RawInputCallback {
 		}
 	};
 
-	private void cancelRedraw() {
+	public void cancelRedraw() {
 		this.scribbleActivity.isRedrawing = false;
 		this.debounceRedrawTask.cancel();
 	}
