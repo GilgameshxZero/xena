@@ -99,8 +99,9 @@ $(ADK_DIR).make: $(JDK_DIR).make
 		"platform-tools" \
 		"emulator" \
 		"system-images;android-$(ANDROID_MINIMUM_VERSION);google_apis;x86_64" && \
-	"$(ADK_DIR)cmdline-tools\bin\avdmanager" \
-		--sdk_root=$(ADK_DIR) create avd -n $(ANDROID_MINIMUM_VERSION)-x86_64 -k \
+	"$(ADK_DIR)cmdline-tools\bin\avdmanager" create avd \
+		--name $(ANDROID_MINIMUM_VERSION)-x86_64 \
+		--package \
 		"system-images;android-$(ANDROID_MINIMUM_VERSION);google_apis;x86_64"
 	@COPY NUL $(ADK_DIR).make
 
@@ -237,7 +238,8 @@ run: $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk
 	@CALL $(PLATFORM_TOOLS_DIR)adb.exe install -r $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk
 	@ECHO Cooling down after install...
 	@TIMEOUT /T 2 >NUL
-	@CALL $(PLATFORM_TOOLS_DIR)adb.exe shell am start $(PACKAGE_NAME)/$(PACKAGE_NAME).$(MAIN_CLASS)
+	@CALL $(PLATFORM_TOOLS_DIR)adb.exe shell am start -n \
+		$(PACKAGE_NAME)/$(PACKAGE_NAME).$(MAIN_CLASS)
 
 # Clean target removes all intermediates.
 shallow-clean:
@@ -249,7 +251,10 @@ shallow-clean:
 	@IF EXIST $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java \
 		DEL $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java
 	@ECHO Uninstalling from device...
-	@CALL $(PLATFORM_TOOLS_DIR)adb.exe uninstall $(PACKAGE_NAME) &
+	@IF EXIST $(PLATFORM_TOOLS_DIR)adb.exe \
+		@CALL $(PLATFORM_TOOLS_DIR)adb.exe uninstall $(PACKAGE_NAME)
+	@IF EXIST $(PLATFORM_TOOLS_DIR)adb.exe \
+		@CALL $(PLATFORM_TOOLS_DIR)adb.exe kill-server >NUL
 
 clean: shallow-clean
 	@IF EXIST $(ROOT_DIR)android RD /Q /S $(ROOT_DIR)android

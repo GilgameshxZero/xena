@@ -14,6 +14,10 @@ import android.util.Log;
 
 // Path state and utility functions.
 public class PathManager {
+	static private final float[] ZOOM_STEPS = new float[] { 0.25f, 0.33f, 0.5f,
+			0.8f, 1f, 1.2f, 1.5f, 2f, 3f };
+	static private final int ZOOM_STEP_ID_DEFAULT = 4;
+
 	private final PathManager that = this;
 
 	// Size of one chunk is one viewport, always.
@@ -32,7 +36,7 @@ public class PathManager {
 
 	private Point currentChunk = new Point(0, 0);
 
-	private float zoomScale = 1;
+	private int zoomStepId = PathManager.ZOOM_STEP_ID_DEFAULT;
 
 	public PathManager(Point chunkSize) {
 		this.CHUNK_SIZE = chunkSize;
@@ -150,26 +154,47 @@ public class PathManager {
 	}
 
 	public float getZoomScale() {
-		return this.zoomScale;
+		return PathManager.ZOOM_STEPS[this.zoomStepId];
 	}
 
-	public void setZoomScale(float zoomScale) {
+	public int getZoomStepId() {
+		return this.zoomStepId;
+	}
+
+	public void zoomIn() {
+		this.setZoomStepId(Math.min(PathManager.ZOOM_STEPS.length - 1,
+				this.zoomStepId + 1));
+	}
+
+	public void zoomOut() {
+		this.setZoomStepId(Math.max(0, this.zoomStepId - 1));
+	}
+
+	public void resetZoom() {
+		this.setZoomStepId(PathManager.ZOOM_STEP_ID_DEFAULT);
+	}
+
+	public void setZoomStepId(int newZoomStepId) {
 		// Also update the viewport offset so that scale functions according to the
 		// center of the screen.
 		PointF newViewportOffset = new PointF(
-				this.viewportOffset.x - this.CHUNK_SIZE.x / this.zoomScale / 2
-						+ this.CHUNK_SIZE.x / zoomScale / 2,
-				this.viewportOffset.y - this.CHUNK_SIZE.y / this.zoomScale / 2
-						+ this.CHUNK_SIZE.y / zoomScale / 2);
+				this.viewportOffset.x
+						- this.CHUNK_SIZE.x / PathManager.ZOOM_STEPS[this.zoomStepId] / 2
+						+ this.CHUNK_SIZE.x / PathManager.ZOOM_STEPS[newZoomStepId] / 2,
+				this.viewportOffset.y
+						- this.CHUNK_SIZE.y / PathManager.ZOOM_STEPS[this.zoomStepId] / 2
+						+ this.CHUNK_SIZE.y / PathManager.ZOOM_STEPS[newZoomStepId] / 2);
 
-		this.zoomScale = zoomScale;
+		this.zoomStepId = newZoomStepId;
 		this.setViewportOffset(newViewportOffset);
 	}
 
 	public ArrayList<Chunk> getVisibleChunks() {
 		ArrayList<Chunk> visibleChunks = new ArrayList<Chunk>();
-		for (int i = -1; i < Math.ceil(1 / this.zoomScale); i++) {
-			for (int j = -1; j < Math.ceil(1 / this.zoomScale); j++) {
+		for (int i = -1; i < Math
+				.ceil(1 / PathManager.ZOOM_STEPS[this.zoomStepId]); i++) {
+			for (int j = -1; j < Math
+					.ceil(1 / PathManager.ZOOM_STEPS[this.zoomStepId]); j++) {
 				Point chunkCoordinate = new Point(this.currentChunk.x + i,
 						this.currentChunk.y + j);
 				Chunk chunk = chunks.get(chunkCoordinate);

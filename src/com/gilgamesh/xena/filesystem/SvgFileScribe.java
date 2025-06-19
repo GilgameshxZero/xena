@@ -1,9 +1,9 @@
 package com.gilgamesh.xena.filesystem;
 
 import com.gilgamesh.xena.XenaApplication;
-import com.gilgamesh.xena.scribble.Chunk;
 import com.gilgamesh.xena.scribble.CompoundPath;
 import com.gilgamesh.xena.scribble.PathManager;
+import com.gilgamesh.xena.scribble.ScribbleActivity;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -49,10 +49,15 @@ public class SvgFileScribe {
 
 					if (parser.getName().equals("svg")) {
 						// Viewport is not scaled.
-						String[] viewport = parser.getAttributeValue(null, "data-xena")
+						String[] data = parser.getAttributeValue(null, "data-xena")
 								.split(" ");
+
+						if (data.length > 2) {
+							pathManager.setZoomStepId(Integer.parseInt(data[2]));
+						}
+
 						pathManager.setViewportOffset(new PointF(
-								Integer.parseInt(viewport[0]), Integer.parseInt(viewport[1])));
+								Integer.parseInt(data[0]), Integer.parseInt(data[1])));
 					}
 
 					if (!parser.getName().equals("path")) {
@@ -204,13 +209,13 @@ public class SvgFileScribe {
 					stringBuilder.append("\"/>\n");
 				}
 
-				containerBox.left -= Chunk.STROKE_WIDTH
+				containerBox.left -= ScribbleActivity.STROKE_WIDTH_DP
 						* SvgFileScribe.COORDINATE_SCALE_FACTOR;
-				containerBox.top -= Chunk.STROKE_WIDTH
+				containerBox.top -= ScribbleActivity.STROKE_WIDTH_DP
 						* SvgFileScribe.COORDINATE_SCALE_FACTOR;
-				containerBox.right += Chunk.STROKE_WIDTH
+				containerBox.right += ScribbleActivity.STROKE_WIDTH_DP
 						* SvgFileScribe.COORDINATE_SCALE_FACTOR;
-				containerBox.bottom += Chunk.STROKE_WIDTH
+				containerBox.bottom += ScribbleActivity.STROKE_WIDTH_DP
 						* SvgFileScribe.COORDINATE_SCALE_FACTOR;
 				outputStreamWriter.write(
 						"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\""
@@ -227,12 +232,14 @@ public class SvgFileScribe {
 										* SvgFileScribe.COORDINATE_SCALE_FACTOR)
 								+ "\" stroke=\"black\" stroke-width=\""
 								+ Math
-										.round(Chunk.STROKE_WIDTH
+										.round(ScribbleActivity.STROKE_WIDTH_DP
 												* SvgFileScribe.COORDINATE_SCALE_FACTOR)
 								+ "\" stroke-linecap=\"round\" stroke-linejoin=\"round\" fill=\"none\" data-xena=\""
 								+ Math.round(pathManager.getViewportOffset().x)
 								+ ' '
 								+ Math.round(pathManager.getViewportOffset().y)
+								+ ' '
+								+ pathManager.getZoomStepId()
 								+ "\">"
 								+ "<style>@media(prefers-color-scheme:dark){svg{background-color:black;stroke:white;}}</style>\n");
 				outputStreamWriter.write(stringBuilder.toString());

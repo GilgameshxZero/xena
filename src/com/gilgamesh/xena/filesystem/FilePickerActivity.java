@@ -19,7 +19,6 @@ import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -42,16 +41,19 @@ public class FilePickerActivity extends Activity
 	static private final int REQUEST_CODE_WRITE_EXTERNAL_STORAGE = 2;
 	static private final int REQUEST_CODE_MANAGE_EXTERNAL_STORAGE = 3;
 	static private final String SHARED_PREFERENCES_EDIT_TEXT_CACHE = "SHARED_PREFERENCES_EDIT_TEXT_CACHE";
-	static private final Point MIN_PANE_SIZE_DP = new Point(256, 48);
+	static private final Point MIN_PANE_SIZE_DP = new Point(384, 72);
+	static private final Point MIN_PANE_SIZE_PX = new Point(
+			FilePickerActivity.MIN_PANE_SIZE_DP.x * XenaApplication.DPI / 160,
+			FilePickerActivity.MIN_PANE_SIZE_DP.y * XenaApplication.DPI / 160);
+	static private final int MARGIN_SIZE_DP = 6;
+	static private final int MARGIN_SIZE_PX = FilePickerActivity.MARGIN_SIZE_DP
+			* XenaApplication.DPI / 160;
 	static private final LayoutParams LISTING_LAYOUT_ROW = new LayoutParams(
 			LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-	static private final int MARGIN_SIZE_DP = 4;
 
-	private Point MIN_PANE_SIZE_PX;
-	private int MARGIN_SIZE_PX;
+	private Point GRID_DIMENSIONS;
 	private int PANES_PER_PAGE;
 	private Point PANE_SIZE;
-	private Point GRID_DIMENSIONS;
 	private LayoutParams LISTING_LAYOUT_PANE = null;
 
 	private EditText editText;
@@ -69,20 +71,6 @@ public class FilePickerActivity extends Activity
 
 		this.editText = findViewById(R.id.activity_file_picker_edit_text);
 		this.layoutListing = findViewById(R.id.activity_file_picker_layout_listing);
-
-		// Finish init.
-		this.MIN_PANE_SIZE_PX = new Point((int) TypedValue.applyDimension(
-				TypedValue.COMPLEX_UNIT_DIP,
-				FilePickerActivity.MIN_PANE_SIZE_DP.x,
-				this.getResources().getDisplayMetrics()),
-				(int) TypedValue.applyDimension(
-						TypedValue.COMPLEX_UNIT_DIP,
-						FilePickerActivity.MIN_PANE_SIZE_DP.y,
-						this.getResources().getDisplayMetrics()));
-		this.MARGIN_SIZE_PX = (int) TypedValue.applyDimension(
-				TypedValue.COMPLEX_UNIT_DIP,
-				FilePickerActivity.MARGIN_SIZE_DP,
-				this.getResources().getDisplayMetrics());
 
 		this.layoutListing.getViewTreeObserver().addOnGlobalLayoutListener(
 				new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -127,15 +115,17 @@ public class FilePickerActivity extends Activity
 		// Calculate PANE_SIZE.
 		this.GRID_DIMENSIONS = new Point(
 				this.layoutListing.getWidth()
-						/ (this.MIN_PANE_SIZE_PX.x + this.MARGIN_SIZE_PX * 2),
+						/ (FilePickerActivity.MIN_PANE_SIZE_PX.x
+								+ FilePickerActivity.MARGIN_SIZE_PX * 2),
 				this.layoutListing.getHeight()
-						/ (this.MIN_PANE_SIZE_PX.y + this.MARGIN_SIZE_PX * 2));
+						/ (FilePickerActivity.MIN_PANE_SIZE_PX.y
+								+ FilePickerActivity.MARGIN_SIZE_PX * 2));
 		this.PANES_PER_PAGE = this.GRID_DIMENSIONS.x * this.GRID_DIMENSIONS.y;
 		this.PANE_SIZE = new Point(
 				this.layoutListing.getWidth() / this.GRID_DIMENSIONS.x
-						- this.MARGIN_SIZE_PX * 2,
+						- FilePickerActivity.MARGIN_SIZE_PX * 2,
 				this.layoutListing.getHeight() / this.GRID_DIMENSIONS.y
-						- this.MARGIN_SIZE_PX * 2);
+						- FilePickerActivity.MARGIN_SIZE_PX * 2);
 		Log.v(XenaApplication.TAG, "FilePickerActivity::onLayoutListingViewReady: "
 				+ this.layoutListing.getWidth() + ", "
 				+ this.layoutListing.getHeight() + " | "
@@ -144,8 +134,8 @@ public class FilePickerActivity extends Activity
 		this.LISTING_LAYOUT_PANE = new LayoutParams(this.PANE_SIZE.x,
 				this.PANE_SIZE.y);
 		this.LISTING_LAYOUT_PANE.setMargins(
-				this.MARGIN_SIZE_PX, this.MARGIN_SIZE_PX,
-				this.MARGIN_SIZE_PX, this.MARGIN_SIZE_PX);
+				FilePickerActivity.MARGIN_SIZE_PX, FilePickerActivity.MARGIN_SIZE_PX,
+				FilePickerActivity.MARGIN_SIZE_PX, FilePickerActivity.MARGIN_SIZE_PX);
 
 		updateListing();
 	}

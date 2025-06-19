@@ -6,14 +6,12 @@ import java.util.ArrayList;
 import com.gilgamesh.xena.XenaApplication;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.graphics.pdf.PdfRenderer;
 import android.graphics.pdf.PdfRenderer.Page;
 import android.net.Uri;
-import android.util.DisplayMetrics;
 import android.util.Log;
 
 // Pages are laid out vertically, left-aligned at 0.
@@ -30,9 +28,9 @@ public class PdfReader {
 		this.context = context;
 		this.uri = uri;
 
-		DisplayMetrics displayMetrics = Resources.getSystem().getDisplayMetrics();
-		this.pointScale.x = displayMetrics.xdpi / 72;
-		this.pointScale.y = displayMetrics.ydpi / 72;
+		// 72 because PDFs render at 72dpi.
+		this.pointScale.x = XenaApplication.DPI / 72f;
+		this.pointScale.y = XenaApplication.DPI / 72f;
 
 		try {
 			PdfRenderer renderer = new PdfRenderer(context.getContentResolver()
