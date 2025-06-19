@@ -17,7 +17,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class PenManager extends RawInputCallback {
-	static private final float DRAW_MOVE_EPSILON = 3f;
+	static private final float DRAW_MOVE_EPSILON_DP = 2f;
+	static private final float DRAW_MOVE_EPSILON_PX = PenManager.DRAW_MOVE_EPSILON_DP
+			* XenaApplication.DPI / 160;
 	private final int DEBOUNCE_REDRAW_DELAY_MS = 1000;
 	private final int DEBOUNCE_INPUT_COOLDOWN_DELAY_MS = 200;
 
@@ -30,7 +32,7 @@ public class PenManager extends RawInputCallback {
 	// begin/end events created. Thus, we only interpret an erase event ending
 	// if no erase-related events have been received within a certain time.
 	// Before then, we erase all points received.
-	private final int DEBOUNCE_END_ERASE_DELAY_MS = 150;
+	private final int DEBOUNCE_END_ERASE_DELAY_MS = 300;
 
 	private PointF previousErasePoint = new PointF();
 	private PointF previousTentativeDrawPoint = new PointF();
@@ -260,7 +262,7 @@ public class PenManager extends RawInputCallback {
 
 		if (currentPath.points.size() > 1
 				&& Geometry.distance(lastPoint,
-						newPoint) < PenManager.DRAW_MOVE_EPSILON) {
+						newPoint) < PenManager.DRAW_MOVE_EPSILON_PX) {
 			return;
 		}
 		currentPath.addPoint(newPoint);
@@ -295,7 +297,8 @@ public class PenManager extends RawInputCallback {
 
 	@Override
 	public void onBeginRawErasing(boolean b, TouchPoint touchPoint) {
-		if (!this.scribbleActivity.isPenEraseMode && this.scribbleActivity.penTouchMode != ScribbleActivity.PenTouchMode.DEFAULT) {
+		if (!this.scribbleActivity.isPenEraseMode
+				&& this.scribbleActivity.penTouchMode != ScribbleActivity.PenTouchMode.DEFAULT) {
 			return;
 		}
 
@@ -326,7 +329,8 @@ public class PenManager extends RawInputCallback {
 
 	@Override
 	public void onEndRawErasing(boolean b, TouchPoint touchPoint) {
-		if (!this.scribbleActivity.isPenEraseMode && this.scribbleActivity.penTouchMode != ScribbleActivity.PenTouchMode.DEFAULT) {
+		if (!this.scribbleActivity.isPenEraseMode
+				&& this.scribbleActivity.penTouchMode != ScribbleActivity.PenTouchMode.DEFAULT) {
 			return;
 		}
 
@@ -342,7 +346,8 @@ public class PenManager extends RawInputCallback {
 
 	@Override
 	public void onRawErasingTouchPointMoveReceived(TouchPoint touchPoint) {
-		if (!this.scribbleActivity.isPenEraseMode && this.scribbleActivity.penTouchMode != ScribbleActivity.PenTouchMode.DEFAULT) {
+		if (!this.scribbleActivity.isPenEraseMode
+				&& this.scribbleActivity.penTouchMode != ScribbleActivity.PenTouchMode.DEFAULT) {
 			return;
 		}
 

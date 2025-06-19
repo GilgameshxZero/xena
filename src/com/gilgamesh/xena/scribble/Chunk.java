@@ -15,7 +15,6 @@ import android.graphics.RectF;
 // Chunk stores some path IDs which are in the chunk, as well as a bitmap rendering of all paths in the chunk. The chunk also stores the offset of its top-left corner in the viewport to enable rendering.
 // Each bitmap/chunk requires around 11MB of memory for 1872x1404 space.
 public class Chunk {
-	static public final float STROKE_WIDTH = 4f;
 	static public final Paint PAINT;
 	static {
 		PAINT = new Paint();
@@ -24,7 +23,7 @@ public class Chunk {
 		PAINT.setStyle(Paint.Style.STROKE);
 		PAINT.setStrokeJoin(Paint.Join.ROUND);
 		PAINT.setStrokeCap(Paint.Cap.ROUND);
-		PAINT.setStrokeWidth(Chunk.STROKE_WIDTH);
+		PAINT.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX);
 	}
 	static private final Paint PAINT_ERASE;
 	static {
@@ -35,7 +34,7 @@ public class Chunk {
 		PAINT_ERASE.setStyle(Paint.Style.STROKE);
 		PAINT_ERASE.setStrokeJoin(Paint.Join.ROUND);
 		PAINT_ERASE.setStrokeCap(Paint.Cap.ROUND);
-		PAINT_ERASE.setStrokeWidth(Chunk.STROKE_WIDTH * 1.5f);
+		PAINT_ERASE.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * 1.5f);
 	}
 
 	public final int OFFSET_X;

@@ -13,11 +13,11 @@ import android.view.View;
 public class TouchManager implements View.OnTouchListener {
 	static private final float FLICK_MOVE_RATIO = 0.8f;
 	static private final float TOUCH_BORDER_INVALID_RATIO = 0.1f;
-	static private final float ZOOM_STEP = 1.2f;
-
-	private final int FLICK_LOWER_BOUND_MS = 80;
-	private final int FLICK_UPPER_BOUND_MS = 220;
-	private final float ZOOM_DISTANCE_BOUND = 128;
+	static private final int FLICK_LOWER_BOUND_MS = 80;
+	static private final int FLICK_UPPER_BOUND_MS = 220;
+	static private final float ZOOM_DISTANCE_BOUND_DP = 64;
+	static private final float ZOOM_DISTANCE_BOUND_PX = TouchManager.ZOOM_DISTANCE_BOUND_DP
+			* XenaApplication.DPI / 160;
 
 	private PointF previousPoint = new PointF();
 	private long actionDownTimeMs = 0;
@@ -111,7 +111,7 @@ public class TouchManager implements View.OnTouchListener {
 				}
 
 				// Don't process until we exit flick range.
-				if (eventDurationMs <= FLICK_UPPER_BOUND_MS) {
+				if (eventDurationMs <= TouchManager.FLICK_UPPER_BOUND_MS) {
 					break;
 				}
 
@@ -159,8 +159,8 @@ public class TouchManager implements View.OnTouchListener {
 				this.scribbleActivity.isPanning = false;
 
 				// Detect flicks.
-				if (eventDurationMs >= FLICK_LOWER_BOUND_MS
-						&& eventDurationMs <= FLICK_UPPER_BOUND_MS) {
+				if (eventDurationMs >= TouchManager.FLICK_LOWER_BOUND_MS
+						&& eventDurationMs <= TouchManager.FLICK_UPPER_BOUND_MS) {
 					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:FLICK");
 
 					// Determine flick direction.
@@ -203,26 +203,31 @@ public class TouchManager implements View.OnTouchListener {
 						"ScribbleActivity::onTouch:ACTION_POINTER_UP "
 								+ zoomEndDistance);
 
-				if (this.zoomBeginDistance - zoomEndDistance >= ZOOM_DISTANCE_BOUND) {
-					// Zoom out.
-					this.scribbleActivity.pathManager.setZoomScale(
-							this.scribbleActivity.pathManager.getZoomScale()
-									/ TouchManager.ZOOM_STEP);
+				boolean zoomChanged = false;
+				if (this.zoomBeginDistance
+						- zoomEndDistance >= TouchManager.ZOOM_DISTANCE_BOUND_PX) {
+					this.scribbleActivity.pathManager.zoomOut();
+					zoomChanged = true;
 				} else if (zoomEndDistance
-						- this.zoomBeginDistance >= ZOOM_DISTANCE_BOUND) {
-					// Zoom in.
-					this.scribbleActivity.pathManager.setZoomScale(
-							this.scribbleActivity.pathManager.getZoomScale()
-									* TouchManager.ZOOM_STEP);
+						- this.zoomBeginDistance >= TouchManager.ZOOM_DISTANCE_BOUND_PX) {
+					this.scribbleActivity.pathManager.zoomIn();
+					zoomChanged = true;
 				}
-				this.scribbleActivity.touchHelper.setStrokeWidth(
-						Chunk.STROKE_WIDTH
-								* this.scribbleActivity.pathManager.getZoomScale());
-				ScribbleActivity.PAINT_TENTATIVE_LINE.setStrokeWidth(
-						Chunk.STROKE_WIDTH
-								* this.scribbleActivity.pathManager.getZoomScale());
-				this.scribbleActivity.updateTextViewStatus();
-				this.scribbleActivity.drawBitmapToView(true, true);
+
+				if (zoomChanged) {
+					this.scribbleActivity.touchHelper.setStrokeWidth(
+							ScribbleActivity.STROKE_WIDTH_PX
+									* this.scribbleActivity.pathManager.getZoomScale());
+					ScribbleActivity.PAINT_TENTATIVE_LINE.setStrokeWidth(
+							ScribbleActivity.STROKE_WIDTH_PX
+									* this.scribbleActivity.pathManager.getZoomScale());
+					this.scribbleActivity.updateTextViewStatus();
+					this.scribbleActivity.drawBitmapToView(true, true);
+					this.scribbleActivity.svgFileScribe.debounceSave(
+							this.scribbleActivity,
+							this.scribbleActivity.svgUri,
+							this.scribbleActivity.pathManager);
+				}
 
 				// Cancel panning by remaining finger.
 				this.scribbleActivity.isPanning = false;

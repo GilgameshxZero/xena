@@ -18,7 +18,7 @@ public class ScribbleView extends ImageView {
 		PAINT_TENTATIVE_LINE.setStyle(Paint.Style.STROKE);
 		PAINT_TENTATIVE_LINE.setStrokeJoin(Paint.Join.ROUND);
 		PAINT_TENTATIVE_LINE.setStrokeCap(Paint.Cap.ROUND);
-		PAINT_TENTATIVE_LINE.setStrokeWidth(Chunk.STROKE_WIDTH);
+		PAINT_TENTATIVE_LINE.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX);
 	}
 
 	private boolean isDrawing = false;

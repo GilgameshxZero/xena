@@ -2,8 +2,8 @@
 <resources>
 	<style name="file_picker_pane_directory">
 		<!-- Layout params cannot be specified in a style which will be applied via theming. -->
-		<item name="android:padding">8dp</item>
-		<item name="android:textSize">20dp</item>
+		<item name="android:padding">12dp</item>
+		<item name="android:textSize">30dp</item>
 		<item name="android:maxLines">1</item>
 		<item name="android:gravity">top</item>
 		<item name="android:textColor">@android:color/black</item>
@@ -11,8 +11,8 @@
 		<item name="android:onClick">onClick</item>
 	</style>
 	<style name="file_picker_pane_file">
-		<item name="android:padding">8dp</item>
-		<item name="android:textSize">20dp</item>
+		<item name="android:padding">12dp</item>
+		<item name="android:textSize">30dp</item>
 		<item name="android:maxLines">1</item>
 		<item name="android:gravity">top</item>
 		<item name="android:textColor">@android:color/black</item>

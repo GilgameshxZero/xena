@@ -30,6 +30,10 @@ import java.io.File;
 
 public class ScribbleActivity extends Activity
 		implements View.OnClickListener {
+	static public final float STROKE_WIDTH_DP = 3f;
+	static public final float STROKE_WIDTH_PX = ScribbleActivity.STROKE_WIDTH_DP
+			* XenaApplication.DPI / 160;
+
 	// `final` is deceptive for mutable objects.
 	static final Paint PAINT_TENTATIVE_LINE;
 	static {
@@ -39,7 +43,8 @@ public class ScribbleActivity extends Activity
 		PAINT_TENTATIVE_LINE.setStyle(Paint.Style.STROKE);
 		PAINT_TENTATIVE_LINE.setStrokeJoin(Paint.Join.ROUND);
 		PAINT_TENTATIVE_LINE.setStrokeCap(Paint.Cap.ROUND);
-		PAINT_TENTATIVE_LINE.setStrokeWidth(Chunk.STROKE_WIDTH);
+		ScribbleActivity.PAINT_TENTATIVE_LINE
+				.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX);
 	}
 	static private final Paint PAINT_TRANSPARENT;
 	static {
@@ -158,7 +163,8 @@ public class ScribbleActivity extends Activity
 				.setRawDrawingEnabled(true);
 		if (this.pathManager != null) {
 			this.touchHelper
-					.setStrokeWidth(Chunk.STROKE_WIDTH * this.pathManager.getZoomScale());
+					.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX
+							* this.pathManager.getZoomScale());
 		}
 		super.onResume();
 	}
@@ -194,10 +200,10 @@ public class ScribbleActivity extends Activity
 			case R.id.activity_scribble_text_view_status:
 				Log.v(XenaApplication.TAG,
 						"ScribbleActivity::onClick:activity_scribble_text_view_status.");
-				this.pathManager.setZoomScale(1);
-				this.touchHelper.setStrokeWidth(Chunk.STROKE_WIDTH);
+				this.pathManager.resetZoom();
+				this.touchHelper.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX);
 				ScribbleActivity.PAINT_TENTATIVE_LINE
-						.setStrokeWidth(Chunk.STROKE_WIDTH);
+						.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX);
 				this.updateTextViewStatus();
 				this.drawBitmapToView(true, true);
 				break;
@@ -368,7 +374,7 @@ public class ScribbleActivity extends Activity
 						new Rect(0, 0, this.scribbleView.getWidth(),
 								this.scribbleView.getHeight()),
 						this.getRawDrawingExclusions())
-				.setStrokeWidth(Chunk.STROKE_WIDTH * zoomScale)
+				.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * zoomScale)
 				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
 				.openRawDrawing().setRawDrawingEnabled(true);
 	}

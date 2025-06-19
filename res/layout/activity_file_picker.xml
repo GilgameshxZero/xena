@@ -11,18 +11,18 @@
 		android:orientation="horizontal"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
-		android:layout_marginTop="8dp"
-		android:layout_marginRight="8dp"
+		android:layout_marginTop="12dp"
+		android:layout_marginRight="12dp"
 		android:layout_marginBottom="0dp"
-		android:layout_marginLeft="8dp"
+		android:layout_marginLeft="12dp"
 		android:background="@android:color/white">
 		<Button
 			android:id="@+id/activity_file_picker_button_date"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:layout_margin="8dp"
-			android:padding="8dp"
-			android:textSize="20dp"
+			android:layout_margin="12dp"
+			android:padding="12dp"
+			android:textSize="30dp"
 			android:background="@drawable/solid_empty"
 			android:onClick="onClick"
 			android:text="DATE" />
@@ -31,18 +31,18 @@
 			android:layout_weight="1"
 			android:layout_height="wrap_content"
 			android:layout_width="fill_parent"
-			android:layout_margin="8dp"
-			android:textSize="20dp"
+			android:layout_margin="12dp"
+			android:textSize="30dp"
 			android:background="@drawable/solid_empty"
-			android:padding="8dp"
+			android:padding="12dp"
 			android:inputType="textNoSuggestions" />
 		<Button
 			android:id="@+id/activity_file_picker_button_go"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:layout_margin="8dp"
-			android:padding="8dp"
-			android:textSize="20dp"
+			android:layout_margin="12dp"
+			android:padding="12dp"
+			android:textSize="30dp"
 			android:background="@drawable/solid_empty"
 			android:onClick="onClick"
 			android:text="GO" />
@@ -54,9 +54,9 @@
 		android:layout_width="match_parent"
 		android:layout_height="fill_parent"
 		android:layout_marginTop="0dp"
-		android:layout_marginRight="12dp"
-		android:layout_marginBottom="12dp"
-		android:layout_marginLeft="12dp"
+		android:layout_marginRight="18dp"
+		android:layout_marginBottom="18dp"
+		android:layout_marginLeft="18dp"
 		android:background="@android:color/white">
 	</LinearLayout>
 </LinearLayout>
