@@ -141,7 +141,8 @@ public class TouchManager implements View.OnTouchListener {
 				// this.scribbleActivity.drawBitmapToView(false, true);
 				// }
 
-				// No need to reset raw input capture here, for some reason.
+				// No need to reset raw input capture here, because it is assumed that
+				// the Boox canvas is clean.
 				break;
 			case MotionEvent.ACTION_UP:
 				if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_DRAW) {
@@ -184,7 +185,8 @@ public class TouchManager implements View.OnTouchListener {
 				this.scribbleActivity.svgFileScribe.debounceSave(this.scribbleActivity,
 						this.scribbleActivity.svgUri,
 						this.scribbleActivity.pathManager);
-				this.scribbleActivity.drawBitmapToView(true, true);
+				this.scribbleActivity.penManager.cancelRedraw();
+				this.scribbleActivity.redraw();
 				break;
 			// Deprecated events may still be used by Boox API.
 			case MotionEvent.ACTION_POINTER_DOWN:
@@ -222,7 +224,8 @@ public class TouchManager implements View.OnTouchListener {
 							ScribbleActivity.STROKE_WIDTH_PX
 									* this.scribbleActivity.pathManager.getZoomScale());
 					this.scribbleActivity.updateTextViewStatus();
-					this.scribbleActivity.drawBitmapToView(true, true);
+					this.scribbleActivity.penManager.cancelRedraw();
+					this.scribbleActivity.redraw();
 					this.scribbleActivity.svgFileScribe.debounceSave(
 							this.scribbleActivity,
 							this.scribbleActivity.svgUri,
