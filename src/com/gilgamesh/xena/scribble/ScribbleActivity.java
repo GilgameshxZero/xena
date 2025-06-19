@@ -30,7 +30,7 @@ import java.io.File;
 
 public class ScribbleActivity extends Activity
 		implements View.OnClickListener {
-	static public final float STROKE_WIDTH_DP = 3.5f;
+	static public final float STROKE_WIDTH_DP = 3f;
 	static public final float STROKE_WIDTH_PX = ScribbleActivity.STROKE_WIDTH_DP
 			* XenaApplication.DPI / 160;
 
