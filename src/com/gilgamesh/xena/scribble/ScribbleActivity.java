@@ -194,6 +194,8 @@ public class ScribbleActivity extends Activity
 			case R.id.activity_scribble_text_view_path:
 				Log.v(XenaApplication.TAG,
 						"ScribbleActivity::onClick:activity_scribble_text_view_path.");
+				this.penManager.cancelRedraw();
+				this.redraw();
 				this.svgFileScribe.debounceSave(ScribbleActivity.this, svgUri,
 						this.pathManager, 0);
 				break;
@@ -215,6 +217,8 @@ public class ScribbleActivity extends Activity
 				this.drawEraseToggle
 						.setBackgroundResource(this.isPenEraseMode ? R.drawable.solid_empty
 								: R.drawable.dotted_empty);
+				this.penManager.cancelRedraw();
+				this.redraw();
 				break;
 			case R.id.activity_scribble_draw_pan_toggle:
 				Log.v(XenaApplication.TAG,
@@ -235,6 +239,8 @@ public class ScribbleActivity extends Activity
 						this.openTouchHelperRawDrawing();
 						break;
 				}
+				this.penManager.cancelRedraw();
+				this.redraw();
 				break;
 		}
 	}
