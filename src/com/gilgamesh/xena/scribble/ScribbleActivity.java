@@ -81,7 +81,7 @@ public class ScribbleActivity extends Activity
 	private Uri pdfUri;
 	private TextView textViewPath;
 	private TextView textViewStatus;
-	private View drawEraseToggle;
+	View drawEraseToggle;
 	private View drawPanToggle;
 
 	// State is package-private.
