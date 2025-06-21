@@ -17,7 +17,7 @@ public class TouchManager implements View.OnTouchListener {
 	static private final int FLICK_LOWER_BOUND_MS = 80;
 	static private final int FLICK_UPPER_BOUND_MS = 220;
 	static private final int MOVE_LOWER_BOUND_MS = 280;
-	static private final float FLICK_OFFSET_THRESHOLD_DP = 60;
+	static private final float FLICK_OFFSET_THRESHOLD_DP = 30;
 	static private final float FLICK_OFFSET_THRESHOLD_PX = TouchManager.FLICK_OFFSET_THRESHOLD_DP
 			* XenaApplication.DPI / 160;
 	static private final float ZOOM_DISTANCE_BOUND_DP = 64;
