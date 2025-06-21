@@ -1,5 +1,6 @@
 package com.gilgamesh.xena.scribble;
 
+import com.gilgamesh.xena.R;
 import com.gilgamesh.xena.XenaApplication;
 import com.gilgamesh.xena.algorithm.Geometry;
 import com.onyx.android.sdk.data.note.TouchPoint;
@@ -22,10 +23,13 @@ public class TouchManager implements View.OnTouchListener {
 	static private final float ZOOM_DISTANCE_BOUND_DP = 64;
 	static private final float ZOOM_DISTANCE_BOUND_PX = TouchManager.ZOOM_DISTANCE_BOUND_DP
 			* XenaApplication.DPI / 160;
+	static private final int DOUBLE_TAP_UPPER_BOUND_MS = 350;
 
 	private PointF previousPoint = new PointF();
 	private long actionDownTimeMs = 0;
 	private float zoomBeginDistance;
+	private boolean hasPanned;
+	private long previousTapTimeMs = 0;
 
 	private ScribbleActivity scribbleActivity;
 
@@ -59,8 +63,8 @@ public class TouchManager implements View.OnTouchListener {
 		}
 
 		PointF touchPoint = new PointF(eventX0, eventY0);
-		long eventDurationMs = (System.currentTimeMillis()
-				- this.actionDownTimeMs);
+		long currentTimeMs = System.currentTimeMillis();
+		long eventDurationMs = (currentTimeMs - this.actionDownTimeMs);
 
 		switch (eventAction) {
 			case MotionEvent.ACTION_DOWN:
@@ -93,7 +97,7 @@ public class TouchManager implements View.OnTouchListener {
 
 						this.scribbleActivity.isPanning = true;
 
-						this.actionDownTimeMs = System.currentTimeMillis();
+						this.actionDownTimeMs = currentTimeMs;
 					}
 				}
 
@@ -101,6 +105,8 @@ public class TouchManager implements View.OnTouchListener {
 						.getViewportOffset();
 				this.previousPoint.x = touchPoint.x;
 				this.previousPoint.y = touchPoint.y;
+
+				this.hasPanned = false;
 
 				break;
 			case MotionEvent.ACTION_MOVE:
@@ -134,6 +140,8 @@ public class TouchManager implements View.OnTouchListener {
 			}
 				this.previousPoint.x = touchPoint.x;
 				this.previousPoint.y = touchPoint.y;
+
+				this.hasPanned = true;
 
 				// Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:MOVE "
 				// + pathManager.getViewportOffset());
@@ -191,13 +199,34 @@ public class TouchManager implements View.OnTouchListener {
 						this.scribbleActivity.pathManager.setViewportOffset(newOffset);
 						this.scribbleActivity.updateTextViewStatus();
 					}
+
+					this.hasPanned = true;
 				}
 
-				this.scribbleActivity.svgFileScribe.debounceSave(this.scribbleActivity,
-						this.scribbleActivity.svgUri,
-						this.scribbleActivity.pathManager);
-				this.scribbleActivity.penManager.cancelRedraw();
-				this.scribbleActivity.redraw();
+				// If not panned, treat as a tap.
+				if (!this.hasPanned) {
+					if (currentTimeMs
+							- this.previousTapTimeMs <= TouchManager.DOUBLE_TAP_UPPER_BOUND_MS) {
+						Log.v(XenaApplication.TAG, "TouchManager::onTouch:double_tap.");
+						this.scribbleActivity.isPenEraseMode = !this.scribbleActivity.isPenEraseMode;
+						this.scribbleActivity.drawEraseToggle.setBackgroundResource(
+								this.scribbleActivity.isPenEraseMode
+										? R.drawable.solid_empty
+										: R.drawable.dotted_empty);
+						this.scribbleActivity.penManager.cancelRedraw();
+						this.scribbleActivity.redraw();
+						this.previousTapTimeMs = 0;
+					} else {
+						this.previousTapTimeMs = currentTimeMs;
+					}
+				} else {
+					this.scribbleActivity.svgFileScribe.debounceSave(
+							this.scribbleActivity,
+							this.scribbleActivity.svgUri,
+							this.scribbleActivity.pathManager);
+					this.scribbleActivity.penManager.cancelRedraw();
+					this.scribbleActivity.redraw();
+				}
 				break;
 			// Deprecated events may still be used by Boox API.
 			case MotionEvent.ACTION_POINTER_DOWN:
