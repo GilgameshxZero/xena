@@ -12,6 +12,7 @@ import android.graphics.RectF;
 import android.graphics.pdf.PdfRenderer;
 import android.graphics.pdf.PdfRenderer.Page;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.util.Log;
 
 // Pages are laid out vertically, left-aligned at 0.
@@ -59,7 +60,20 @@ public class PdfReader {
 	}
 
 	// Caches bitmaps.
-	private PageBitmap getBitmapForPage(int pageIdx) {
+	private PageBitmap getBitmapForPage(int pageIdx, boolean preRender) {
+		if (preRender) {
+			// Pre-render surrounding pages.
+			AsyncTask.execute(new Runnable() {
+				@Override
+				public void run() {
+					getBitmapForPage(pageIdx - 2, false);
+					getBitmapForPage(pageIdx - 1, false);
+					getBitmapForPage(pageIdx + 1, false);
+					getBitmapForPage(pageIdx + 2, false);
+				}
+			});
+		}
+
 		if (this.pages[pageIdx].bitmap == null) {
 			try {
 				PdfRenderer renderer = new PdfRenderer(context.getContentResolver()
@@ -115,7 +129,7 @@ public class PdfReader {
 		ArrayList<PageBitmap> validPages = new ArrayList<PageBitmap>();
 		for (int i = 0; i < this.pageCount; i++) {
 			if (RectF.intersects(viewport, this.pages[i].location)) {
-				validPages.add(this.getBitmapForPage(i));
+				validPages.add(this.getBitmapForPage(i, true));
 			} else if (validPages.size() > 0) {
 				break;
 			}

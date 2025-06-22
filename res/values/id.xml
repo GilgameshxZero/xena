@@ -11,4 +11,8 @@
 	<item name="activity_scribble_text_view_status" type="id" />
 	<item name="activity_scribble_draw_erase_toggle" type="id" />
 	<item name="activity_scribble_draw_pan_toggle" type="id" />
+	<item name="activity_scribble_coordinate_dialog" type="id" />
+	<item name="activity_scribble_coordinate_dialog_edit_x" type="id" />
+	<item name="activity_scribble_coordinate_dialog_edit_y" type="id" />
+	<item name="activity_scribble_coordinate_dialog_set" type="id" />
 </resources>

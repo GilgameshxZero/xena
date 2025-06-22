@@ -14,9 +14,10 @@ import android.util.Log;
 
 // Path state and utility functions.
 public class PathManager {
-	static private final float[] ZOOM_STEPS = new float[] { 0.25f, 0.33f, 0.5f,
-			0.8f, 1f, 1.2f, 1.5f, 2f, 3f };
+	static private final float[] ZOOM_STEPS = new float[] { 0.17f, 0.41f, 0.64f,
+			0.8f, 1f, 1.25f, 1.56f, 2.43f, 5.90f };
 	static private final int ZOOM_STEP_ID_DEFAULT = 4;
+	static private final float CHUNK_SIZE_SCALE = 0.25f;
 
 	private final PathManager that = this;
 
@@ -36,10 +37,12 @@ public class PathManager {
 
 	private Point currentChunk = new Point(0, 0);
 
-	private int zoomStepId = PathManager.ZOOM_STEP_ID_DEFAULT;
+	private int zoomStepId = 0;
 
-	public PathManager(Point chunkSize) {
-		this.CHUNK_SIZE = chunkSize;
+	public PathManager(Point chunkSizePrescale) {
+		this.CHUNK_SIZE = new Point(
+				(int) Math.ceil(chunkSizePrescale.x * PathManager.CHUNK_SIZE_SCALE),
+				(int) Math.ceil(chunkSizePrescale.y * PathManager.CHUNK_SIZE_SCALE));
 	}
 
 	public AbstractMap.SimpleEntry<Integer, CompoundPath> addPath(PointF point) {
@@ -99,13 +102,17 @@ public class PathManager {
 	public void removePathId(int pathId) {
 		CompoundPath path = this.paths.get(pathId);
 		for (int chunkCoordinateX = (int) Math
-				.floor(path.bounds.left / CHUNK_SIZE.x); chunkCoordinateX <= (int) Math
-						.floor(path.bounds.right / CHUNK_SIZE.x); chunkCoordinateX++) {
+				.floor(path.bounds.left
+						/ this.CHUNK_SIZE.x); chunkCoordinateX <= (int) Math
+								.floor(path.bounds.right
+										/ this.CHUNK_SIZE.x); chunkCoordinateX++) {
 			for (int chunkCoordinateY = (int) Math
 					.floor(
-							path.bounds.top / CHUNK_SIZE.y); chunkCoordinateY <= (int) Math
-									.floor(
-											path.bounds.bottom / CHUNK_SIZE.y); chunkCoordinateY++) {
+							path.bounds.top
+									/ this.CHUNK_SIZE.y); chunkCoordinateY <= (int) Math
+											.floor(
+													path.bounds.bottom
+															/ this.CHUNK_SIZE.y); chunkCoordinateY++) {
 				Chunk chunk = chunks
 						.get(new Point(chunkCoordinateX, chunkCoordinateY));
 				if (chunk != null && chunk.getPathIds().contains(pathId)) {
@@ -142,9 +149,9 @@ public class PathManager {
 	private void updateCurrentChunk() {
 		Point newChunk = new Point(
 				(int) -Math
-						.floor(this.viewportOffset.x / CHUNK_SIZE.x),
+						.floor(this.viewportOffset.x / this.CHUNK_SIZE.x),
 				(int) -Math
-						.floor(this.viewportOffset.y / CHUNK_SIZE.y));
+						.floor(this.viewportOffset.y / this.CHUNK_SIZE.y));
 		if (!newChunk.equals(this.currentChunk)) {
 			Log.v(XenaApplication.TAG,
 					"PathManager::setViewportOffset: Moved into new chunk "
@@ -154,7 +161,8 @@ public class PathManager {
 	}
 
 	public float getZoomScale() {
-		return PathManager.ZOOM_STEPS[this.zoomStepId];
+		return PathManager.ZOOM_STEPS[this.zoomStepId
+				+ PathManager.ZOOM_STEP_ID_DEFAULT];
 	}
 
 	public int getZoomStepId() {
@@ -162,28 +170,36 @@ public class PathManager {
 	}
 
 	public void zoomIn() {
-		this.setZoomStepId(Math.min(PathManager.ZOOM_STEPS.length - 1,
-				this.zoomStepId + 1));
+		this.setZoomStepId(this.zoomStepId + 1);
 	}
 
 	public void zoomOut() {
-		this.setZoomStepId(Math.max(0, this.zoomStepId - 1));
+		this.setZoomStepId(this.zoomStepId - 1);
 	}
 
 	public void resetZoom() {
-		this.setZoomStepId(PathManager.ZOOM_STEP_ID_DEFAULT);
+		this.setZoomStepId(0);
 	}
 
 	public void setZoomStepId(int newZoomStepId) {
+		// Clamp.
+		newZoomStepId = Math.min(
+				PathManager.ZOOM_STEPS.length - PathManager.ZOOM_STEP_ID_DEFAULT - 1,
+				Math.max(-PathManager.ZOOM_STEP_ID_DEFAULT, newZoomStepId));
+
 		// Also update the viewport offset so that scale functions according to the
 		// center of the screen.
 		PointF newViewportOffset = new PointF(
 				this.viewportOffset.x
-						- this.CHUNK_SIZE.x / PathManager.ZOOM_STEPS[this.zoomStepId] / 2
-						+ this.CHUNK_SIZE.x / PathManager.ZOOM_STEPS[newZoomStepId] / 2,
+						- this.CHUNK_SIZE.x / PathManager.ZOOM_STEPS[this.zoomStepId
+								+ PathManager.ZOOM_STEP_ID_DEFAULT] / 2
+						+ this.CHUNK_SIZE.x / PathManager.ZOOM_STEPS[newZoomStepId
+								+ PathManager.ZOOM_STEP_ID_DEFAULT] / 2,
 				this.viewportOffset.y
-						- this.CHUNK_SIZE.y / PathManager.ZOOM_STEPS[this.zoomStepId] / 2
-						+ this.CHUNK_SIZE.y / PathManager.ZOOM_STEPS[newZoomStepId] / 2);
+						- this.CHUNK_SIZE.y / PathManager.ZOOM_STEPS[this.zoomStepId
+								+ PathManager.ZOOM_STEP_ID_DEFAULT] / 2
+						+ this.CHUNK_SIZE.y / PathManager.ZOOM_STEPS[newZoomStepId
+								+ PathManager.ZOOM_STEP_ID_DEFAULT] / 2);
 
 		this.zoomStepId = newZoomStepId;
 		this.setViewportOffset(newViewportOffset);
@@ -192,9 +208,13 @@ public class PathManager {
 	public ArrayList<Chunk> getVisibleChunks() {
 		ArrayList<Chunk> visibleChunks = new ArrayList<Chunk>();
 		for (int i = -1; i < Math
-				.ceil(1 / PathManager.ZOOM_STEPS[this.zoomStepId]); i++) {
+				.ceil(1 / PathManager.CHUNK_SIZE_SCALE
+						/ PathManager.ZOOM_STEPS[this.zoomStepId
+								+ PathManager.ZOOM_STEP_ID_DEFAULT]); i++) {
 			for (int j = -1; j < Math
-					.ceil(1 / PathManager.ZOOM_STEPS[this.zoomStepId]); j++) {
+					.ceil(1 / PathManager.CHUNK_SIZE_SCALE
+							/ PathManager.ZOOM_STEPS[this.zoomStepId
+									+ PathManager.ZOOM_STEP_ID_DEFAULT]); j++) {
 				Point chunkCoordinate = new Point(this.currentChunk.x + i,
 						this.currentChunk.y + j);
 				Chunk chunk = chunks.get(chunkCoordinate);
@@ -208,5 +228,14 @@ public class PathManager {
 			}
 		}
 		return visibleChunks;
+	}
+
+	public Point getChunkCoordinateForPoint(PointF point) {
+		return new Point((int) Math.floor(point.x / CHUNK_SIZE.x),
+				(int) Math.floor(point.y / CHUNK_SIZE.y));
+	}
+
+	public Chunk getChunkForCoordinate(Point chunkCoordinate) {
+		return this.chunks.get(chunkCoordinate);
 	}
 }

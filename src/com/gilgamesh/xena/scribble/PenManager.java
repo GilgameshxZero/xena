@@ -7,6 +7,7 @@ import com.onyx.android.sdk.data.note.TouchPoint;
 import com.onyx.android.sdk.pen.data.TouchPointList;
 import com.onyx.android.sdk.pen.RawInputCallback;
 
+import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.util.Log;
@@ -20,7 +21,10 @@ public class PenManager extends RawInputCallback {
 	static private final float DRAW_MOVE_EPSILON_DP = 2f;
 	static private final float DRAW_MOVE_EPSILON_PX = PenManager.DRAW_MOVE_EPSILON_DP
 			* XenaApplication.DPI / 160;
-	private final int DEBOUNCE_REDRAW_DELAY_MS = 1000;
+	static private final float ERASE_MOVE_EPSILON_DP = 16f;
+	static private final float ERASE_MOVE_EPSILON_PX = PenManager.ERASE_MOVE_EPSILON_DP
+			* XenaApplication.DPI / 160;
+	private final int DEBOUNCE_REDRAW_DELAY_MS = 64000;
 	private final int DEBOUNCE_INPUT_COOLDOWN_DELAY_MS = 200;
 
 	// Drawing end/begin pairs may fire within milliseconds. In this case,
@@ -127,7 +131,6 @@ public class PenManager extends RawInputCallback {
 				// The new path has already been loaded by the PathManager. Conclude
 				// it by drawing it onto the chunk bitmaps here.
 				scribbleActivity.isDrawing = false;
-				scribbleActivity.scribbleView.clearTentativePoints();
 				debounceRedraw(DEBOUNCE_REDRAW_DELAY_MS);
 				debounceInputCooldown(DEBOUNCE_INPUT_COOLDOWN_DELAY_MS);
 
@@ -208,8 +211,6 @@ public class PenManager extends RawInputCallback {
 		this.cancelRedraw();
 		this.scribbleActivity.isDrawing = true;
 		this.previousTentativeDrawPoint.set(touchPoint.x, touchPoint.y);
-		this.scribbleActivity.scribbleView.addTentativePoint(touchPoint.x,
-				touchPoint.y);
 		this.currentPath = this.scribbleActivity.pathManager
 				.addPath(new PointF(
 						touchPoint.x / this.scribbleActivity.pathManager.getZoomScale()
@@ -265,11 +266,12 @@ public class PenManager extends RawInputCallback {
 						newPoint) < PenManager.DRAW_MOVE_EPSILON_PX) {
 			return;
 		}
-		currentPath.addPoint(newPoint);
 
 		// Log.v(XenaApplication.TAG,
 		// "ScribbleActivity::onRawDrawingTouchPointMoveReceived "
 		// + touchPoint);
+
+		currentPath.addPoint(newPoint);
 
 		this.scribbleActivity.scribbleViewCanvas.drawLine(
 				previousTentativeDrawPoint.x,
@@ -280,7 +282,6 @@ public class PenManager extends RawInputCallback {
 		} else {
 			// Draw line for the purposes of screenshare, which does not capture any
 			// raw drawing activities.
-			// scribbleView.addTentativePoint(touchPoint.x, touchPoint.y);
 			this.scribbleActivity.scribbleView.postInvalidate();
 		}
 		previousTentativeDrawPoint.set(touchPoint.x, touchPoint.y);
@@ -357,10 +358,6 @@ public class PenManager extends RawInputCallback {
 			this.onBeginRawErasing(false, touchPoint);
 		}
 
-		// Log.v(XenaApplication.TAG,
-		// "ScribbleActivity::onRawErasingTouchPointMoveReceived");
-		this.debounceEndErase(DEBOUNCE_END_ERASE_DELAY_MS);
-
 		// Actual logic to handle erasing.
 		int initialSize = this.scribbleActivity.pathManager.getPathsCount();
 		PointF currentErasePoint = new PointF(
@@ -369,9 +366,30 @@ public class PenManager extends RawInputCallback {
 				touchPoint.y / this.scribbleActivity.pathManager.getZoomScale()
 						- this.scribbleActivity.pathManager.getViewportOffset().y);
 
-		for (Chunk chunk : this.scribbleActivity.pathManager.getVisibleChunks()) {
+		// Only process this event if significantly different from previous point.
+		if (Geometry.distance(this.previousErasePoint,
+				currentErasePoint) <= PenManager.ERASE_MOVE_EPSILON_PX) {
+			return;
+		}
+
+		// Log.v(XenaApplication.TAG,
+		// "ScribbleActivity::onRawErasingTouchPointMoveReceived "
+		// + currentErasePoint);
+
+		this.debounceEndErase(DEBOUNCE_END_ERASE_DELAY_MS);
+
+		HashSet<Point> chunkIds = new HashSet<Point>();
+		chunkIds.add(
+				this.scribbleActivity.pathManager
+						.getChunkCoordinateForPoint(this.previousErasePoint));
+		chunkIds.add(
+				this.scribbleActivity.pathManager
+						.getChunkCoordinateForPoint(currentErasePoint));
+		for (Point chunkId : chunkIds) {
 			// Copy so that concurrent read/writes don't happen.
-			HashSet<Integer> pathIds = new HashSet<Integer>(chunk.getPathIds());
+			HashSet<Integer> pathIds = new HashSet<Integer>(
+					this.scribbleActivity.pathManager.getChunkForCoordinate(chunkId)
+							.getPathIds());
 			for (Integer pathId : pathIds) {
 				if (this.scribbleActivity.pathManager.getPath(pathId)
 						.isIntersectingSegment(
