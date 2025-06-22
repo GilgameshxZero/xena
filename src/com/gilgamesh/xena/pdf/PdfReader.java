@@ -74,6 +74,10 @@ public class PdfReader {
 			});
 		}
 
+		if (pageIdx < 0 || pageIdx >= this.pages.length) {
+			return null;
+		}
+
 		if (this.pages[pageIdx].bitmap == null) {
 			try {
 				PdfRenderer renderer = new PdfRenderer(context.getContentResolver()
