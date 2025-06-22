@@ -15,8 +15,8 @@ public class TouchManager implements View.OnTouchListener {
 	static private final float FLICK_MOVE_RATIO = 0.8f;
 	static private final float TOUCH_BORDER_INVALID_RATIO = 0f;
 	static private final int FLICK_LOWER_BOUND_MS = 80;
-	static private final int FLICK_UPPER_BOUND_MS = 220;
-	static private final int MOVE_LOWER_BOUND_MS = 240;
+	static private final int FLICK_UPPER_BOUND_MS = 260;
+	static private final int MOVE_LOWER_BOUND_MS = 260;
 	static private final float FLICK_OFFSET_THRESHOLD_DP = 30;
 	static private final float FLICK_OFFSET_THRESHOLD_PX = TouchManager.FLICK_OFFSET_THRESHOLD_DP
 			* XenaApplication.DPI / 160;
@@ -136,7 +136,9 @@ public class TouchManager implements View.OnTouchListener {
 										- this.previousPoint.y)
 										/ this.scribbleActivity.pathManager.getZoomScale());
 				this.scribbleActivity.pathManager.setViewportOffset(newOffset);
-				this.scribbleActivity.updateTextViewStatus();
+
+				// Do not update text view while dragging.
+				// this.scribbleActivity.updateTextViewStatus();
 			}
 				this.previousPoint.x = touchPoint.x;
 				this.previousPoint.y = touchPoint.y;
@@ -147,6 +149,7 @@ public class TouchManager implements View.OnTouchListener {
 				// + pathManager.getViewportOffset());
 
 				// Do not redraw while dragging.
+
 				// if (this.scribbleActivity.isRedrawing) {
 				// this.scribbleActivity.redraw();
 				// } else {
@@ -190,14 +193,12 @@ public class TouchManager implements View.OnTouchListener {
 							? 1
 							: -1;
 					{
-						PointF newOffset = new PointF(
+						this.scribbleActivity.pathManager.setViewportOffset(new PointF(
 								this.scribbleActivity.panBeginOffset.x,
 								this.scribbleActivity.panBeginOffset.y
 										+ direction * this.scribbleActivity.scribbleView.getHeight()
 												* TouchManager.FLICK_MOVE_RATIO
-												/ this.scribbleActivity.pathManager.getZoomScale());
-						this.scribbleActivity.pathManager.setViewportOffset(newOffset);
-						this.scribbleActivity.updateTextViewStatus();
+												/ this.scribbleActivity.pathManager.getZoomScale()));
 					}
 
 					this.hasPanned = true;
@@ -220,6 +221,7 @@ public class TouchManager implements View.OnTouchListener {
 						this.previousTapTimeMs = currentTimeMs;
 					}
 				} else {
+					this.scribbleActivity.updateTextViewStatus();
 					this.scribbleActivity.svgFileScribe.debounceSave(
 							this.scribbleActivity,
 							this.scribbleActivity.svgUri,
@@ -257,12 +259,8 @@ public class TouchManager implements View.OnTouchListener {
 				}
 
 				if (zoomChanged) {
-					this.scribbleActivity.touchHelper.setStrokeWidth(
-							ScribbleActivity.STROKE_WIDTH_PX
-									* this.scribbleActivity.pathManager.getZoomScale());
-					ScribbleActivity.PAINT_TENTATIVE_LINE.setStrokeWidth(
-							ScribbleActivity.STROKE_WIDTH_PX
-									* this.scribbleActivity.pathManager.getZoomScale());
+					this.scribbleActivity.setStrokeWidthScale(
+							this.scribbleActivity.pathManager.getZoomScale());
 					this.scribbleActivity.updateTextViewStatus();
 					this.scribbleActivity.penManager.cancelRedraw();
 					this.scribbleActivity.redraw();

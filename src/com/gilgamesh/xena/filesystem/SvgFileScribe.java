@@ -30,8 +30,9 @@ public class SvgFileScribe {
 		public abstract void onDebounceSaveUpdate(boolean isSaved);
 	}
 
-	static public final float COORDINATE_SCALE_FACTOR = 8;
-	static public final int DEBOUNCE_SAVE_MS = 8000;
+	static public final float COORDINATE_SCALE_FACTOR = 12f / XenaApplication.DPI
+			 * 160f;
+	static public final int DEBOUNCE_SAVE_MS = 64000;
 
 	static public void loadPathsFromSvg(Context context,
 			Uri uri, PathManager pathManager) {
@@ -57,7 +58,8 @@ public class SvgFileScribe {
 						}
 
 						pathManager.setViewportOffset(new PointF(
-								Integer.parseInt(data[0]), Integer.parseInt(data[1])));
+								Integer.parseInt(data[0]) * XenaApplication.DPI,
+								Integer.parseInt(data[1]) * XenaApplication.DPI));
 					}
 
 					if (!parser.getName().equals("path")) {
@@ -235,9 +237,11 @@ public class SvgFileScribe {
 										.round(ScribbleActivity.STROKE_WIDTH_DP
 												* SvgFileScribe.COORDINATE_SCALE_FACTOR)
 								+ "\" stroke-linecap=\"round\" stroke-linejoin=\"round\" fill=\"none\" data-xena=\""
-								+ Math.round(pathManager.getViewportOffset().x)
+								+ Math.round(
+										pathManager.getViewportOffset().x / XenaApplication.DPI)
 								+ ' '
-								+ Math.round(pathManager.getViewportOffset().y)
+								+ Math.round(
+										pathManager.getViewportOffset().y / XenaApplication.DPI)
 								+ ' '
 								+ pathManager.getZoomStepId()
 								+ "\">"
