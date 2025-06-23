@@ -101,7 +101,7 @@ $(ADK_DIR).make: $(JDK_DIR).make
 		"system-images;android-$(ANDROID_MINIMUM_VERSION);google_apis;x86_64" && \
 	"$(ADK_DIR)cmdline-tools\bin\avdmanager" create avd \
 		--name $(ANDROID_MINIMUM_VERSION)-x86_64 \
-		--package \
+		--force --package \
 		"system-images;android-$(ANDROID_MINIMUM_VERSION);google_apis;x86_64"
 	@COPY NUL $(ADK_DIR).make
 
@@ -252,9 +252,9 @@ shallow-clean:
 		DEL $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java
 	@ECHO Uninstalling from device...
 	@IF EXIST $(PLATFORM_TOOLS_DIR)adb.exe \
-		@CALL $(PLATFORM_TOOLS_DIR)adb.exe uninstall $(PACKAGE_NAME)
+		@CALL $(PLATFORM_TOOLS_DIR)adb.exe uninstall $(PACKAGE_NAME) &
 	@IF EXIST $(PLATFORM_TOOLS_DIR)adb.exe \
-		@CALL $(PLATFORM_TOOLS_DIR)adb.exe kill-server >NUL
+		@CALL $(PLATFORM_TOOLS_DIR)adb.exe kill-server &
 
 clean: shallow-clean
 	@IF EXIST $(ROOT_DIR)android RD /Q /S $(ROOT_DIR)android
