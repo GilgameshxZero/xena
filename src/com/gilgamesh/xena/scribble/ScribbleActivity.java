@@ -207,6 +207,14 @@ public class ScribbleActivity extends Activity
 
 	@Override
 	public void onClick(View v) {
+		long currentTimeMs = System.currentTimeMillis();
+		if (currentTimeMs
+				- this.touchManager.previousIgnoreChainTimeMs <= TouchManager.IGNORE_CHAIN_BOUND_MS) {
+			this.touchManager.previousIgnoreChainTimeMs = currentTimeMs;
+			Log.v(XenaApplication.TAG, "ScribbleActivity::onClick:IGNORE_CHAIN");
+			return;
+		}
+
 		switch (v.getId()) {
 			case R.id.activity_scribble_text_view_path:
 				Log.v(XenaApplication.TAG,
