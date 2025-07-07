@@ -13,7 +13,7 @@ import android.view.View;
 
 public class TouchManager implements View.OnTouchListener {
 	static private final float FLICK_MOVE_RATIO = 0.8f;
-	static private final float TOUCH_BORDER_INVALID_RATIO = 0.1f;
+	static private final float TOUCH_BORDER_INVALID_RATIO = 0f;
 	static private final int FLICK_LOWER_BOUND_MS = 80;
 	static private final int FLICK_UPPER_BOUND_MS = 260;
 	static private final int MOVE_LOWER_BOUND_MS = 260;
@@ -141,22 +141,22 @@ public class TouchManager implements View.OnTouchListener {
 				}
 
 			{
-				PointF newOffset = new PointF(
-						this.scribbleActivity.pathManager.getViewportOffset().x
-								+ (touchPoint.x
-										- this.previousPoint.x)
-										/ this.scribbleActivity.pathManager.getZoomScale(),
-						this.scribbleActivity.pathManager.getViewportOffset().y
-								+ (touchPoint.y
-										- this.previousPoint.y)
-										/ this.scribbleActivity.pathManager.getZoomScale());
-				this.scribbleActivity.pathManager.setViewportOffset(newOffset);
+				// PointF newOffset = new PointF(
+				// 		this.scribbleActivity.pathManager.getViewportOffset().x
+				// 				+ (touchPoint.x
+				// 						- this.previousPoint.x)
+				// 						/ this.scribbleActivity.pathManager.getZoomScale(),
+				// 		this.scribbleActivity.pathManager.getViewportOffset().y
+				// 				+ (touchPoint.y
+				// 						- this.previousPoint.y)
+				// 						/ this.scribbleActivity.pathManager.getZoomScale());
+				// this.scribbleActivity.pathManager.setViewportOffset(newOffset);
 
 				// Do not update text view while dragging.
 				// this.scribbleActivity.updateTextViewStatus();
 			}
-				this.previousPoint.x = touchPoint.x;
-				this.previousPoint.y = touchPoint.y;
+				// this.previousPoint.x = touchPoint.x;
+				// this.previousPoint.y = touchPoint.y;
 
 				this.hasPanned = true;
 
