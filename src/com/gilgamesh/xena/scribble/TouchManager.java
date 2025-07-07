@@ -249,6 +249,18 @@ public class TouchManager implements View.OnTouchListener {
 					}
 				} else {
 					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:PAN");
+
+				PointF newOffset = new PointF(
+						this.scribbleActivity.pathManager.getViewportOffset().x
+								+ (touchPoint.x
+										- this.previousPoint.x)
+										/ this.scribbleActivity.pathManager.getZoomScale(),
+						this.scribbleActivity.pathManager.getViewportOffset().y
+								+ (touchPoint.y
+										- this.previousPoint.y)
+										/ this.scribbleActivity.pathManager.getZoomScale());
+				this.scribbleActivity.pathManager.setViewportOffset(newOffset);
+
 					this.scribbleActivity.updateTextViewStatus();
 					this.scribbleActivity.svgFileScribe.debounceSave(
 							this.scribbleActivity,
