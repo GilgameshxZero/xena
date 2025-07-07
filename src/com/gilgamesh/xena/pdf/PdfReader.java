@@ -66,10 +66,8 @@ public class PdfReader {
 			AsyncTask.execute(new Runnable() {
 				@Override
 				public void run() {
-					getBitmapForPage(pageIdx - 2, false);
 					getBitmapForPage(pageIdx - 1, false);
 					getBitmapForPage(pageIdx + 1, false);
-					getBitmapForPage(pageIdx + 2, false);
 				}
 			});
 		}
