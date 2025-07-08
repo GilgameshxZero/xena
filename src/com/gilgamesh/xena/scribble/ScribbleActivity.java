@@ -9,6 +9,7 @@ import com.gilgamesh.xena.XenaApplication;
 import com.onyx.android.sdk.pen.TouchHelper;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -23,6 +24,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -87,9 +89,9 @@ public class ScribbleActivity extends Activity
 	View drawEraseToggle;
 	private View drawPanToggle;
 	private LinearLayout coordinateDialog;
+	private EditText coordinateEditPalm;
 	private EditText coordinateEditX;
 	private EditText coordinateEditY;
-	private Button coordinateButtonSet;
 
 	// State is package-private.
 	boolean isDrawing = false;
@@ -129,14 +131,15 @@ public class ScribbleActivity extends Activity
 				R.id.activity_scribble_draw_pan_toggle);
 		this.coordinateDialog = findViewById(
 				R.id.activity_scribble_coordinate_dialog);
+		this.coordinateEditPalm = findViewById(
+				R.id.activity_scribble_coordinate_dialog_edit_palm);
+		this.coordinateEditPalm.setTransformationMethod(null);
 		this.coordinateEditX = findViewById(
 				R.id.activity_scribble_coordinate_dialog_edit_x);
 		this.coordinateEditX.setTransformationMethod(null);
 		this.coordinateEditY = findViewById(
 				R.id.activity_scribble_coordinate_dialog_edit_y);
 		this.coordinateEditY.setTransformationMethod(null);
-		this.coordinateButtonSet = findViewById(
-				R.id.activity_scribble_coordinate_dialog_set);
 
 		this.svgFileScribe = new SvgFileScribe(new SvgFileScribe.Callback() {
 			@Override
@@ -226,6 +229,10 @@ public class ScribbleActivity extends Activity
 				Log.v(XenaApplication.TAG,
 						"ScribbleActivity::onClick:activity_scribble_text_view_status.");
 				PointF viewportOffset = this.pathManager.getViewportOffset();
+				this.coordinateEditPalm.setText(
+						String.valueOf(
+								(int) Math
+										.round(TouchManager.PALM_TOUCH_MAJOR_MINOR_THRESHOLD)));
 				this.coordinateEditX.setText(String.valueOf((int) Math.floor(
 						-viewportOffset.x / ScribbleActivity.PIXELS_PER_PAGE.x)));
 				this.coordinateEditY.setText(String.valueOf((int) Math.floor(
@@ -277,10 +284,18 @@ public class ScribbleActivity extends Activity
 								* ScribbleActivity.PIXELS_PER_PAGE.x,
 						-Integer.parseInt(this.coordinateEditY.getText().toString())
 								* ScribbleActivity.PIXELS_PER_PAGE.y));
+				this.touchManager.updatePalmTouchThreshold(Float
+						.parseFloat(this.coordinateEditPalm.getText().toString()));
 				this.updateTextViewStatus();
 				this.coordinateDialog.setVisibility(View.GONE);
-				this.coordinateEditX.clearFocus();
-				this.coordinateEditY.clearFocus();
+
+				View view = this.getCurrentFocus();
+				if (view != null) {
+					InputMethodManager imm = (InputMethodManager) getSystemService(
+							Context.INPUT_METHOD_SERVICE);
+					imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+				}
+
 				this.drawBitmapToView(true, true);
 				this.openTouchHelperRawDrawing();
 				break;
