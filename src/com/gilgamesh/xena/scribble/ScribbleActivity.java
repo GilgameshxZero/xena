@@ -33,7 +33,7 @@ import java.io.File;
 
 public class ScribbleActivity extends Activity
 		implements View.OnClickListener {
-	static public final float STROKE_WIDTH_DP = 3f;
+	static public final float STROKE_WIDTH_DP = 2.5f;
 	static public final float STROKE_WIDTH_PX = ScribbleActivity.STROKE_WIDTH_DP
 			* XenaApplication.DPI / 160;
 
@@ -179,9 +179,7 @@ public class ScribbleActivity extends Activity
 				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
 				.setRawDrawingEnabled(true);
 		if (this.pathManager != null) {
-			this.touchHelper
-					.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX
-							* this.pathManager.getZoomScale());
+			this.setStrokeWidthScale(this.pathManager.getZoomScale());
 		}
 		super.onResume();
 	}
@@ -436,8 +434,12 @@ public class ScribbleActivity extends Activity
 	}
 
 	void setStrokeWidthScale(float scale) {
-		this.touchHelper.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale);
+		this.touchHelper
+				.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale * 1.25f);
 		ScribbleActivity.PAINT_TENTATIVE_LINE
 				.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale);
+		Chunk.PAINT.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale);
+		Chunk.PAINT_ERASE
+				.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale * 1.5f);
 	}
 }
