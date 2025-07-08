@@ -36,7 +36,7 @@ public class PenManager extends RawInputCallback {
 	// begin/end events created. Thus, we only interpret an erase event ending
 	// if no erase-related events have been received within a certain time.
 	// Before then, we erase all points received.
-	private final int DEBOUNCE_END_ERASE_DELAY_MS = 300;
+	private final int DEBOUNCE_END_ERASE_DELAY_MS = 200;
 
 	private PointF previousErasePoint = new PointF();
 	private PointF previousTentativeDrawPoint = new PointF();
