@@ -68,6 +68,16 @@
 			android:gravity="center"
 			android:background="@drawable/solid_empty"
 			android:padding="6dp">
+			<EditText android:id="@+id/activity_scribble_coordinate_dialog_edit_palm"
+				android:layout_width="100dp"
+				android:layout_height="wrap_content"
+				android:gravity="center"
+				android:inputType="numberPassword"
+				android:textColor="@android:color/black"
+				android:background="@drawable/solid_empty"
+				android:layout_margin="6dp"
+				android:padding="6dp"
+				android:textSize="24dp" />
 			<EditText android:id="@+id/activity_scribble_coordinate_dialog_edit_x"
 				android:layout_width="100dp"
 				android:layout_height="wrap_content"
@@ -96,7 +106,7 @@
 				android:textSize="24dp"
 				android:textColor="@android:color/black"
 				android:background="@drawable/solid_empty"
-				android:text="SET COORDINATES"
+				android:text="SET"
 				android:onClick="onClick" />
 		</LinearLayout>
 	</LinearLayout>

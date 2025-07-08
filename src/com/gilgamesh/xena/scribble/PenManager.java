@@ -120,7 +120,7 @@ public class PenManager extends RawInputCallback {
 						public void run() {
 							scribbleActivity.touchManager.onTouchInner(
 									MotionEvent.ACTION_UP, endDrawTaskTouchPoint.x,
-									endDrawTaskTouchPoint.y, 0, 0);
+									endDrawTaskTouchPoint.y, 0, 0, 0, 0);
 						}
 					});
 					return;
@@ -172,7 +172,7 @@ public class PenManager extends RawInputCallback {
 	public void onBeginRawDrawing(boolean b, TouchPoint touchPoint) {
 		if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_PAN) {
 			this.scribbleActivity.touchManager.onTouchInner(
-					MotionEvent.ACTION_DOWN, touchPoint.x, touchPoint.y, 0, 0);
+					MotionEvent.ACTION_DOWN, touchPoint.x, touchPoint.y, 0, 0, 0, 0);
 			return;
 		}
 
@@ -241,7 +241,7 @@ public class PenManager extends RawInputCallback {
 	public void onRawDrawingTouchPointMoveReceived(TouchPoint touchPoint) {
 		if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_PAN) {
 			this.scribbleActivity.touchManager.onTouchInner(
-					MotionEvent.ACTION_MOVE, touchPoint.x, touchPoint.y, 0, 0);
+					MotionEvent.ACTION_MOVE, touchPoint.x, touchPoint.y, 0, 0, 0, 0);
 			return;
 		}
 
