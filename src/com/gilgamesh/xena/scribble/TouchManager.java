@@ -18,7 +18,7 @@ import android.view.View;
 public class TouchManager implements View.OnTouchListener {
 	static private final float FLICK_MOVE_RATIO = 0.85f;
 	static private final float TOUCH_BORDER_INVALID_RATIO = 0f;
-	static private final int FLICK_LOWER_BOUND_MS = 10;
+	static private final int FLICK_LOWER_BOUND_MS = 40;
 	static private final int FLICK_UPPER_BOUND_MS = 220;
 	static private final float FLICK_OFFSET_THRESHOLD_DP = 10;
 	static private final float FLICK_OFFSET_THRESHOLD_PX = TouchManager.FLICK_OFFSET_THRESHOLD_DP
