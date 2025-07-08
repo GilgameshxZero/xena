@@ -14,25 +14,28 @@ import android.view.View;
 public class TouchManager implements View.OnTouchListener {
 	static private final float FLICK_MOVE_RATIO = 0.8f;
 	static private final float TOUCH_BORDER_INVALID_RATIO = 0f;
-	static private final int FLICK_LOWER_BOUND_MS = 80;
-	static private final int FLICK_UPPER_BOUND_MS = 260;
-	static private final int MOVE_LOWER_BOUND_MS = 260;
-	static private final float FLICK_OFFSET_THRESHOLD_DP = 30;
+	static private final int FLICK_LOWER_BOUND_MS = 140;
+	static private final int FLICK_UPPER_BOUND_MS = 350;
+	static private final int MOVE_LOWER_BOUND_MS = TouchManager.FLICK_UPPER_BOUND_MS;
+	static private final float FLICK_OFFSET_THRESHOLD_DP = 40;
 	static private final float FLICK_OFFSET_THRESHOLD_PX = TouchManager.FLICK_OFFSET_THRESHOLD_DP
+			* XenaApplication.DPI / 160;
+	static private final float PAN_DISTANCE_THRESHOLD_DP = 40;
+	static private final float PAN_DISTANCE_THRESHOLD_PX = TouchManager.PAN_DISTANCE_THRESHOLD_DP
 			* XenaApplication.DPI / 160;
 	static private final float ZOOM_DISTANCE_BOUND_DP = 128;
 	static private final float ZOOM_DISTANCE_BOUND_PX = TouchManager.ZOOM_DISTANCE_BOUND_DP
 			* XenaApplication.DPI / 160;
 	static private final int ZOOM_LOWER_BOUND_MS = 160;
 	static private final int DOUBLE_TAP_UPPER_BOUND_MS = 360;
-	static final int IGNORE_CHAIN_BOUND_MS = 360;
+	static final int IGNORE_CHAIN_BOUND_MS = 500;
 
 	private PointF previousPoint = new PointF();
 	private long actionDownTimeMs = 0;
 	private long zoomDownTimeMs = 0;
 	private float zoomBeginDistance;
 	private boolean zoomDownConsumed = true;
-	private boolean hasPanned;
+	private int cMoveEvents;
 	private long previousTapTimeMs = 0;
 	long previousIgnoreChainTimeMs = 0;
 
@@ -94,7 +97,7 @@ public class TouchManager implements View.OnTouchListener {
 
 				if (this.scribbleActivity.isPanning) {
 					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:RESET "
-							+ this.scribbleActivity.pathManager.getViewportOffset());
+							+ touchPoint);
 				} else {
 					RectF bounds = new RectF(
 							this.scribbleActivity.scribbleView.getWidth()
@@ -108,8 +111,6 @@ public class TouchManager implements View.OnTouchListener {
 					if (bounds.contains(touchPoint.x, touchPoint.y)) {
 						// Only count actions that don't start near the border.
 						this.scribbleActivity.isPanning = true;
-
-						this.actionDownTimeMs = currentTimeMs;
 					} else {
 						Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:IGNORE");
 						this.previousIgnoreChainTimeMs = currentTimeMs;
@@ -120,8 +121,9 @@ public class TouchManager implements View.OnTouchListener {
 						.getViewportOffset();
 				this.previousPoint.x = touchPoint.x;
 				this.previousPoint.y = touchPoint.y;
+				this.actionDownTimeMs = currentTimeMs;
 
-				this.hasPanned = false;
+				this.cMoveEvents = 0;
 
 				break;
 			case MotionEvent.ACTION_MOVE:
@@ -131,25 +133,34 @@ public class TouchManager implements View.OnTouchListener {
 					break;
 				}
 
-				if (!this.scribbleActivity.isPanning) {
+				if (currentTimeMs
+						- this.previousIgnoreChainTimeMs <= TouchManager.IGNORE_CHAIN_BOUND_MS) {
+					this.previousIgnoreChainTimeMs = currentTimeMs;
+					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:IGNORE_CHAIN");
 					break;
 				}
 
-				// Don't process until we exit flick range.
-				if (eventDurationMs <= TouchManager.MOVE_LOWER_BOUND_MS) {
+				if (!this.scribbleActivity.isPanning) {
+					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:IGNORE");
+					this.previousIgnoreChainTimeMs = currentTimeMs;
 					break;
 				}
+
+			// // Don't process until we exit flick range.
+			// if (eventDurationMs <= TouchManager.MOVE_LOWER_BOUND_MS) {
+			// break;
+			// }
 
 			{
 				// PointF newOffset = new PointF(
-				// 		this.scribbleActivity.pathManager.getViewportOffset().x
-				// 				+ (touchPoint.x
-				// 						- this.previousPoint.x)
-				// 						/ this.scribbleActivity.pathManager.getZoomScale(),
-				// 		this.scribbleActivity.pathManager.getViewportOffset().y
-				// 				+ (touchPoint.y
-				// 						- this.previousPoint.y)
-				// 						/ this.scribbleActivity.pathManager.getZoomScale());
+				// this.scribbleActivity.pathManager.getViewportOffset().x
+				// + (touchPoint.x
+				// - this.previousPoint.x)
+				// / this.scribbleActivity.pathManager.getZoomScale(),
+				// this.scribbleActivity.pathManager.getViewportOffset().y
+				// + (touchPoint.y
+				// - this.previousPoint.y)
+				// / this.scribbleActivity.pathManager.getZoomScale());
 				// this.scribbleActivity.pathManager.setViewportOffset(newOffset);
 
 				// Do not update text view while dragging.
@@ -158,7 +169,7 @@ public class TouchManager implements View.OnTouchListener {
 				// this.previousPoint.x = touchPoint.x;
 				// this.previousPoint.y = touchPoint.y;
 
-				this.hasPanned = true;
+				this.cMoveEvents++;
 
 				// Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:MOVE "
 				// + pathManager.getViewportOffset());
@@ -182,7 +193,8 @@ public class TouchManager implements View.OnTouchListener {
 				}
 
 				Log.v(XenaApplication.TAG,
-						"ScribbleActivity::onTouch:UP " + touchPoint);
+						"ScribbleActivity::onTouch:UP " + touchPoint + " "
+								+ this.cMoveEvents);
 
 				if (currentTimeMs
 						- this.previousIgnoreChainTimeMs <= TouchManager.IGNORE_CHAIN_BOUND_MS) {
@@ -205,62 +217,31 @@ public class TouchManager implements View.OnTouchListener {
 				this.scribbleActivity.isPanning = false;
 
 				// Detect flicks.
-				float flickOffset = this.scribbleActivity.pathManager
+				float flickOffsetX = this.scribbleActivity.pathManager
+						.getViewportOffset().x
+						+ touchPoint.x - this.previousPoint.x
+						- this.scribbleActivity.panBeginOffset.x;
+				float flickOffsetY = this.scribbleActivity.pathManager
 						.getViewportOffset().y
 						+ touchPoint.y - this.previousPoint.y
 						- this.scribbleActivity.panBeginOffset.y;
 				if (eventDurationMs >= TouchManager.FLICK_LOWER_BOUND_MS
 						&& eventDurationMs <= TouchManager.FLICK_UPPER_BOUND_MS
 						&& Math
-								.abs(flickOffset) >= TouchManager.FLICK_OFFSET_THRESHOLD_PX) {
+								.abs(flickOffsetY) >= TouchManager.FLICK_OFFSET_THRESHOLD_PX) {
 					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:FLICK");
 
 					// Determine flick direction.
-					int direction = flickOffset > 0
+					int direction = flickOffsetY > 0
 							? 1
 							: -1;
-					{
-						this.scribbleActivity.pathManager.setViewportOffset(new PointF(
-								this.scribbleActivity.panBeginOffset.x,
-								this.scribbleActivity.panBeginOffset.y
-										+ direction * this.scribbleActivity.scribbleView.getHeight()
-												* TouchManager.FLICK_MOVE_RATIO
-												/ this.scribbleActivity.pathManager.getZoomScale()));
-					}
 
-					this.hasPanned = true;
-				}
-
-				// If not panned, treat as a tap.
-				if (!this.hasPanned) {
-					if (currentTimeMs
-							- this.previousTapTimeMs <= TouchManager.DOUBLE_TAP_UPPER_BOUND_MS) {
-						Log.v(XenaApplication.TAG, "TouchManager::onTouch:double_tap.");
-						this.scribbleActivity.isPenEraseMode = !this.scribbleActivity.isPenEraseMode;
-						this.scribbleActivity.drawEraseToggle.setBackgroundResource(
-								this.scribbleActivity.isPenEraseMode
-										? R.drawable.solid_empty
-										: R.drawable.dotted_empty);
-						this.scribbleActivity.penManager.cancelRedraw();
-						this.scribbleActivity.redraw();
-						this.previousTapTimeMs = 0;
-					} else {
-						this.previousTapTimeMs = currentTimeMs;
-					}
-				} else {
-					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:PAN");
-
-				PointF newOffset = new PointF(
-						this.scribbleActivity.pathManager.getViewportOffset().x
-								+ (touchPoint.x
-										- this.previousPoint.x)
-										/ this.scribbleActivity.pathManager.getZoomScale(),
-						this.scribbleActivity.pathManager.getViewportOffset().y
-								+ (touchPoint.y
-										- this.previousPoint.y)
-										/ this.scribbleActivity.pathManager.getZoomScale());
-				this.scribbleActivity.pathManager.setViewportOffset(newOffset);
-
+					this.scribbleActivity.pathManager.setViewportOffset(new PointF(
+							this.scribbleActivity.panBeginOffset.x,
+							this.scribbleActivity.panBeginOffset.y
+									+ direction * this.scribbleActivity.scribbleView.getHeight()
+											* TouchManager.FLICK_MOVE_RATIO
+											/ this.scribbleActivity.pathManager.getZoomScale()));
 					this.scribbleActivity.updateTextViewStatus();
 					this.scribbleActivity.svgFileScribe.debounceSave(
 							this.scribbleActivity,
@@ -268,6 +249,52 @@ public class TouchManager implements View.OnTouchListener {
 							this.scribbleActivity.pathManager);
 					this.scribbleActivity.penManager.cancelRedraw();
 					this.scribbleActivity.redraw();
+				} else {
+					// If not panned, treat as a tap.
+					if (eventDurationMs < TouchManager.FLICK_LOWER_BOUND_MS
+							&& this.cMoveEvents == 0) {
+						if (currentTimeMs
+								- this.previousTapTimeMs <= TouchManager.DOUBLE_TAP_UPPER_BOUND_MS) {
+							Log.v(XenaApplication.TAG, "TouchManager::onTouch:DOUBLE_TAP.");
+							this.scribbleActivity.isPenEraseMode = !this.scribbleActivity.isPenEraseMode;
+							this.scribbleActivity.drawEraseToggle.setBackgroundResource(
+									this.scribbleActivity.isPenEraseMode
+											? R.drawable.solid_empty
+											: R.drawable.dotted_empty);
+							this.scribbleActivity.penManager.cancelRedraw();
+							this.scribbleActivity.redraw();
+							this.previousTapTimeMs = 0;
+						} else {
+							Log.v(XenaApplication.TAG, "TouchManager::onTouch:TAP.");
+							this.previousTapTimeMs = currentTimeMs;
+						}
+					} else if (eventDurationMs > TouchManager.FLICK_UPPER_BOUND_MS
+							&& Math.sqrt(flickOffsetX * flickOffsetX
+									+ flickOffsetY * flickOffsetY) >= PAN_DISTANCE_THRESHOLD_PX) {
+						Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:PAN");
+
+						PointF newOffset = new PointF(
+								this.scribbleActivity.pathManager.getViewportOffset().x
+										+ (touchPoint.x
+												- this.previousPoint.x)
+												/ this.scribbleActivity.pathManager.getZoomScale(),
+								this.scribbleActivity.pathManager.getViewportOffset().y
+										+ (touchPoint.y
+												- this.previousPoint.y)
+												/ this.scribbleActivity.pathManager.getZoomScale());
+						this.scribbleActivity.pathManager.setViewportOffset(newOffset);
+
+						this.scribbleActivity.updateTextViewStatus();
+						this.scribbleActivity.svgFileScribe.debounceSave(
+								this.scribbleActivity,
+								this.scribbleActivity.svgUri,
+								this.scribbleActivity.pathManager);
+						this.scribbleActivity.penManager.cancelRedraw();
+						this.scribbleActivity.redraw();
+					} else {
+						Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:IGNORE");
+						this.previousIgnoreChainTimeMs = currentTimeMs;
+					}
 				}
 				break;
 			// Deprecated events may still be used by Boox API.
@@ -335,10 +362,19 @@ public class TouchManager implements View.OnTouchListener {
 							this.scribbleActivity,
 							this.scribbleActivity.svgUri,
 							this.scribbleActivity.pathManager);
+				} else {
+					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:IGNORE");
+					this.previousIgnoreChainTimeMs = currentTimeMs;
 				}
 
 				// Cancel panning by remaining finger.
 				this.scribbleActivity.isPanning = false;
+				break;
+			default:
+				Log.v(XenaApplication.TAG,
+						"ScribbleActivity::onTouch:OTHER " + eventAction);
+				Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:IGNORE");
+				this.previousIgnoreChainTimeMs = currentTimeMs;
 				break;
 		}
 		return true;

@@ -37,7 +37,8 @@
 		android:background="@drawable/solid_empty"
 		android:maxLines="1"
 		android:gravity="top"
-		android:onClick="onClick" />
+		android:onClick="onClick"
+		android:text="Loading..." />
 	<View android:id="@+id/activity_scribble_draw_erase_toggle"
 		android:layout_width="48dp"
 		android:layout_height="48dp"

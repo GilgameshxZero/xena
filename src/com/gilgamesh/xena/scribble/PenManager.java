@@ -21,7 +21,7 @@ public class PenManager extends RawInputCallback {
 	static private final float DRAW_MOVE_EPSILON_DP = 2f;
 	static private final float DRAW_MOVE_EPSILON_PX = PenManager.DRAW_MOVE_EPSILON_DP
 			* XenaApplication.DPI / 160;
-	static private final float ERASE_MOVE_EPSILON_DP = 16f;
+	static private final float ERASE_MOVE_EPSILON_DP = 4f;
 	static private final float ERASE_MOVE_EPSILON_PX = PenManager.ERASE_MOVE_EPSILON_DP
 			* XenaApplication.DPI / 160;
 	private final int DEBOUNCE_REDRAW_DELAY_MS = 64000;

@@ -25,7 +25,7 @@ public class Chunk {
 		PAINT.setStrokeCap(Paint.Cap.ROUND);
 		PAINT.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX);
 	}
-	static private final Paint PAINT_ERASE;
+	static final Paint PAINT_ERASE;
 	static {
 		PAINT_ERASE = new Paint();
 		PAINT_ERASE.setAntiAlias(true);
