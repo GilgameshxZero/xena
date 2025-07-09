@@ -64,7 +64,7 @@ public class PdfReader {
 						XenaApplication.log("PdfReader::PdfReader: Sized page ", i, ".");
 
 						// If a page is sized into the viewport, call the callback to redraw
-						// it immediately.
+						// it as soon as possible.
 						if (callerViewport != null
 							&& RectF.intersects(callerViewport, pages[i].location)) {
 							callback.onPageSizedIntoViewport();

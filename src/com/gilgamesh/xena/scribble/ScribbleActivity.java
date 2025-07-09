@@ -42,14 +42,14 @@ public class ScribbleActivity extends BaseActivity
 			@Override
 			public void onRun() {
 				XenaApplication.log("ScribbleActivity::redrawTask.");
-				redraw(true, true);
+				redraw(true);
 			}
 		});
 
 	private final PdfReader.Callback PDF_READER_CALLBACK
 		= new PdfReader.Callback() {
 			public void onPageSizedIntoViewport() {
-				redraw(true, true);
+				redraw(true);
 			}
 		};
 
@@ -169,7 +169,7 @@ public class ScribbleActivity extends BaseActivity
 			case R.id.activity_scribble_text_view_path:
 				XenaApplication
 					.log("ScribbleActivity::onClick: activity_scribble_text_view_path.");
-				this.redraw(true, true);
+				this.redraw(this.redrawTask.isAwaiting());
 				this.svgFileScribe.saveTask.debounce(0);
 				break;
 			case R.id.activity_scribble_text_view_status:
@@ -183,7 +183,7 @@ public class ScribbleActivity extends BaseActivity
 				this.coordinateEditY.setText(String.valueOf((int) Math
 					.floor(-viewportOffset.y / ScribbleActivity.PIXELS_PER_PAGE.y)));
 				this.coordinateDialog.setVisibility(View.VISIBLE);
-				this.redraw(true, true);
+				this.redraw(this.redrawTask.isAwaiting());
 				this.touchHelper.closeRawDrawing();
 				break;
 			case R.id.activity_scribble_draw_erase_toggle:
@@ -193,7 +193,7 @@ public class ScribbleActivity extends BaseActivity
 				this.drawEraseToggle.setBackgroundResource(this.isPenEraseMode
 					? R.drawable.solid_empty
 					: R.drawable.dotted_empty);
-				this.redraw(true, true);
+				this.redraw(this.redrawTask.isAwaiting());
 				break;
 			case R.id.activity_scribble_draw_pan_toggle:
 				XenaApplication
@@ -214,7 +214,7 @@ public class ScribbleActivity extends BaseActivity
 						this.openTouchHelperRawDrawing();
 						break;
 				}
-				this.redraw(true, true);
+				this.redraw(this.redrawTask.isAwaiting());
 				break;
 			case R.id.activity_scribble_coordinate_dialog_set:
 				XenaApplication.log(
@@ -239,7 +239,7 @@ public class ScribbleActivity extends BaseActivity
 					imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
 				}
 
-				this.redraw(true, true);
+				// this.redraw(true);
 				this.openTouchHelperRawDrawing();
 				break;
 		}
@@ -296,15 +296,16 @@ public class ScribbleActivity extends BaseActivity
 		this.refreshTextViewPath(true);
 		this.refreshTextViewStatus();
 
-		this.redraw(true, true);
+		this.redraw(true);
 		this.openTouchHelperRawDrawing();
 	}
 
-	public void redraw(boolean force, boolean refreshRawDrawing) {
+	// Always "invalidates", i.e. sets scribbleView dirty, and guarantees a redraw
+	// in the future, which may accumulate several redraw calls. It is guaranteed
+	// that all changes before this function is called will be drawn, eventually.
+	public void redraw(boolean refreshRawDrawing) {
 		this.redrawTask.cancel();
-		if (force || !scribbleView.isDrawing()) {
-			this.scribbleView.invalidate();
-		}
+		this.scribbleView.invalidate();
 		if (refreshRawDrawing) {
 			this.touchHelper.setRawDrawingEnabled(false).setRawDrawingEnabled(true);
 		}

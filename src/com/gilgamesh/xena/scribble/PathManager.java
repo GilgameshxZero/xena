@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.gilgamesh.xena.XenaApplication;
 
@@ -16,16 +17,16 @@ public class PathManager {
 	static private final float[] ZOOM_STEPS
 		= new float[] { 0.17f, 0.41f, 0.64f, 0.8f, 1f, 1.25f, 1.56f, 2.43f, 5.90f };
 	static private final int ZOOM_STEP_ID_DEFAULT = 4;
-	static private final float CHUNK_SIZE_SCALE = 0.25f;
+	static public final float CHUNK_SIZE_SCALE = 0.25f;
 
 	private final PathManager that = this;
 
 	// Size of one chunk is one viewport, always.
 	public final Point CHUNK_SIZE;
 
-	// Maps ID -> Compound path.
-	private HashMap<Integer, CompoundPath> paths
-		= new HashMap<Integer, CompoundPath>();
+	// Maps ID -> Compound path. Must be concurrent as file saves are async.
+	private ConcurrentHashMap<Integer, CompoundPath> paths
+		= new ConcurrentHashMap<Integer, CompoundPath>();
 
 	// Maps chunk coordinate -> path IDs intersecting this chunk. Paths may span
 	// multiple chunks in a (larger than, if created on another device) 2x2 chunk
@@ -34,9 +35,7 @@ public class PathManager {
 
 	// Offset of the upper-left point of the viewport.
 	private PointF viewportOffset = new PointF(0, 0);
-
 	private Point currentChunk = new Point(0, 0);
-
 	private int zoomStepId = 0;
 
 	public PathManager(Point chunkSizePrescale) {
@@ -62,8 +61,9 @@ public class PathManager {
 					if (!chunk.getPathIds().contains(path.ID)) {
 						chunk.addPath(path.ID);
 						path.containingChunks.add(chunkCoordinate);
-						XenaApplication.log("Added path " + path.ID + " to chunk "
-							+ chunkCoordinate.x + ", " + chunkCoordinate.y + ".");
+						XenaApplication
+							.log("PathManager::addPath: Added path " + path.ID + " to chunk "
+								+ chunkCoordinate.x + ", " + chunkCoordinate.y + ".");
 					}
 				} else {
 					chunk
@@ -73,8 +73,9 @@ public class PathManager {
 					chunk.addPath(path.ID);
 					chunks.put(chunkCoordinate, chunk);
 					path.containingChunks.add(chunkCoordinate);
-					XenaApplication.log("Added path " + path.ID + " to new chunk "
-						+ chunkCoordinate.x + ", " + chunkCoordinate.y + ".");
+					XenaApplication
+						.log("PathManager::addPath: Added path " + path.ID + " to chunk "
+							+ chunkCoordinate.x + ", " + chunkCoordinate.y + ".");
 				}
 			}
 		});

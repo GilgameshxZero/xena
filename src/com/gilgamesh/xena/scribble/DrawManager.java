@@ -106,7 +106,7 @@ public class DrawManager {
 				this.scribbleActivity.pathManager
 					.setViewportOffset(this.scribbleActivity.panManager.panBeginOffset);
 				this.scribbleActivity.refreshTextViewStatus();
-				this.scribbleActivity.redraw(true, false);
+				this.scribbleActivity.redraw(false);
 			}
 
 			XenaApplication.log("DrawManager::onDrawBegin: UNDO, viewportOffset = ",
@@ -185,7 +185,7 @@ public class DrawManager {
 		this.endEraseTask.debounce(DrawManager.DEBOUNCE_END_ERASE_DELAY_MS);
 		this.scribbleActivity.isPanning = false;
 
-		this.scribbleActivity.redraw(true, true);
+		this.scribbleActivity.redraw(true);
 
 		this.previousErasePoint.set(
 			position.x / this.scribbleActivity.pathManager.getZoomScale()
@@ -248,7 +248,7 @@ public class DrawManager {
 		}
 
 		if (initialSize != this.scribbleActivity.pathManager.getPathsCount()) {
-			this.scribbleActivity.redraw(true, false);
+			this.scribbleActivity.redraw(false);
 			this.scribbleActivity.svgFileScribe.saveTask
 				.debounce(SvgFileScribe.DEBOUNCE_SAVE_MS);
 		}

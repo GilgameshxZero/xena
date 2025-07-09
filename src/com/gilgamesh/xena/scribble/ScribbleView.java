@@ -1,5 +1,8 @@
 package com.gilgamesh.xena.scribble;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import com.gilgamesh.xena.XenaApplication;
 import com.gilgamesh.xena.pdf.PageBitmap;
 
 import android.content.Context;
@@ -26,7 +29,7 @@ public class ScribbleView extends ImageView {
 		PAINT_WHITE.setColor(Color.WHITE);
 	}
 
-	private boolean isDrawing = false;
+	private AtomicBoolean isDirty = new AtomicBoolean();
 	private PointF viewportOffset, viewSize = new PointF();
 	private float zoomScale;
 
@@ -51,18 +54,26 @@ public class ScribbleView extends ImageView {
 
 	@Override
 	public void invalidate() {
-		this.isDrawing = true;
+		this.isDirty.set(true);
+		XenaApplication.log("ScribbleView::invalidate: Queued draw.");
 		super.invalidate();
 	}
 
 	@Override
-	protected void onDraw(Canvas canvas) {
+	synchronized protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
 
 		if (this.scribbleActivity == null
 			|| this.scribbleActivity.pathManager == null) {
 			return;
 		}
+
+		// Together with `synchronized`, allows non-forcing queued invalidates.
+		if (!this.isDirty.getAndSet(false)) {
+			XenaApplication.log("ScribbleView::onDraw: Consumed draw.");
+			return;
+		}
+		XenaApplication.log("ScribbleView::onDraw: Drawing.");
 
 		this.viewSize.x = this.getWidth();
 		this.viewSize.y = this.getHeight();
@@ -101,11 +112,5 @@ public class ScribbleView extends ImageView {
 						+ this.scribbleActivity.pathManager.CHUNK_SIZE.y) * this.zoomScale),
 				ScribbleView.PAINT_BITMAP);
 		}
-
-		this.isDrawing = false;
-	}
-
-	public boolean isDrawing() {
-		return this.isDrawing;
 	}
 }
