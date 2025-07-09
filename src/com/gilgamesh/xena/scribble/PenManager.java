@@ -36,7 +36,7 @@ public class PenManager extends RawInputCallback {
 	// begin/end events created. Thus, we only interpret an erase event ending
 	// if no erase-related events have been received within a certain time.
 	// Before then, we erase all points received.
-	private final int DEBOUNCE_END_ERASE_DELAY_MS = 200;
+	private final int DEBOUNCE_END_ERASE_DELAY_MS = 300;
 
 	private PointF previousErasePoint = new PointF();
 	private PointF previousTentativeDrawPoint = new PointF();
@@ -273,16 +273,17 @@ public class PenManager extends RawInputCallback {
 
 		currentPath.addPoint(newPoint);
 
-		this.scribbleActivity.scribbleViewCanvas.drawLine(
-				previousTentativeDrawPoint.x,
-				previousTentativeDrawPoint.y, touchPoint.x, touchPoint.y,
-				ScribbleActivity.PAINT_TENTATIVE_LINE);
+		// TODO: re-enable.
+		// this.scribbleActivity.scribbleViewCanvas.drawLine(
+		// previousTentativeDrawPoint.x,
+		// previousTentativeDrawPoint.y, touchPoint.x, touchPoint.y,
+		// ScribbleActivity.PAINT_TENTATIVE_LINE);
 		if (this.scribbleActivity.scribbleView.isDrawing()) {
 			// Log.v(XenaApplication.TAG, "Dirty ScribbleView.");
 		} else {
 			// Draw line for the purposes of screenshare, which does not capture any
 			// raw drawing activities.
-			this.scribbleActivity.scribbleView.postInvalidate();
+			// this.scribbleActivity.scribbleView.postInvalidate();
 		}
 		previousTentativeDrawPoint.set(touchPoint.x, touchPoint.y);
 	}

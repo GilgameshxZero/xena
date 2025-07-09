@@ -3,13 +3,11 @@ package com.gilgamesh.xena.scribble;
 import com.gilgamesh.xena.R;
 import com.gilgamesh.xena.XenaApplication;
 import com.gilgamesh.xena.algorithm.Geometry;
-import com.gilgamesh.xena.filesystem.FilePickerActivity;
 import com.onyx.android.sdk.data.note.TouchPoint;
 
 import android.content.SharedPreferences;
 import android.graphics.PointF;
 import android.graphics.RectF;
-import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -18,7 +16,7 @@ import android.view.View;
 public class TouchManager implements View.OnTouchListener {
 	static private final float FLICK_MOVE_RATIO = 0.85f;
 	static private final float TOUCH_BORDER_INVALID_RATIO = 0f;
-	static private final int FLICK_LOWER_BOUND_MS = 40;
+	static private final int FLICK_LOWER_BOUND_MS = 10;
 	static private final int FLICK_UPPER_BOUND_MS = 220;
 	static private final float FLICK_OFFSET_THRESHOLD_DP = 10;
 	static private final float FLICK_OFFSET_THRESHOLD_PX = TouchManager.FLICK_OFFSET_THRESHOLD_DP
@@ -30,6 +28,7 @@ public class TouchManager implements View.OnTouchListener {
 	static private final float ZOOM_DISTANCE_BOUND_PX = TouchManager.ZOOM_DISTANCE_BOUND_DP
 			* XenaApplication.DPI / 160;
 	static private final int ZOOM_LOWER_BOUND_MS = 80;
+	static private final int TAP_UPPER_BOUND_MS = 80;
 	static private final int DOUBLE_TAP_UPPER_BOUND_MS = 360;
 	static final int IGNORE_CHAIN_BOUND_MS = 250;
 	static private final String SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD_CACHE = "SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD_CACHE";
@@ -175,28 +174,28 @@ public class TouchManager implements View.OnTouchListener {
 					break;
 				}
 
-			// // Don't process until we exit flick range.
-			// if (eventDurationMs <= TouchManager.MOVE_LOWER_BOUND_MS) {
-			// break;
+				// Don't process until we exit flick range.
+				if (eventDurationMs <= TouchManager.FLICK_UPPER_BOUND_MS) {
+					break;
+				}
+
+			// {
+			// 	PointF newOffset = new PointF(
+			// 			this.scribbleActivity.pathManager.getViewportOffset().x
+			// 					+ (touchPoint.x
+			// 							- this.previousPoint.x)
+			// 							/ this.scribbleActivity.pathManager.getZoomScale(),
+			// 			this.scribbleActivity.pathManager.getViewportOffset().y
+			// 					+ (touchPoint.y
+			// 							- this.previousPoint.y)
+			// 							/ this.scribbleActivity.pathManager.getZoomScale());
+			// 	this.scribbleActivity.pathManager.setViewportOffset(newOffset);
+
+			// 	// Do not update text view while dragging.
+			// 	// this.scribbleActivity.updateTextViewStatus();
 			// }
-
-			{
-				// PointF newOffset = new PointF(
-				// this.scribbleActivity.pathManager.getViewportOffset().x
-				// + (touchPoint.x
-				// - this.previousPoint.x)
-				// / this.scribbleActivity.pathManager.getZoomScale(),
-				// this.scribbleActivity.pathManager.getViewportOffset().y
-				// + (touchPoint.y
-				// - this.previousPoint.y)
-				// / this.scribbleActivity.pathManager.getZoomScale());
-				// this.scribbleActivity.pathManager.setViewportOffset(newOffset);
-
-				// Do not update text view while dragging.
-				// this.scribbleActivity.updateTextViewStatus();
-			}
-				// this.previousPoint.x = touchPoint.x;
-				// this.previousPoint.y = touchPoint.y;
+			// 	this.previousPoint.x = touchPoint.x;
+			// 	this.previousPoint.y = touchPoint.y;
 
 				this.cMoveEvents++;
 				this.actionDownMaxTouchMajorMinor = Math.max(
@@ -206,12 +205,10 @@ public class TouchManager implements View.OnTouchListener {
 				// Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:MOVE "
 				// + pathManager.getViewportOffset());
 
-				// Do not redraw while dragging.
-
 				// if (this.scribbleActivity.isRedrawing) {
-				// this.scribbleActivity.redraw();
+				// 	this.scribbleActivity.redraw();
 				// } else {
-				// this.scribbleActivity.drawBitmapToView(false, true);
+				// 	this.scribbleActivity.drawBitmapToView(false, true);
 				// }
 
 				// No need to reset raw input capture here, because it is assumed that
@@ -292,7 +289,7 @@ public class TouchManager implements View.OnTouchListener {
 					this.scribbleActivity.redraw();
 				} else {
 					// If not panned, treat as a tap.
-					if (eventDurationMs < TouchManager.FLICK_LOWER_BOUND_MS
+					if (eventDurationMs < TouchManager.TAP_UPPER_BOUND_MS
 							&& this.cMoveEvents == 0) {
 						if (currentTimeMs
 								- this.previousTapTimeMs <= TouchManager.DOUBLE_TAP_UPPER_BOUND_MS) {

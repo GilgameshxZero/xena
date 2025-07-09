@@ -49,7 +49,7 @@ public class ScribbleActivity extends Activity
 		PAINT_TENTATIVE_LINE.setStrokeJoin(Paint.Join.ROUND);
 		PAINT_TENTATIVE_LINE.setStrokeCap(Paint.Cap.ROUND);
 	}
-	static private final Paint PAINT_TRANSPARENT;
+	static final Paint PAINT_TRANSPARENT;
 	static {
 		PAINT_TRANSPARENT = new Paint();
 		PAINT_TRANSPARENT.setAntiAlias(true);
@@ -57,7 +57,13 @@ public class ScribbleActivity extends Activity
 				.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OUT));
 		PAINT_TRANSPARENT.setColor(Color.TRANSPARENT);
 	}
-	static private final Paint PAINT_BITMAP;
+	static final Paint PAINT_WHITE;
+	static {
+		PAINT_WHITE = new Paint();
+		PAINT_WHITE.setAntiAlias(true);
+		PAINT_WHITE.setColor(Color.WHITE);
+	}
+	static final Paint PAINT_BITMAP;
 	static {
 		PAINT_BITMAP = new Paint();
 		PAINT_BITMAP.setAntiAlias(true);
@@ -72,14 +78,12 @@ public class ScribbleActivity extends Activity
 	// Managers.
 	SvgFileScribe svgFileScribe;
 	PathManager pathManager;
-	private PdfReader pdfReader;
+	PdfReader pdfReader;
 	PenManager penManager;
 	TouchManager touchManager;
 
 	// General aliases.
 	ScribbleView scribbleView;
-	private Bitmap scribbleViewBitmap;
-	Canvas scribbleViewCanvas;
 	TouchHelper touchHelper;
 	Uri svgUri;
 	// pdfUri is null if no PDF is loaded.
@@ -113,8 +117,10 @@ public class ScribbleActivity extends Activity
 
 	public void redraw() {
 		this.isRedrawing = false;
+		Log.v("Xena", "ScribbleView::onDraw:BEFORE_DRAW.");
 		this.drawBitmapToView(true, true);
 		this.touchHelper.setRawDrawingEnabled(false).setRawDrawingEnabled(true);
+		Log.v("Xena", "ScribbleView::onDraw:AFTER_DRAW.");
 	}
 
 	// Switching orientation may rebuild the activity.
@@ -159,6 +165,7 @@ public class ScribbleActivity extends Activity
 		this.penManager = new PenManager(this);
 
 		this.scribbleView = findViewById(R.id.activity_scribble_scribble_view);
+		this.scribbleView.scribbleActivity = this;
 		this.scribbleView.post(new Runnable() {
 			@Override
 			public void run() {
@@ -330,11 +337,6 @@ public class ScribbleActivity extends Activity
 				new Point(this.scribbleView.getWidth(), this.scribbleView.getHeight()));
 		SvgFileScribe.loadPathsFromSvg(this, this.svgUri, this.pathManager);
 
-		this.scribbleViewBitmap = Bitmap.createBitmap(this.scribbleView.getWidth(),
-				this.scribbleView.getHeight(),
-				Bitmap.Config.ARGB_8888);
-		this.scribbleViewCanvas = new Canvas(this.scribbleViewBitmap);
-		this.scribbleView.setImageBitmap(this.scribbleViewBitmap);
 		drawBitmapToView(true, true);
 
 		this.updateTextViewStatus();
@@ -347,58 +349,10 @@ public class ScribbleActivity extends Activity
 			return;
 		}
 
-		this.scribbleViewCanvas.drawRect(0, 0, scribbleView.getWidth(),
-				scribbleView.getHeight(),
-				PAINT_TRANSPARENT);
-
-		if (this.pdfReader != null) {
-			for (PageBitmap page : this.pdfReader.getBitmapsForViewport(
-					new RectF(-this.pathManager.getViewportOffset().x,
-							-this.pathManager.getViewportOffset().y,
-							-this.pathManager.getViewportOffset().x
-									+ this.scribbleView.getWidth()
-											/ this.pathManager.getZoomScale(),
-							-this.pathManager.getViewportOffset().y
-									+ this.scribbleView.getHeight()
-											/ this.pathManager.getZoomScale()))) {
-				this.scribbleViewCanvas.drawBitmap(page.bitmap,
-						new Rect(0, 0, page.bitmap.getWidth(), page.bitmap.getHeight()),
-						new RectF(
-								(page.location.left
-										+ this.pathManager.getViewportOffset().x)
-										* this.pathManager.getZoomScale(),
-								(page.location.top
-										+ this.pathManager.getViewportOffset().y)
-										* this.pathManager.getZoomScale(),
-								(page.location.right
-										+ this.pathManager.getViewportOffset().x)
-										* this.pathManager.getZoomScale(),
-								(page.location.bottom
-										+ this.pathManager.getViewportOffset().y)
-										* this.pathManager.getZoomScale()),
-						PAINT_BITMAP);
-			}
-		}
-
-		for (Chunk chunk : this.pathManager.getVisibleChunks()) {
-			this.scribbleViewCanvas.drawBitmap(chunk.getBitmap(),
-					new Rect(0, 0, this.pathManager.CHUNK_SIZE.x,
-							this.pathManager.CHUNK_SIZE.y),
-					new RectF((this.pathManager.getViewportOffset().x
-							+ chunk.OFFSET_X) * this.pathManager.getZoomScale(),
-							(this.pathManager.getViewportOffset().y
-									+ chunk.OFFSET_Y) * this.pathManager.getZoomScale(),
-							(this.pathManager.getViewportOffset().x
-									+ chunk.OFFSET_X + this.pathManager.CHUNK_SIZE.x)
-									* this.pathManager.getZoomScale(),
-							(this.pathManager.getViewportOffset().y
-									+ chunk.OFFSET_Y + this.pathManager.CHUNK_SIZE.y)
-									* this.pathManager.getZoomScale()),
-					PAINT_BITMAP);
-		}
+		this.scribbleView.isDirty = true;
 
 		if (invalidate) {
-			this.scribbleView.postInvalidate();
+			this.scribbleView.invalidate();
 		}
 	}
 
@@ -450,11 +404,8 @@ public class ScribbleActivity extends Activity
 
 	void setStrokeWidthScale(float scale) {
 		this.touchHelper
-				.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale * 1.25f);
+				.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale * 1.2f);
 		ScribbleActivity.PAINT_TENTATIVE_LINE
 				.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale);
-		Chunk.PAINT.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale);
-		Chunk.PAINT_ERASE
-				.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale * 1.5f);
 	}
 }
