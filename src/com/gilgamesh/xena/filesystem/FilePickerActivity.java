@@ -13,7 +13,6 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Environment;
-import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.ContextThemeWrapper;
@@ -23,6 +22,8 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
+
+import androidx.preference.PreferenceManager;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -79,7 +80,6 @@ public class FilePickerActivity extends BaseActivity
 				}
 			});
 		this.layoutListing.setOnTouchListener(this.touchManager);
-		// TODO: Deprecated.
 		this.sharedPreferences
 			= PreferenceManager.getDefaultSharedPreferences(this);
 

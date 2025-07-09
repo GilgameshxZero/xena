@@ -8,9 +8,10 @@ import com.onyx.android.sdk.data.note.TouchPoint;
 import android.content.SharedPreferences;
 import android.graphics.PointF;
 import android.graphics.RectF;
-import android.preference.PreferenceManager;
 import android.view.MotionEvent;
 import android.view.View;
+
+import androidx.preference.PreferenceManager;
 
 public class TouchManager implements View.OnTouchListener {
 	static private final float FLICK_MOVE_RATIO = 0.85f;
@@ -50,7 +51,6 @@ public class TouchManager implements View.OnTouchListener {
 	public TouchManager(ScribbleActivity scribbleActivity) {
 		this.scribbleActivity = scribbleActivity;
 
-		// TODO: Deprecated.
 		this.sharedPreferences
 			= PreferenceManager.getDefaultSharedPreferences(scribbleActivity);
 		TouchManager.PALM_TOUCH_MAJOR_MINOR_THRESHOLD

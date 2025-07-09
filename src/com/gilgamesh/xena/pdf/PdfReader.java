@@ -2,6 +2,8 @@ package com.gilgamesh.xena.pdf;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.gilgamesh.xena.XenaApplication;
 import com.gilgamesh.xena.scribble.ScribbleActivity;
@@ -13,7 +15,6 @@ import android.graphics.RectF;
 import android.graphics.pdf.PdfRenderer;
 import android.graphics.pdf.PdfRenderer.Page;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.util.Log;
 
 // Pages are laid out vertically, left-aligned at 0.
@@ -36,8 +37,6 @@ public class PdfReader {
 			this.renderer
 				= new PdfRenderer(
 					scribbleActivity.getContentResolver().openFileDescriptor(uri, "r"));
-			// TODO: renderer should be closed, but there is no destructor to close
-			// it.
 		} catch (IOException e) {
 			Log.e(XenaApplication.TAG,
 				"PdfReader::PdfReader: Failed to parse file: " + e.toString() + ".");
@@ -46,8 +45,8 @@ public class PdfReader {
 		this.pageCount = renderer.getPageCount();
 		this.pages = new PageBitmap[this.pageCount];
 
-		AsyncTask.execute(new Runnable() {
-			@Override
+		ExecutorService executorService = Executors.newSingleThreadExecutor();
+		executorService.execute(new Runnable() {
 			public void run() {
 				float nextTop = 0;
 				for (int i = 0; i < pageCount; i++) {
@@ -67,6 +66,7 @@ public class PdfReader {
 				scribbleActivity.redraw();
 			}
 		});
+		executorService.shutdown();
 
 		XenaApplication.log("PdfReader::PdfReader: Found " + pageCount + " pages.");
 	}
@@ -89,29 +89,6 @@ public class PdfReader {
 			XenaApplication.log("PdfReader::PdfReader: Rendered page " + pageIdx
 				+ ": " + page.getWidth() + "x" + page.getHeight() + ".");
 			page.close();
-			// Bitmap bitmap = Bitmap.createBitmap(
-			// Math.round(page.getWidth() * this.pointScale.x),
-			// Math.round(page.getHeight() * this.pointScale.y),
-			// Bitmap.Config.ARGB_8888);
-			// page.render(bitmap, null, null, Page.RENDER_MODE_FOR_DISPLAY);
-			// int cPixels = bitmap.getWidth() * bitmap.getHeight();
-			// int pixels[] = new int[cPixels];
-			// bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0,
-			// bitmap.getWidth(),
-			// bitmap.getHeight());
-			// this.pages[pageIdx].bitmap = Bitmap.createBitmap(
-			// Math.round(page.getWidth() * this.pointScale.x),
-			// Math.round(page.getHeight() * this.pointScale.y),
-			// Bitmap.Config.ALPHA_8);
-			// for (int i = 0; i < cPixels; i++) {
-			// Color color = Color.valueOf(pixels[i]);
-			// pixels[i] = (int) ((1 - (color.red() + color.green() + color.blue())
-			// / 3)
-			// * color.alpha() * 255) << 24;
-			// }
-			// this.pages[pageIdx].bitmap.setPixels(pixels, 0, bitmap.getWidth(), 0,
-			// 0,
-			// bitmap.getWidth(), bitmap.getHeight());
 		}
 
 		return this.pages[pageIdx];
@@ -134,8 +111,8 @@ public class PdfReader {
 
 			final int finalFirstPage = firstPage;
 			final int finalLastPage = lastPage;
-			AsyncTask.execute(new Runnable() {
-				@Override
+			ExecutorService executorService = Executors.newSingleThreadExecutor();
+			executorService.execute(new Runnable() {
 				public void run() {
 					getBitmapForPage(finalFirstPage - 2);
 					getBitmapForPage(finalFirstPage - 1);
@@ -143,6 +120,7 @@ public class PdfReader {
 					getBitmapForPage(finalLastPage + 2);
 				}
 			});
+			executorService.shutdown();
 		}
 		return validPages;
 	}
