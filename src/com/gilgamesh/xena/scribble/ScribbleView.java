@@ -1,13 +1,21 @@
 package com.gilgamesh.xena.scribble;
 
 import android.graphics.Canvas;
+import android.graphics.PointF;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.widget.ImageView;
 import android.util.AttributeSet;
+import android.util.Log;
+
+import com.gilgamesh.xena.pdf.PageBitmap;
 
 import android.content.Context;
 
 public class ScribbleView extends ImageView {
 	private boolean isDrawing = false;
+	boolean isDirty = false;
+	ScribbleActivity scribbleActivity = null;
 
 	public ScribbleView(Context context) {
 		super(context);
@@ -28,9 +36,9 @@ public class ScribbleView extends ImageView {
 	}
 
 	@Override
-	public void postInvalidate() {
+	public void invalidate() {
 		this.isDrawing = true;
-		super.postInvalidate();
+		super.invalidate();
 	}
 
 	public boolean isDrawing() {
@@ -39,7 +47,83 @@ public class ScribbleView extends ImageView {
 
 	@Override
 	protected void onDraw(Canvas canvas) {
+		Log.v("Xena", "onDraw");
 		super.onDraw(canvas);
+
+		if (this.scribbleActivity == null
+				|| this.scribbleActivity.pathManager == null) {
+			return;
+		}
+
+		if (!this.isDirty) {
+			return;
+		}
+		this.isDirty = false;
+
+		// Point viewSize = new Point(this.getWidth(), this.getHeight());
+		// PointF viewportOffset = this.scribbleActivity.pathManager
+		// .getViewportOffset();
+		Log.v("Xena", "ScribbleView::onDraw:START.");
+
+		canvas.drawRect(0, 0, this.getWidth(),
+				this.getHeight(),
+				ScribbleActivity.PAINT_WHITE);
+
+		if (this.scribbleActivity.pdfReader != null) {
+			for (PageBitmap page : this.scribbleActivity.pdfReader
+					.getBitmapsForViewport(
+							new RectF(
+									-this.scribbleActivity.pathManager.getViewportOffset().x,
+									-this.scribbleActivity.pathManager.getViewportOffset().y,
+									-this.scribbleActivity.pathManager.getViewportOffset().x
+											+ this.scribbleActivity.scribbleView.getWidth()
+													/ this.scribbleActivity.pathManager.getZoomScale(),
+									-this.scribbleActivity.pathManager.getViewportOffset().y
+											+ this.scribbleActivity.scribbleView.getHeight()
+													/ this.scribbleActivity.pathManager
+															.getZoomScale()))) {
+				canvas.drawBitmap(page.bitmap,
+						new Rect(0, 0, page.bitmap.getWidth(), page.bitmap.getHeight()),
+						new RectF(
+								(page.location.left
+										+ this.scribbleActivity.pathManager.getViewportOffset().x)
+										* this.scribbleActivity.pathManager.getZoomScale(),
+								(page.location.top
+										+ this.scribbleActivity.pathManager.getViewportOffset().y)
+										* this.scribbleActivity.pathManager.getZoomScale(),
+								(page.location.right
+										+ this.scribbleActivity.pathManager.getViewportOffset().x)
+										* this.scribbleActivity.pathManager.getZoomScale(),
+								(page.location.bottom
+										+ this.scribbleActivity.pathManager.getViewportOffset().y)
+										* this.scribbleActivity.pathManager.getZoomScale()),
+						ScribbleActivity.PAINT_BITMAP);
+			}
+		}
+		Log.v("Xena", "ScribbleView::onDraw:PDF_DONE.");
+
+		for (Chunk chunk : this.scribbleActivity.pathManager.getVisibleChunks()) {
+			canvas.drawBitmap(chunk.getBitmap(),
+					new Rect(0, 0, this.scribbleActivity.pathManager.CHUNK_SIZE.x,
+							this.scribbleActivity.pathManager.CHUNK_SIZE.y),
+					new RectF((this.scribbleActivity.pathManager.getViewportOffset().x
+							+ chunk.OFFSET_X)
+							* this.scribbleActivity.pathManager.getZoomScale(),
+							(this.scribbleActivity.pathManager.getViewportOffset().y
+									+ chunk.OFFSET_Y)
+									* this.scribbleActivity.pathManager.getZoomScale(),
+							(this.scribbleActivity.pathManager.getViewportOffset().x
+									+ chunk.OFFSET_X
+									+ this.scribbleActivity.pathManager.CHUNK_SIZE.x)
+									* this.scribbleActivity.pathManager.getZoomScale(),
+							(this.scribbleActivity.pathManager.getViewportOffset().y
+									+ chunk.OFFSET_Y
+									+ this.scribbleActivity.pathManager.CHUNK_SIZE.y)
+									* this.scribbleActivity.pathManager.getZoomScale()),
+					ScribbleActivity.PAINT_BITMAP);
+		}
+		Log.v("Xena", "ScribbleView::onDraw:DONE.");
+
 		this.isDrawing = false;
 	}
 }
