@@ -143,9 +143,8 @@ public class PathManager {
 			= new Point((int) -Math.floor(this.viewportOffset.x / this.CHUNK_SIZE.x),
 				(int) -Math.floor(this.viewportOffset.y / this.CHUNK_SIZE.y));
 		if (!newChunk.equals(this.currentChunk)) {
-			XenaApplication
-				.log("PathManager::setViewportOffset: Moved into new chunk "
-					+ newChunk.x + ", " + newChunk.y + ".");
+			XenaApplication.log("PathManager::setViewportOffset: Moved into chunk ",
+				newChunk.x, ", ", newChunk.y, ".");
 			this.currentChunk = newChunk;
 		}
 	}

@@ -7,11 +7,10 @@ import com.gilgamesh.xena.multithreading.DebouncedTask;
 
 import android.graphics.Point;
 import android.graphics.PointF;
-import android.view.MotionEvent;
 
 import java.util.HashSet;
 
-// Used by PenManager and alt-mode TouchManager.
+// Used by DrawManager and alt-mode TouchManager.
 public class DrawManager {
 	static private final float DRAW_MOVE_EPSILON_DP = 2f;
 	static private final float DRAW_MOVE_EPSILON_PX
@@ -48,7 +47,7 @@ public class DrawManager {
 		= new DebouncedTask(new DebouncedTask.Callback() {
 			@Override
 			public void onRun() {
-				XenaApplication.log("PenManager::inputCooldownTask");
+				XenaApplication.log("DrawManager::inputCooldownTask.");
 			}
 		});
 
@@ -60,14 +59,13 @@ public class DrawManager {
 				scribbleActivity.runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
-						scribbleActivity.touchManager.onTouchInner(MotionEvent.ACTION_UP,
-							endDrawTaskTouchPoint.x, endDrawTaskTouchPoint.y, 0, 0, 0, 0);
+						scribbleActivity.panManager.onActionUp(0, endDrawTaskTouchPoint, 0);
 					}
 				});
 				return;
 			}
 
-			XenaApplication.log("PenManager::endDrawTask");
+			XenaApplication.log("DrawManager::endDrawTask.");
 
 			// The new path has already been loaded by the PathManager. Conclude
 			// it by drawing it onto the chunk bitmaps here.
@@ -85,7 +83,7 @@ public class DrawManager {
 	DebouncedTask endEraseTask = new DebouncedTask(new DebouncedTask.Callback() {
 		@Override
 		public void onRun() {
-			XenaApplication.log("PenManager::endEraseTask");
+			XenaApplication.log("DrawManager::endEraseTask.");
 			inputCooldownTask.debounce(DrawManager.DEBOUNCE_INPUT_COOLDOWN_DELAY_MS);
 		}
 	});
@@ -94,36 +92,36 @@ public class DrawManager {
 		this.scribbleActivity = scribbleActivity;
 	}
 
-	public void drawBegin(PointF position) {
+	public void onDrawBegin(PointF position) {
 		if (this.scribbleActivity.isPenEraseMode) {
-			this.eraseBegin(position);
+			this.onEraseBegin(position);
 			return;
 		}
 
 		// If currently panning, that means there were erroneous panning events
 		// fired. Undo them, and unset panning.
 		if (this.scribbleActivity.isPanning) {
-			if (this.scribbleActivity.panBeginOffset != this.scribbleActivity.pathManager
+			if (this.scribbleActivity.panManager.panBeginOffset != this.scribbleActivity.pathManager
 				.getViewportOffset()) {
 				this.scribbleActivity.pathManager
-					.setViewportOffset(this.scribbleActivity.panBeginOffset);
-				this.scribbleActivity.updateTextViewStatus();
+					.setViewportOffset(this.scribbleActivity.panManager.panBeginOffset);
+				this.scribbleActivity.refreshTextViewStatus();
 				this.scribbleActivity.redraw(true, false);
 			}
 
-			XenaApplication.log("PenManager::onTouch:UNDO "
-				+ this.scribbleActivity.pathManager.getViewportOffset());
+			XenaApplication.log("DrawManager::onDrawBegin: UNDO, viewportOffset = ",
+				this.scribbleActivity.pathManager.getViewportOffset(), ".");
 
 			this.scribbleActivity.isPanning = false;
 		}
 
 		// If currently drawing, treat this event the same as a move event.
 		if (this.endDrawTask.isAwaiting()) {
-			this.drawMove(position);
+			this.onDrawMove(position);
 			return;
 		}
 
-		XenaApplication.log("PenManager::onBeginRawDrawing");
+		XenaApplication.log("DrawManager::onDrawBegin.");
 		this.scribbleActivity.redrawTask.cancel();
 		this.endDrawTask.debounce(-1);
 		this.currentPath
@@ -136,9 +134,9 @@ public class DrawManager {
 				.getValue();
 	}
 
-	public void drawEnd(PointF position) {
+	public void onDrawEnd(PointF position) {
 		if (this.scribbleActivity.isPenEraseMode) {
-			this.eraseEnd(position);
+			this.onEraseEnd(position);
 			return;
 		}
 
@@ -146,7 +144,12 @@ public class DrawManager {
 		this.endDrawTask.debounce(DEBOUNCE_END_DRAW_DELAY_MS);
 	}
 
-	public void drawMove(PointF position) {
+	public void onDrawMove(PointF position) {
+		if (this.scribbleActivity.isPenEraseMode) {
+			this.onEraseMove(position);
+			return;
+		}
+
 		if (!this.endDrawTask.isAwaiting()) {
 			return;
 		}
@@ -169,14 +172,14 @@ public class DrawManager {
 		currentPath.addPoint(newPoint);
 	}
 
-	public void eraseBegin(PointF position) {
+	public void onEraseBegin(PointF position) {
 		if (this.endEraseTask.isAwaiting()) {
 			// This should be interpreted as an erase move event.
-			this.eraseMove(position);
+			this.onEraseMove(position);
 			return;
 		}
 
-		XenaApplication.log("PenManager::onBeginRawErasing");
+		XenaApplication.log("DrawManager::onEraseBegin.");
 
 		// This is the beginning of an erase move sequence.
 		this.endEraseTask.debounce(DrawManager.DEBOUNCE_END_ERASE_DELAY_MS);
@@ -191,22 +194,22 @@ public class DrawManager {
 				- this.scribbleActivity.pathManager.getViewportOffset().y);
 	}
 
-	public void eraseEnd(PointF position) {
+	public void onEraseEnd(PointF position) {
 		if (!this.endEraseTask.isAwaiting()) {
 			return;
 		}
 
-		XenaApplication.log("PenManager::onEndRawErasing");
+		XenaApplication.log("DrawManager::onEraseEnd.");
 
 		// Process this event as a move event.
-		this.eraseMove(position);
+		this.onEraseMove(position);
 	}
 
-	public void eraseMove(PointF position) {
+	public void onEraseMove(PointF position) {
 		// Some events come after onEndRawErasing; instead of ignoring those
 		// events, we restart erasing at this time.
 		if (!this.endEraseTask.isAwaiting()) {
-			this.eraseBegin(position);
+			this.onEraseBegin(position);
 		} else {
 			this.endEraseTask.debounce(DrawManager.DEBOUNCE_END_ERASE_DELAY_MS);
 		}
