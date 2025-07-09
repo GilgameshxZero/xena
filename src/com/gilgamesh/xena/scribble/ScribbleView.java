@@ -47,7 +47,6 @@ public class ScribbleView extends ImageView {
 
 	@Override
 	protected void onDraw(Canvas canvas) {
-		Log.v("Xena", "onDraw");
 		super.onDraw(canvas);
 
 		if (this.scribbleActivity == null
@@ -56,14 +55,13 @@ public class ScribbleView extends ImageView {
 		}
 
 		// if (!this.isDirty) {
-		// 	return;
+		// return;
 		// }
 		// this.isDirty = false;
 
 		// Point viewSize = new Point(this.getWidth(), this.getHeight());
 		// PointF viewportOffset = this.scribbleActivity.pathManager
 		// .getViewportOffset();
-		Log.v("Xena", "ScribbleView::onDraw:START.");
 
 		canvas.drawRect(0, 0, this.getWidth(),
 				this.getHeight(),
@@ -100,7 +98,6 @@ public class ScribbleView extends ImageView {
 						ScribbleActivity.PAINT_BITMAP);
 			}
 		}
-		Log.v("Xena", "ScribbleView::onDraw:PDF_DONE.");
 
 		for (Chunk chunk : this.scribbleActivity.pathManager.getVisibleChunks()) {
 			canvas.drawBitmap(chunk.getBitmap(),
@@ -122,7 +119,6 @@ public class ScribbleView extends ImageView {
 									* this.scribbleActivity.pathManager.getZoomScale()),
 					ScribbleActivity.PAINT_BITMAP);
 		}
-		Log.v("Xena", "ScribbleView::onDraw:DONE.");
 
 		this.isDrawing = false;
 	}

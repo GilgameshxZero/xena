@@ -117,10 +117,8 @@ public class ScribbleActivity extends Activity
 
 	public void redraw() {
 		this.isRedrawing = false;
-		Log.v("Xena", "ScribbleView::onDraw:BEFORE_DRAW.");
 		this.drawBitmapToView(true, true);
 		this.touchHelper.setRawDrawingEnabled(false).setRawDrawingEnabled(true);
-		Log.v("Xena", "ScribbleView::onDraw:AFTER_DRAW.");
 	}
 
 	// Switching orientation may rebuild the activity.
@@ -159,8 +157,6 @@ public class ScribbleActivity extends Activity
 			}
 		});
 
-		this.parseUri();
-
 		this.touchManager = new TouchManager(this);
 		this.penManager = new PenManager(this);
 
@@ -176,6 +172,9 @@ public class ScribbleActivity extends Activity
 
 		// TouchHelper must be initialized onCreate, since it is used in `onResume`.
 		this.touchHelper = TouchHelper.create(scribbleView, this.penManager);
+
+		// Must be called after touchHelper since PdfReader may try to redraw.
+		this.parseUri();
 	}
 
 	@Override
@@ -314,8 +313,6 @@ public class ScribbleActivity extends Activity
 		String pdfPath = this.getIntent().getStringExtra(EXTRA_PDF_PATH);
 		this.svgUri = Uri.fromFile(new File(svgPath));
 
-		this.updateTextViewPath(true);
-
 		if (pdfPath != null) {
 			this.pdfUri = Uri.fromFile(new File(pdfPath));
 			this.pdfReader = new PdfReader(this, this.pdfUri);
@@ -330,6 +327,8 @@ public class ScribbleActivity extends Activity
 							+ this.svgUri.toString()
 							+ ".");
 		}
+
+		this.updateTextViewPath(true);
 	}
 
 	private void initDrawing() {
