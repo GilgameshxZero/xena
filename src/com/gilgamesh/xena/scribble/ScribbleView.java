@@ -55,10 +55,10 @@ public class ScribbleView extends ImageView {
 			return;
 		}
 
-		if (!this.isDirty) {
-			return;
-		}
-		this.isDirty = false;
+		// if (!this.isDirty) {
+		// 	return;
+		// }
+		// this.isDirty = false;
 
 		// Point viewSize = new Point(this.getWidth(), this.getHeight());
 		// PointF viewportOffset = this.scribbleActivity.pathManager
