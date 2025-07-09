@@ -1,7 +1,9 @@
 package com.gilgamesh.xena.scribble;
 
-import com.gilgamesh.algorithm.Geometry;
 import com.gilgamesh.xena.XenaApplication;
+import com.gilgamesh.xena.algorithm.Geometry;
+import com.gilgamesh.xena.filesystem.SvgFileScribe;
+import com.gilgamesh.xena.multithreading.DebouncedTask;
 import com.onyx.android.sdk.data.note.TouchPoint;
 import com.onyx.android.sdk.pen.data.TouchPointList;
 import com.onyx.android.sdk.pen.RawInputCallback;
@@ -12,8 +14,6 @@ import android.graphics.RectF;
 import android.view.MotionEvent;
 
 import java.util.HashSet;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class PenManager extends RawInputCallback {
 	static private final float DRAW_MOVE_EPSILON_DP = 2f;
@@ -22,19 +22,23 @@ public class PenManager extends RawInputCallback {
 	static private final float ERASE_MOVE_EPSILON_DP = 4f;
 	static private final float ERASE_MOVE_EPSILON_PX
 		= PenManager.ERASE_MOVE_EPSILON_DP * XenaApplication.DPI / 160;
-	private final int DEBOUNCE_REDRAW_DELAY_MS = 64000;
-	private final int DEBOUNCE_INPUT_COOLDOWN_DELAY_MS = 200;
+	static private final int DEBOUNCE_REDRAW_DELAY_MS = 64000;
+
+	// For a short bit after draw or erase, touch events are disabled.
+	static private final int DEBOUNCE_INPUT_COOLDOWN_DELAY_MS = 50;
 
 	// Drawing end/begin pairs may fire within milliseconds. In this case,
 	// ignore both events. We accomplish this with a debounce on the end events.
-	private final int DEBOUNCE_END_DRAW_DELAY_MS = 10;
+	// This will not be used for draw begin and draw move events, because draw end
+	// is guaranteed to fire.
+	static private final int DEBOUNCE_END_DRAW_DELAY_MS = 10;
 
 	// The erasing events are a little broken. The end erase event is not
 	// guaranteed, and sometimes without lifting the eraser there are multiple
 	// begin/end events created. Thus, we only interpret an erase event ending
 	// if no erase-related events have been received within a certain time.
 	// Before then, we erase all points received.
-	private final int DEBOUNCE_END_ERASE_DELAY_MS = 300;
+	static private final int DEBOUNCE_END_ERASE_DELAY_MS = 300;
 
 	private PointF previousErasePoint = new PointF();
 	private PointF previousTentativeDrawPoint = new PointF();
@@ -49,116 +53,51 @@ public class PenManager extends RawInputCallback {
 		this.scribbleActivity = scribbleActivity;
 	}
 
-	// Cancellable dummy.
-	private TimerTask debounceRedrawTask = new TimerTask() {
-		@Override
-		public void run() {
-		}
-	};
-
-	public void cancelRedraw() {
-		this.scribbleActivity.isAwaitingRedraw = false;
-		this.debounceRedrawTask.cancel();
-	}
-
-	private void debounceRedraw(int delayMs) {
-		this.cancelRedraw();
-		this.scribbleActivity.isAwaitingRedraw = true;
-		new Timer().schedule(this.debounceRedrawTask = new TimerTask() {
+	// Cooldown for input end operations to prevent panning.
+	DebouncedTask inputCooldownTask
+		= new DebouncedTask(new DebouncedTask.Callback() {
 			@Override
-			public void run() {
-				XenaApplication.log("ScribbleActivity::debounceRedrawTask.");
-				scribbleActivity.redraw(true, true);
+			public void onRun() {
+				XenaApplication.log("PenManager::inputCooldownTask");
 			}
-		}, delayMs);
-	}
+		});
 
-	// Debounce cooldown for input end operations to prevent panning; implements
-	// palm rejection.
-	private TimerTask debounceInputCooldownTask = new TimerTask() {
+	// Erroneous draw end/begin pairs.
+	DebouncedTask endDrawTask = new DebouncedTask(new DebouncedTask.Callback() {
 		@Override
-		public void run() {
-		}
-	};
-
-	private void debounceInputCooldown(int delayMs) {
-		this.debounceInputCooldownTask.cancel();
-		this.scribbleActivity.isInputCooldown = true;
-		TimerTask task = new TimerTask() {
-			@Override
-			public void run() {
-				XenaApplication.log("ScribbleActivity::debounceInputCooldownTask");
-
-				scribbleActivity.isInputCooldown = false;
+		public void onRun() {
+			if (scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_PAN) {
+				scribbleActivity.runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						scribbleActivity.touchManager.onTouchInner(MotionEvent.ACTION_UP,
+							endDrawTaskTouchPoint.x, endDrawTaskTouchPoint.y, 0, 0, 0, 0);
+					}
+				});
+				return;
 			}
-		};
-		new Timer().schedule(task, delayMs);
-		this.debounceInputCooldownTask = task;
-	}
 
-	// Debounce for erroneous draw end/begin pairs.
-	private TimerTask debounceEndDrawTask = new TimerTask() {
+			XenaApplication.log("PenManager::endDrawTask");
+
+			// The new path has already been loaded by the PathManager. Conclude
+			// it by drawing it onto the chunk bitmaps here.
+			scribbleActivity.redrawTask.debounce(PenManager.DEBOUNCE_REDRAW_DELAY_MS);
+			inputCooldownTask.debounce(PenManager.DEBOUNCE_INPUT_COOLDOWN_DELAY_MS);
+
+			scribbleActivity.pathManager.finalizePath(currentPath);
+			scribbleActivity.svgFileScribe.saveTask
+				.debounce(SvgFileScribe.DEBOUNCE_SAVE_MS);
+		}
+	});
+
+	// Sometimes, the end erase event is never received, or comes in early.
+	DebouncedTask endEraseTask = new DebouncedTask(new DebouncedTask.Callback() {
 		@Override
-		public void run() {
+		public void onRun() {
+			XenaApplication.log("PenManager::endEraseTask");
+			inputCooldownTask.debounce(PenManager.DEBOUNCE_INPUT_COOLDOWN_DELAY_MS);
 		}
-	};
-
-	private void debounceEndDraw(int delayMs) {
-		this.debounceEndDrawTask.cancel();
-		TimerTask task = new TimerTask() {
-			@Override
-			public void run() {
-				if (scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_PAN) {
-					scribbleActivity.runOnUiThread(new Runnable() {
-						@Override
-						public void run() {
-							scribbleActivity.touchManager.onTouchInner(MotionEvent.ACTION_UP,
-								endDrawTaskTouchPoint.x, endDrawTaskTouchPoint.y, 0, 0, 0, 0);
-						}
-					});
-					return;
-				}
-
-				XenaApplication.log("ScribbleActivity::debounceEndDrawTask");
-
-				// The new path has already been loaded by the PathManager. Conclude
-				// it by drawing it onto the chunk bitmaps here.
-				scribbleActivity.isDrawing = false;
-				debounceRedraw(DEBOUNCE_REDRAW_DELAY_MS);
-				debounceInputCooldown(DEBOUNCE_INPUT_COOLDOWN_DELAY_MS);
-
-				scribbleActivity.pathManager.finalizePath(currentPath);
-				scribbleActivity.svgFileScribe.debounceSave(scribbleActivity,
-					scribbleActivity.svgUri, scribbleActivity.pathManager);
-			}
-		};
-		new Timer().schedule(task, delayMs);
-		this.debounceEndDrawTask = task;
-	}
-
-	// Sometimes, the end erase event is never received, so debounce it.
-	private TimerTask debounceEndEraseTask = new TimerTask() {
-		@Override
-		public void run() {
-		}
-	};
-
-	private void debounceEndErase(int delayMs) {
-		this.debounceEndEraseTask.cancel();
-		// Split into a few steps in case of multi-threading errors.
-		TimerTask task = new TimerTask() {
-			@Override
-			public void run() {
-				XenaApplication.log("ScribbleActivity::debounceEndEraseTask");
-
-				scribbleActivity.isErasing = false;
-				scribbleActivity.touchHelper.setRawDrawingEnabled(true);
-				debounceInputCooldown(DEBOUNCE_INPUT_COOLDOWN_DELAY_MS);
-			}
-		};
-		new Timer().schedule(task, delayMs);
-		this.debounceEndEraseTask = task;
-	}
+	});
 
 	@Override
 	public void onBeginRawDrawing(boolean b, TouchPoint touchPoint) {
@@ -184,23 +123,21 @@ public class PenManager extends RawInputCallback {
 				this.scribbleActivity.redraw(true, false);
 			}
 
-			XenaApplication.log("ScribbleActivity::onTouch:UNDO "
+			XenaApplication.log("PenManager::onTouch:UNDO "
 				+ this.scribbleActivity.pathManager.getViewportOffset());
 
 			this.scribbleActivity.isPanning = false;
 		}
 
-		this.debounceEndDrawTask.cancel();
-
 		// If currently drawing, treat this event the same as a move event.
-		if (this.scribbleActivity.isDrawing) {
+		if (this.endDrawTask.isAwaiting()) {
 			this.onRawDrawingTouchPointMoveReceived(touchPoint);
 			return;
 		}
 
-		XenaApplication.log("ScribbleActivity::onBeginRawDrawing");
-		this.cancelRedraw();
-		this.scribbleActivity.isDrawing = true;
+		XenaApplication.log("PenManager::onBeginRawDrawing");
+		this.scribbleActivity.redrawTask.cancel();
+		this.endDrawTask.debounce(-1);
 		this.previousTentativeDrawPoint.set(touchPoint.x, touchPoint.y);
 		this.currentPath
 			= this.scribbleActivity.pathManager
@@ -216,7 +153,7 @@ public class PenManager extends RawInputCallback {
 	public void onEndRawDrawing(boolean b, TouchPoint touchPoint) {
 		if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_PAN) {
 			this.endDrawTaskTouchPoint = new PointF(touchPoint.x, touchPoint.y);
-			this.debounceEndDraw(DEBOUNCE_END_DRAW_DELAY_MS);
+			this.endDrawTask.debounce(PenManager.DEBOUNCE_END_DRAW_DELAY_MS);
 			return;
 		}
 
@@ -226,7 +163,7 @@ public class PenManager extends RawInputCallback {
 		}
 
 		this.endDrawTaskTouchPoint = new PointF(touchPoint.x, touchPoint.y);
-		this.debounceEndDraw(DEBOUNCE_END_DRAW_DELAY_MS);
+		this.endDrawTask.debounce(DEBOUNCE_END_DRAW_DELAY_MS);
 	}
 
 	@Override
@@ -242,9 +179,11 @@ public class PenManager extends RawInputCallback {
 			return;
 		}
 
-		if (!this.scribbleActivity.isDrawing) {
+		if (!this.endDrawTask.isAwaiting()) {
 			return;
 		}
+
+		this.endDrawTask.debounce(-1);
 
 		PointF lastPoint = currentPath.points.get(currentPath.points.size() - 1);
 		PointF newPoint
@@ -259,34 +198,12 @@ public class PenManager extends RawInputCallback {
 			return;
 		}
 
-		// XenaApplication.log(
-		// "ScribbleActivity::onRawDrawingTouchPointMoveReceived "
-		// + touchPoint);
-
 		currentPath.addPoint(newPoint);
-
-		// TODO: re-enable.
-		// this.scribbleActivity.scribbleViewCanvas.drawLine(
-		// previousTentativeDrawPoint.x,
-		// previousTentativeDrawPoint.y, touchPoint.x, touchPoint.y,
-		// ScribbleActivity.PAINT_TENTATIVE_LINE);
-		if (this.scribbleActivity.scribbleView.isDrawing()) {
-			// XenaApplication.log( "Dirty ScribbleView.");
-		} else {
-			// Draw line for the purposes of screenshare, which does not capture any
-			// raw drawing activities.
-			// this.scribbleActivity.scribbleView.postInvalidate();
-		}
-		previousTentativeDrawPoint.set(touchPoint.x, touchPoint.y);
 	}
 
 	@Override
 	public void onRawDrawingTouchPointListReceived(
 		TouchPointList touchPointList) {
-		if (this.scribbleActivity.isPenEraseMode) {
-			this.onRawErasingTouchPointListReceived(touchPointList);
-			return;
-		}
 	}
 
 	@Override
@@ -296,22 +213,19 @@ public class PenManager extends RawInputCallback {
 			return;
 		}
 
-		if (this.scribbleActivity.isErasing) {
+		if (this.endEraseTask.isAwaiting()) {
 			// This should be interpreted as an erase move event.
 			this.onRawErasingTouchPointMoveReceived(touchPoint);
 			return;
 		}
 
-		XenaApplication.log("ScribbleActivity::onBeginRawErasing");
-
-		this.scribbleActivity.touchHelper.setRawDrawingEnabled(false);
+		XenaApplication.log("PenManager::onBeginRawErasing");
 
 		// This is the beginning of an erase move sequence.
-		this.debounceEndErase(DEBOUNCE_END_ERASE_DELAY_MS);
+		this.endEraseTask.debounce(PenManager.DEBOUNCE_END_ERASE_DELAY_MS);
 		this.scribbleActivity.isPanning = false;
-		this.scribbleActivity.isErasing = true;
 
-		this.scribbleActivity.redraw(true, false);
+		this.scribbleActivity.redraw(true, true);
 
 		this.previousErasePoint.set(
 			touchPoint.x / this.scribbleActivity.pathManager.getZoomScale()
@@ -327,14 +241,14 @@ public class PenManager extends RawInputCallback {
 			return;
 		}
 
-		if (!this.scribbleActivity.isErasing) {
+		if (!this.endEraseTask.isAwaiting()) {
 			return;
 		}
 
+		XenaApplication.log("PenManager::onEndRawErasing");
+
 		// Process this event as a move event.
 		this.onRawErasingTouchPointMoveReceived(touchPoint);
-
-		XenaApplication.log("ScribbleActivity::onEndRawErasing");
 	}
 
 	@Override
@@ -346,8 +260,10 @@ public class PenManager extends RawInputCallback {
 
 		// Some events come after onEndRawErasing; instead of ignoring those
 		// events, we restart erasing at this time.
-		if (!this.scribbleActivity.isErasing) {
+		if (!this.endEraseTask.isAwaiting()) {
 			this.onBeginRawErasing(false, touchPoint);
+		} else {
+			this.endEraseTask.debounce(PenManager.DEBOUNCE_END_ERASE_DELAY_MS);
 		}
 
 		// Actual logic to handle erasing.
@@ -359,13 +275,12 @@ public class PenManager extends RawInputCallback {
 				touchPoint.y / this.scribbleActivity.pathManager.getZoomScale()
 					- this.scribbleActivity.pathManager.getViewportOffset().y);
 
-		// Only process this event if significantly different from previous point.
+		// Only process this event if significantly different from previous
+		// point.
 		if (Geometry.distance(this.previousErasePoint,
 			currentErasePoint) <= PenManager.ERASE_MOVE_EPSILON_PX) {
 			return;
 		}
-
-		this.debounceEndErase(DEBOUNCE_END_ERASE_DELAY_MS);
 
 		HashSet<Point> chunkIds = new HashSet<Point>();
 		chunkIds.add(this.scribbleActivity.pathManager
@@ -387,8 +302,8 @@ public class PenManager extends RawInputCallback {
 
 		if (initialSize != this.scribbleActivity.pathManager.getPathsCount()) {
 			this.scribbleActivity.redraw(true, false);
-			this.scribbleActivity.svgFileScribe.debounceSave(this.scribbleActivity,
-				this.scribbleActivity.svgUri, this.scribbleActivity.pathManager);
+			this.scribbleActivity.svgFileScribe.saveTask
+				.debounce(SvgFileScribe.DEBOUNCE_SAVE_MS);
 		}
 
 		this.previousErasePoint.set(currentErasePoint);

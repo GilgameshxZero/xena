@@ -1,8 +1,9 @@
 package com.gilgamesh.xena.scribble;
 
-import com.gilgamesh.algorithm.Geometry;
 import com.gilgamesh.xena.R;
 import com.gilgamesh.xena.XenaApplication;
+import com.gilgamesh.xena.algorithm.Geometry;
+import com.gilgamesh.xena.filesystem.SvgFileScribe;
 import com.onyx.android.sdk.data.note.TouchPoint;
 
 import android.content.SharedPreferences;
@@ -88,8 +89,9 @@ public class TouchManager implements View.OnTouchListener {
 	public boolean onTouchInner(int eventAction, float eventX0, float eventY0,
 		float eventX1, float eventY1, float touchMajor, float touchMinor) {
 		if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.DEFAULT
-			&& (this.scribbleActivity.isDrawing || this.scribbleActivity.isErasing
-				|| this.scribbleActivity.isInputCooldown)) {
+			&& (this.scribbleActivity.penManager.endDrawTask.isAwaiting()
+				|| this.scribbleActivity.penManager.endEraseTask.isAwaiting()
+				|| this.scribbleActivity.penManager.inputCooldownTask.isAwaiting())) {
 			return false;
 		}
 
@@ -197,8 +199,8 @@ public class TouchManager implements View.OnTouchListener {
 				this.previousPoint.y = touchPoint.y;
 
 				// Force redraw if awaiting it.
-				this.scribbleActivity.redraw(this.scribbleActivity.isAwaitingRedraw,
-					false);
+				this.scribbleActivity
+					.redraw(this.scribbleActivity.redrawTask.isAwaiting(), false);
 				break;
 			case MotionEvent.ACTION_UP:
 				if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_DRAW) {
@@ -263,9 +265,8 @@ public class TouchManager implements View.OnTouchListener {
 									* TouchManager.FLICK_MOVE_RATIO
 									/ this.scribbleActivity.pathManager.getZoomScale()));
 					this.scribbleActivity.updateTextViewStatus();
-					this.scribbleActivity.svgFileScribe.debounceSave(
-						this.scribbleActivity, this.scribbleActivity.svgUri,
-						this.scribbleActivity.pathManager);
+					this.scribbleActivity.svgFileScribe.saveTask
+						.debounce(SvgFileScribe.DEBOUNCE_SAVE_MS);
 					this.scribbleActivity.redraw(true, true);
 				} else {
 					// If not panned, treat as a tap.
@@ -302,9 +303,8 @@ public class TouchManager implements View.OnTouchListener {
 						this.scribbleActivity.pathManager.setViewportOffset(newOffset);
 
 						this.scribbleActivity.updateTextViewStatus();
-						this.scribbleActivity.svgFileScribe.debounceSave(
-							this.scribbleActivity, this.scribbleActivity.svgUri,
-							this.scribbleActivity.pathManager);
+						this.scribbleActivity.svgFileScribe.saveTask
+							.debounce(SvgFileScribe.DEBOUNCE_SAVE_MS);
 						this.scribbleActivity.redraw(true, true);
 					} else {
 						XenaApplication.log("ScribbleActivity::onTouch:IGNORE");
@@ -379,9 +379,8 @@ public class TouchManager implements View.OnTouchListener {
 						this.scribbleActivity.pathManager.getZoomScale());
 					this.scribbleActivity.updateTextViewStatus();
 					this.scribbleActivity.redraw(true, true);
-					this.scribbleActivity.svgFileScribe.debounceSave(
-						this.scribbleActivity, this.scribbleActivity.svgUri,
-						this.scribbleActivity.pathManager);
+					this.scribbleActivity.svgFileScribe.saveTask
+						.debounce(SvgFileScribe.DEBOUNCE_SAVE_MS);
 				} else {
 					XenaApplication.log("ScribbleActivity::onTouch:IGNORE");
 					this.previousIgnoreChainTimeMs = currentTimeMs;
