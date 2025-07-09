@@ -2,6 +2,8 @@ package com.gilgamesh.xena.scribble;
 
 import java.util.HashSet;
 
+import com.gilgamesh.xena.XenaApplication;
+
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -37,8 +39,7 @@ public class Chunk {
 		PAINT_ERASE.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * 1.5f);
 	}
 
-	public final int OFFSET_X;
-	public final int OFFSET_Y;
+	public final int OFFSET_X, OFFSET_Y;
 
 	// Unloadable/reloadable resources of this chunk for rendering. TODO: unload
 	// at some point.
@@ -57,6 +58,7 @@ public class Chunk {
 		this.OFFSET_X = offsetX;
 		this.OFFSET_Y = offsetY;
 		this.bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+		// TODO: Somehow, this canvas should be hardware accelerated.
 		this.canvas = new Canvas(this.bitmap);
 		this.canvas.drawRect(0, 0, width, height, Chunk.PAINT_ERASE);
 	}

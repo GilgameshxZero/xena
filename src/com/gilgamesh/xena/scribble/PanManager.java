@@ -174,7 +174,7 @@ public class PanManager {
 				this.scribbleActivity.refreshTextViewStatus();
 				this.scribbleActivity.svgFileScribe.saveTask
 					.debounce(SvgFileScribe.DEBOUNCE_SAVE_MS);
-				this.scribbleActivity.redraw(true, true);
+				this.scribbleActivity.redraw(true);
 			} else {
 				// If not panned, treat as a tap.
 				if (eventDurationMs < PanManager.TAP_UPPER_BOUND_MS) {
@@ -187,7 +187,7 @@ public class PanManager {
 							.setBackgroundResource(this.scribbleActivity.isPenEraseMode
 								? R.drawable.solid_empty
 								: R.drawable.dotted_empty);
-						this.scribbleActivity.redraw(true, true);
+						this.scribbleActivity.redraw(true);
 						this.previousTapTimeMs = 0;
 					} else {
 						XenaApplication.log("PanManager::onActionUp: TAP.");
@@ -209,7 +209,7 @@ public class PanManager {
 					this.scribbleActivity.refreshTextViewStatus();
 					this.scribbleActivity.svgFileScribe.saveTask
 						.debounce(SvgFileScribe.DEBOUNCE_SAVE_MS);
-					this.scribbleActivity.redraw(true, true);
+					this.scribbleActivity.redraw(true);
 				} else {
 					this.maybeIgnore(true, currentTimeMs);
 				}
@@ -240,7 +240,7 @@ public class PanManager {
 				XenaApplication.log("PanManager::onActionUp: ZOOM.");
 				this.scribbleActivity.setStrokeWidthScale(zoomScale);
 				this.scribbleActivity.refreshTextViewStatus();
-				this.scribbleActivity.redraw(true, true);
+				this.scribbleActivity.redraw(true);
 				this.scribbleActivity.svgFileScribe.saveTask
 					.debounce(SvgFileScribe.DEBOUNCE_SAVE_MS);
 			} else {
@@ -279,7 +279,6 @@ public class PanManager {
 		this.previousPoint = position;
 
 		// If screen is dirty, clear it.
-		this.scribbleActivity.redraw(false,
-			this.scribbleActivity.redrawTask.isAwaiting());
+		this.scribbleActivity.redraw(this.scribbleActivity.redrawTask.isAwaiting());
 	}
 }
