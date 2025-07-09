@@ -1,6 +1,7 @@
 package com.gilgamesh.xena.scribble;
 
 import com.gilgamesh.xena.filesystem.SvgFileScribe;
+import com.gilgamesh.xena.multithreading.DebouncedTask;
 import com.gilgamesh.xena.pdf.PdfReader;
 import com.gilgamesh.xena.BaseActivity;
 import com.gilgamesh.xena.R;
@@ -69,6 +70,14 @@ public class ScribbleActivity extends BaseActivity
 	static private PointF PIXELS_PER_PAGE
 		= new PointF((int) XenaApplication.DPI * 8.5f, XenaApplication.DPI * 11f);
 
+	DebouncedTask redrawTask = new DebouncedTask(new DebouncedTask.Callback() {
+		@Override
+		public void onRun() {
+			XenaApplication.log("ScribbleActivity::redrawTask.");
+			redraw(true, true);
+		}
+	});
+
 	private final PdfReader.Callback PDF_READER_CALLBACK
 		= new PdfReader.Callback() {
 			public void onPageSizedIntoViewport() {
@@ -99,10 +108,6 @@ public class ScribbleActivity extends BaseActivity
 	private EditText coordinateEditY;
 
 	// State is package-private.
-	boolean isDrawing = false;
-	boolean isErasing = false;
-	boolean isAwaitingRedraw = false;
-	boolean isInputCooldown = false;
 	boolean isPanning = false;
 	boolean isPenEraseMode = false;
 
@@ -137,45 +142,30 @@ public class ScribbleActivity extends BaseActivity
 			= findViewById(R.id.activity_scribble_coordinate_dialog_edit_y);
 		this.coordinateEditY.setTransformationMethod(null);
 
-		this.svgFileScribe = new SvgFileScribe(new SvgFileScribe.Callback() {
-			@Override
-			public void onDebounceSaveUpdate(boolean isSaved) {
-				runOnUiThread(new Runnable() {
-					@Override
-					public void run() {
-						updateTextViewPath(isSaved);
-					}
-				});
-			}
-		});
-
-		this.touchManager = new TouchManager(this);
-		this.penManager = new PenManager(this);
-
 		this.scribbleView = findViewById(R.id.activity_scribble_scribble_view);
 		this.scribbleView.scribbleActivity = this;
 		this.scribbleView.post(new Runnable() {
 			@Override
 			public void run() {
-				initDrawing();
+				onScribbleViewReady();
 			}
 		});
-		this.scribbleView.setOnTouchListener(this.touchManager);
 
-		// TouchHelper must be initialized onCreate, since it is used in `onResume`.
-		this.touchHelper = TouchHelper.create(scribbleView, this.penManager);
-
-		// Must be called after touchHelper since PdfReader may try to redraw.
-		this.parseUri();
+		// Managers use SvgFileScribe, but only when they have been attached in
+		// onScribbleView REady.
+		this.touchManager = new TouchManager(this);
+		this.penManager = new PenManager(this);
 	}
 
 	@Override
 	protected void onResume() {
-		this.touchHelper.setRawDrawingEnabled(false)
-			.setLimitRect(new Rect(0, 0, this.scribbleView.getWidth(),
-				this.scribbleView.getHeight()), this.getRawDrawingExclusions())
-			.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
-			.setRawDrawingEnabled(true);
+		if (this.touchHelper != null) {
+			this.touchHelper.setRawDrawingEnabled(false)
+				.setLimitRect(new Rect(0, 0, this.scribbleView.getWidth(),
+					this.scribbleView.getHeight()), this.getRawDrawingExclusions())
+				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
+				.setRawDrawingEnabled(true);
+		}
 		if (this.pathManager != null) {
 			this.setStrokeWidthScale(this.pathManager.getZoomScale());
 		}
@@ -187,9 +177,8 @@ public class ScribbleActivity extends BaseActivity
 		// onPause will be called when "back" is pressed as well.
 		// Do not resave if already saved—avoids friction where file has been
 		// processed/moved elsewhere already.
-		if (!this.svgFileScribe.getIsSaved()) {
-			this.svgFileScribe.debounceSave(ScribbleActivity.this, svgUri,
-				this.pathManager, 0);
+		if (!this.svgFileScribe.isSaved()) {
+			this.svgFileScribe.saveTask.debounce(0);
 		}
 		this.touchHelper.setRawDrawingEnabled(false);
 		super.onPause();
@@ -216,8 +205,7 @@ public class ScribbleActivity extends BaseActivity
 				XenaApplication
 					.log("ScribbleActivity::onClick:activity_scribble_text_view_path.");
 				this.redraw(true, true);
-				this.svgFileScribe.debounceSave(ScribbleActivity.this, svgUri,
-					this.pathManager, 0);
+				this.svgFileScribe.saveTask.debounce(0);
 				break;
 			case R.id.activity_scribble_text_view_status:
 				XenaApplication
@@ -292,39 +280,63 @@ public class ScribbleActivity extends BaseActivity
 		}
 	}
 
-	private void parseUri() {
+	private void onScribbleViewReady() {
+		this.pathManager
+			= new PathManager(
+				new Point(this.scribbleView.getWidth(), this.scribbleView.getHeight()));
+
 		String svgPath = this.getIntent().getStringExtra(EXTRA_SVG_PATH);
 		String pdfPath = this.getIntent().getStringExtra(EXTRA_PDF_PATH);
 		this.svgUri = Uri.fromFile(new File(svgPath));
+		SvgFileScribe.loadPathsFromSvg(this, this.svgUri, this.pathManager);
 
+		this.svgFileScribe = new SvgFileScribe(new SvgFileScribe.Callback() {
+			@Override
+			public void onDebounceSaveUpdate(boolean isSaved) {
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						updateTextViewPath(isSaved);
+					}
+				});
+			}
+		}, this, this.svgUri, this.pathManager);
+
+		// After these lines, SvgFileScribe may be called from the managers.
+		this.scribbleView.setOnTouchListener(this.touchManager);
+		this.touchHelper
+			= TouchHelper.create(scribbleView, this.penManager)
+				.setRawDrawingEnabled(false)
+				.setLimitRect(new Rect(0, 0, this.scribbleView.getWidth(),
+					this.scribbleView.getHeight()), this.getRawDrawingExclusions())
+				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
+				.setRawDrawingEnabled(true);
+
+		// At this point, ScribbleActivity is ready to draw.
+
+		// PdfReader may attempt to redraw.
 		if (pdfPath != null) {
 			this.pdfUri = Uri.fromFile(new File(pdfPath));
 			this.pdfReader
 				= new PdfReader(this, this.pdfUri, this.PDF_READER_CALLBACK);
-			XenaApplication.log("ScribbleActivity::parseUri: Received 2 URIs: "
-				+ this.svgUri.toString() + " and " + this.pdfUri.toString() + ".");
+			XenaApplication
+				.log("ScribbleActivity::onScribbleViewReady: Parsed 2 URIs: "
+					+ this.svgUri.toString() + " and " + this.pdfUri.toString() + ".");
 		} else {
-			XenaApplication.log("ScribbleActivity::parseUri: Received 1 URI: "
-				+ this.svgUri.toString() + ".");
+			XenaApplication
+				.log("ScribbleActivity::onScribbleViewReady: Parsed 1 URI: "
+					+ this.svgUri.toString() + ".");
 		}
 
 		this.updateTextViewPath(true);
-	}
-
-	private void initDrawing() {
-		this.pathManager
-			= new PathManager(
-				new Point(this.scribbleView.getWidth(), this.scribbleView.getHeight()));
-		SvgFileScribe.loadPathsFromSvg(this, this.svgUri, this.pathManager);
+		this.updateTextViewStatus();
 
 		this.redraw(true, true);
-
-		this.updateTextViewStatus();
 		this.openTouchHelperRawDrawing();
 	}
 
 	public void redraw(boolean force, boolean refreshRawDrawing) {
-		this.penManager.cancelRedraw();
+		this.redrawTask.cancel();
 		if (force || !scribbleView.isDrawing()) {
 			this.scribbleView.invalidate();
 		}
@@ -343,7 +355,7 @@ public class ScribbleActivity extends BaseActivity
 				+ " | " + Math.round(this.pathManager.getZoomScale() * 100) + "%");
 	}
 
-	void updateTextViewPath(boolean isSaved) {
+	private void updateTextViewPath(boolean isSaved) {
 		String uriString
 			= this.pdfUri != null ? this.pdfUri.toString() : this.svgUri.toString();
 		this.textViewPath.setText("..." + uriString.substring(

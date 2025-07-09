@@ -11,6 +11,7 @@ public class XenaApplication extends Application {
 	static public final String TAG = "Xena";
 	static public final int DPI
 		= Resources.getSystem().getDisplayMetrics().densityDpi;
+
 	static public boolean IS_DEBUG = false;
 	static public SharedPreferences preferences;
 

@@ -6,7 +6,6 @@ import android.graphics.RectF;
 import android.widget.ImageView;
 import android.util.AttributeSet;
 
-import com.gilgamesh.xena.XenaApplication;
 import com.gilgamesh.xena.pdf.PageBitmap;
 
 import android.content.Context;

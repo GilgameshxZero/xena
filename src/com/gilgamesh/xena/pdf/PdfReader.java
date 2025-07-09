@@ -136,9 +136,10 @@ public class PdfReader {
 		// Requested bitmaps may not be a contiguous subarray if width differs, and
 		// viewport is on the right. However, we can binary search for the
 		// contiguous range on the Y-axis. Can be further optimized with quad-trees.
-		int low = 0, high = pages.length, mid;
+		int low = -1, high = pages.length, mid;
 		while (low + 1 < high) {
-			mid = (low + high) / 2;
+			// Round up since low is not inclusive.
+			mid = (low + high + 1) / 2;
 			if (this.pages[mid] == null
 				|| viewport.top < this.pages[mid].location.bottom) {
 				high = mid;

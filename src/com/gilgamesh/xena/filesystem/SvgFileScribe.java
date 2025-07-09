@@ -1,6 +1,7 @@
 package com.gilgamesh.xena.filesystem;
 
 import com.gilgamesh.xena.XenaApplication;
+import com.gilgamesh.xena.multithreading.DebouncedTask;
 import com.gilgamesh.xena.scribble.CompoundPath;
 import com.gilgamesh.xena.scribble.PathManager;
 import com.gilgamesh.xena.scribble.ScribbleActivity;
@@ -20,8 +21,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.nio.file.Paths;
 import java.nio.file.Files;
 
@@ -144,18 +143,34 @@ public class SvgFileScribe {
 	private boolean isSaved = true;
 	private Callback callback;
 
-	private TimerTask debounceSaveTask = new TimerTask() {
-		@Override
-		public void run() {
-		}
-	};
+	private ScribbleActivity scribbleActivity;
+	private Uri uri;
+	private PathManager pathManager;
 
-	public SvgFileScribe(Callback callback) {
+	public final DebouncedTask saveTask
+		= new DebouncedTask(new DebouncedTask.Callback() {
+			@Override
+			public void onRun() {
+				save(scribbleActivity, uri, pathManager);
+				callback.onDebounceSaveUpdate(isSaved);
+			}
+
+			@Override
+			public void onDebounce() {
+				isSaved = false;
+				callback.onDebounceSaveUpdate(isSaved);
+			}
+		});
+
+	public SvgFileScribe(Callback callback, ScribbleActivity scribbleActivity,
+		Uri uri, PathManager pathManager) {
 		this.callback = callback;
+		this.scribbleActivity = scribbleActivity;
+		this.uri = uri;
+		this.pathManager = pathManager;
 	}
 
-	private void debounceSaveTaskRun(Context context, Uri uri,
-		PathManager pathManager) {
+	private void save(Context context, Uri uri, PathManager pathManager) {
 		try {
 			Files.createDirectories(Paths.get(uri.getPath()).getParent());
 			OutputStreamWriter outputStreamWriter
@@ -252,46 +267,24 @@ public class SvgFileScribe {
 				outputStreamWriter.write(stringBuilder.toString());
 				outputStreamWriter.write("</svg>\n");
 
-				XenaApplication.log("SvgFileScribe::debounceSaveTaskRun: Saved to "
-					+ uri.toString() + ".");
+				XenaApplication
+					.log("SvgFileScribe::save: Saved to " + uri.toString() + ".");
 				this.isSaved = true;
 			} catch (IOException e) {
 				Log.e(XenaApplication.TAG,
-					"SvgFileScribe::debounceSaveTaskRun: Failed to write to file: "
-						+ e.toString() + ".");
+					"SvgFileScribe::save: Failed to write to file: " + e.toString()
+						+ ".");
 			} finally {
 				outputStreamWriter.close();
 			}
 		} catch (IOException e) {
 			Log.e(XenaApplication.TAG,
-				"SvgFileScribe::debounceSaveTaskRun: Failed to write to file: "
-					+ e.toString() + ".");
+				"SvgFileScribe::save: Failed to write to file: " + e.toString() + ".");
 		}
 	}
 
-	public void debounceSave(Context context, Uri uri, PathManager pathManager,
-		int delayMs) {
-		this.debounceSaveTask.cancel();
-		this.debounceSaveTask = new TimerTask() {
-			@Override
-			public void run() {
-				debounceSaveTaskRun(context, uri, pathManager);
-				callback.onDebounceSaveUpdate(isSaved);
-			}
-		};
-		new Timer().schedule(this.debounceSaveTask, delayMs);
-		this.isSaved = false;
-		this.callback.onDebounceSaveUpdate(isSaved);
-	}
-
-	// Default delayMs.
-	public void debounceSave(Context context, Uri uri, PathManager pathManager) {
-		this.debounceSave(context, uri, pathManager,
-			SvgFileScribe.DEBOUNCE_SAVE_MS);
-	}
-
-	// Returns true iff no pending save task.
-	public boolean getIsSaved() {
+	// Returns true iff no save task is not pending or failed.
+	public boolean isSaved() {
 		return this.isSaved;
 	}
 }
