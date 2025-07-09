@@ -28,7 +28,7 @@ public class TouchManager implements View.OnTouchListener {
 	static private final float ZOOM_DISTANCE_BOUND_PX = TouchManager.ZOOM_DISTANCE_BOUND_DP
 			* XenaApplication.DPI / 160;
 	static private final int ZOOM_LOWER_BOUND_MS = 80;
-	static private final int TAP_UPPER_BOUND_MS = 80;
+	static private final int TAP_UPPER_BOUND_MS = 220;
 	static private final int DOUBLE_TAP_UPPER_BOUND_MS = 360;
 	static final int IGNORE_CHAIN_BOUND_MS = 250;
 	static private final String SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD_CACHE = "SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD_CACHE";
@@ -179,37 +179,41 @@ public class TouchManager implements View.OnTouchListener {
 					break;
 				}
 
-			// {
-			// 	PointF newOffset = new PointF(
-			// 			this.scribbleActivity.pathManager.getViewportOffset().x
-			// 					+ (touchPoint.x
-			// 							- this.previousPoint.x)
-			// 							/ this.scribbleActivity.pathManager.getZoomScale(),
-			// 			this.scribbleActivity.pathManager.getViewportOffset().y
-			// 					+ (touchPoint.y
-			// 							- this.previousPoint.y)
-			// 							/ this.scribbleActivity.pathManager.getZoomScale());
-			// 	this.scribbleActivity.pathManager.setViewportOffset(newOffset);
-
-			// 	// Do not update text view while dragging.
-			// 	// this.scribbleActivity.updateTextViewStatus();
-			// }
-			// 	this.previousPoint.x = touchPoint.x;
-			// 	this.previousPoint.y = touchPoint.y;
-
 				this.cMoveEvents++;
 				this.actionDownMaxTouchMajorMinor = Math.max(
 						this.actionDownMaxTouchMajorMinor,
 						Math.max(touchMajor, touchMinor));
 
+				if (this.actionDownMaxTouchMajorMinor >= TouchManager.PALM_TOUCH_MAJOR_MINOR_THRESHOLD) {
+					break;
+				}
+
+			{
+				PointF newOffset = new PointF(
+						this.scribbleActivity.pathManager.getViewportOffset().x
+								+ (touchPoint.x
+										- this.previousPoint.x)
+										/ this.scribbleActivity.pathManager.getZoomScale(),
+						this.scribbleActivity.pathManager.getViewportOffset().y
+								+ (touchPoint.y
+										- this.previousPoint.y)
+										/ this.scribbleActivity.pathManager.getZoomScale());
+				this.scribbleActivity.pathManager.setViewportOffset(newOffset);
+
+				// Do not update text view while dragging.
+				// this.scribbleActivity.updateTextViewStatus();
+			}
+				this.previousPoint.x = touchPoint.x;
+				this.previousPoint.y = touchPoint.y;
+
 				// Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:MOVE "
 				// + pathManager.getViewportOffset());
 
-				// if (this.scribbleActivity.isRedrawing) {
-				// 	this.scribbleActivity.redraw();
-				// } else {
-				// 	this.scribbleActivity.drawBitmapToView(false, true);
-				// }
+				if (this.scribbleActivity.isRedrawing) {
+					this.scribbleActivity.redraw();
+				} else {
+					this.scribbleActivity.drawBitmapToView(false, true);
+				}
 
 				// No need to reset raw input capture here, because it is assumed that
 				// the Boox canvas is clean.
