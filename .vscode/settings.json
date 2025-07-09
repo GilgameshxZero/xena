@@ -2,9 +2,7 @@
 	"debug.internalConsoleOptions": "neverOpen",
 	"java.settings.url": ".vscode/settings.prefs",
 	"java.project.referencedLibraries": {
-		"include": [
-			"android/platforms/android-34/*.jar",
-			"lib/*.jar"
-		]
-	}
+		"include": ["android/platforms/android-34/*.jar", "lib/*.jar"]
+	},
+	"java.inlayHints.parameterNames.enabled": "none"
 }

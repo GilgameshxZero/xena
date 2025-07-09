@@ -10,7 +10,6 @@ import com.onyx.android.sdk.pen.RawInputCallback;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.RectF;
-import android.util.Log;
 import android.view.MotionEvent;
 
 import java.util.HashSet;
@@ -19,11 +18,11 @@ import java.util.TimerTask;
 
 public class PenManager extends RawInputCallback {
 	static private final float DRAW_MOVE_EPSILON_DP = 2f;
-	static private final float DRAW_MOVE_EPSILON_PX = PenManager.DRAW_MOVE_EPSILON_DP
-			* XenaApplication.DPI / 160;
+	static private final float DRAW_MOVE_EPSILON_PX
+		= PenManager.DRAW_MOVE_EPSILON_DP * XenaApplication.DPI / 160;
 	static private final float ERASE_MOVE_EPSILON_DP = 4f;
-	static private final float ERASE_MOVE_EPSILON_PX = PenManager.ERASE_MOVE_EPSILON_DP
-			* XenaApplication.DPI / 160;
+	static private final float ERASE_MOVE_EPSILON_PX
+		= PenManager.ERASE_MOVE_EPSILON_DP * XenaApplication.DPI / 160;
 	private final int DEBOUNCE_REDRAW_DELAY_MS = 64000;
 	private final int DEBOUNCE_INPUT_COOLDOWN_DELAY_MS = 200;
 
@@ -69,7 +68,7 @@ public class PenManager extends RawInputCallback {
 		TimerTask task = new TimerTask() {
 			@Override
 			public void run() {
-				Log.v(XenaApplication.TAG, "ScribbleActivity::debounceRedrawTask");
+				XenaApplication.log("ScribbleActivity::debounceRedrawTask");
 
 				scribbleActivity.redraw();
 			}
@@ -92,8 +91,7 @@ public class PenManager extends RawInputCallback {
 		TimerTask task = new TimerTask() {
 			@Override
 			public void run() {
-				Log.v(XenaApplication.TAG,
-						"ScribbleActivity::debounceInputCooldownTask");
+				XenaApplication.log("ScribbleActivity::debounceInputCooldownTask");
 
 				scribbleActivity.isInputCooldown = false;
 			}
@@ -118,15 +116,14 @@ public class PenManager extends RawInputCallback {
 					scribbleActivity.runOnUiThread(new Runnable() {
 						@Override
 						public void run() {
-							scribbleActivity.touchManager.onTouchInner(
-									MotionEvent.ACTION_UP, endDrawTaskTouchPoint.x,
-									endDrawTaskTouchPoint.y, 0, 0, 0, 0);
+							scribbleActivity.touchManager.onTouchInner(MotionEvent.ACTION_UP,
+								endDrawTaskTouchPoint.x, endDrawTaskTouchPoint.y, 0, 0, 0, 0);
 						}
 					});
 					return;
 				}
 
-				Log.v(XenaApplication.TAG, "ScribbleActivity::debounceEndDrawTask");
+				XenaApplication.log("ScribbleActivity::debounceEndDrawTask");
 
 				// The new path has already been loaded by the PathManager. Conclude
 				// it by drawing it onto the chunk bitmaps here.
@@ -136,8 +133,7 @@ public class PenManager extends RawInputCallback {
 
 				scribbleActivity.pathManager.finalizePath(currentPath);
 				scribbleActivity.svgFileScribe.debounceSave(scribbleActivity,
-						scribbleActivity.svgUri,
-						scribbleActivity.pathManager);
+					scribbleActivity.svgUri, scribbleActivity.pathManager);
 			}
 		};
 		new Timer().schedule(task, delayMs);
@@ -157,7 +153,7 @@ public class PenManager extends RawInputCallback {
 		TimerTask task = new TimerTask() {
 			@Override
 			public void run() {
-				Log.v(XenaApplication.TAG, "ScribbleActivity::debounceEndEraseTask");
+				XenaApplication.log("ScribbleActivity::debounceEndEraseTask");
 
 				scribbleActivity.isErasing = false;
 				scribbleActivity.touchHelper.setRawDrawingEnabled(true);
@@ -171,8 +167,8 @@ public class PenManager extends RawInputCallback {
 	@Override
 	public void onBeginRawDrawing(boolean b, TouchPoint touchPoint) {
 		if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_PAN) {
-			this.scribbleActivity.touchManager.onTouchInner(
-					MotionEvent.ACTION_DOWN, touchPoint.x, touchPoint.y, 0, 0, 0, 0);
+			this.scribbleActivity.touchManager.onTouchInner(MotionEvent.ACTION_DOWN,
+				touchPoint.x, touchPoint.y, 0, 0, 0, 0);
 			return;
 		}
 
@@ -185,16 +181,15 @@ public class PenManager extends RawInputCallback {
 		// fired. Undo them, and unset panning.
 		if (this.scribbleActivity.isPanning) {
 			if (this.scribbleActivity.panBeginOffset != this.scribbleActivity.pathManager
-					.getViewportOffset()) {
+				.getViewportOffset()) {
 				this.scribbleActivity.pathManager
-						.setViewportOffset(this.scribbleActivity.panBeginOffset);
-				this.scribbleActivity
-						.updateTextViewStatus();
+					.setViewportOffset(this.scribbleActivity.panBeginOffset);
+				this.scribbleActivity.updateTextViewStatus();
 				this.scribbleActivity.drawBitmapToView(true, true);
 			}
 
-			Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:UNDO "
-					+ this.scribbleActivity.pathManager.getViewportOffset());
+			XenaApplication.log("ScribbleActivity::onTouch:UNDO "
+				+ this.scribbleActivity.pathManager.getViewportOffset());
 
 			this.scribbleActivity.isPanning = false;
 		}
@@ -207,16 +202,17 @@ public class PenManager extends RawInputCallback {
 			return;
 		}
 
-		Log.v(XenaApplication.TAG, "ScribbleActivity::onBeginRawDrawing");
+		XenaApplication.log("ScribbleActivity::onBeginRawDrawing");
 		this.cancelRedraw();
 		this.scribbleActivity.isDrawing = true;
 		this.previousTentativeDrawPoint.set(touchPoint.x, touchPoint.y);
-		this.currentPath = this.scribbleActivity.pathManager
+		this.currentPath
+			= this.scribbleActivity.pathManager
 				.addPath(new PointF(
-						touchPoint.x / this.scribbleActivity.pathManager.getZoomScale()
-								- this.scribbleActivity.pathManager.getViewportOffset().x,
-						touchPoint.y / this.scribbleActivity.pathManager.getZoomScale()
-								- this.scribbleActivity.pathManager.getViewportOffset().y))
+					touchPoint.x / this.scribbleActivity.pathManager.getZoomScale()
+						- this.scribbleActivity.pathManager.getViewportOffset().x,
+					touchPoint.y / this.scribbleActivity.pathManager.getZoomScale()
+						- this.scribbleActivity.pathManager.getViewportOffset().y))
 				.getValue();
 	}
 
@@ -240,8 +236,8 @@ public class PenManager extends RawInputCallback {
 	@Override
 	public void onRawDrawingTouchPointMoveReceived(TouchPoint touchPoint) {
 		if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_PAN) {
-			this.scribbleActivity.touchManager.onTouchInner(
-					MotionEvent.ACTION_MOVE, touchPoint.x, touchPoint.y, 0, 0, 0, 0);
+			this.scribbleActivity.touchManager.onTouchInner(MotionEvent.ACTION_MOVE,
+				touchPoint.x, touchPoint.y, 0, 0, 0, 0);
 			return;
 		}
 
@@ -255,19 +251,19 @@ public class PenManager extends RawInputCallback {
 		}
 
 		PointF lastPoint = currentPath.points.get(currentPath.points.size() - 1);
-		PointF newPoint = new PointF(
+		PointF newPoint
+			= new PointF(
 				touchPoint.x / this.scribbleActivity.pathManager.getZoomScale()
-						- this.scribbleActivity.pathManager.getViewportOffset().x,
+					- this.scribbleActivity.pathManager.getViewportOffset().x,
 				touchPoint.y / this.scribbleActivity.pathManager.getZoomScale()
-						- this.scribbleActivity.pathManager.getViewportOffset().y);
+					- this.scribbleActivity.pathManager.getViewportOffset().y);
 
-		if (currentPath.points.size() > 1
-				&& Geometry.distance(lastPoint,
-						newPoint) < PenManager.DRAW_MOVE_EPSILON_PX) {
+		if (currentPath.points.size() > 1 && Geometry.distance(lastPoint,
+			newPoint) < PenManager.DRAW_MOVE_EPSILON_PX) {
 			return;
 		}
 
-		// Log.v(XenaApplication.TAG,
+		// XenaApplication.log(
 		// "ScribbleActivity::onRawDrawingTouchPointMoveReceived "
 		// + touchPoint);
 
@@ -279,7 +275,7 @@ public class PenManager extends RawInputCallback {
 		// previousTentativeDrawPoint.y, touchPoint.x, touchPoint.y,
 		// ScribbleActivity.PAINT_TENTATIVE_LINE);
 		if (this.scribbleActivity.scribbleView.isDrawing()) {
-			// Log.v(XenaApplication.TAG, "Dirty ScribbleView.");
+			// XenaApplication.log( "Dirty ScribbleView.");
 		} else {
 			// Draw line for the purposes of screenshare, which does not capture any
 			// raw drawing activities.
@@ -290,7 +286,7 @@ public class PenManager extends RawInputCallback {
 
 	@Override
 	public void onRawDrawingTouchPointListReceived(
-			TouchPointList touchPointList) {
+		TouchPointList touchPointList) {
 		if (this.scribbleActivity.isPenEraseMode) {
 			this.onRawErasingTouchPointListReceived(touchPointList);
 			return;
@@ -300,7 +296,7 @@ public class PenManager extends RawInputCallback {
 	@Override
 	public void onBeginRawErasing(boolean b, TouchPoint touchPoint) {
 		if (!this.scribbleActivity.isPenEraseMode
-				&& this.scribbleActivity.penTouchMode != ScribbleActivity.PenTouchMode.DEFAULT) {
+			&& this.scribbleActivity.penTouchMode != ScribbleActivity.PenTouchMode.DEFAULT) {
 			return;
 		}
 
@@ -310,7 +306,7 @@ public class PenManager extends RawInputCallback {
 			return;
 		}
 
-		Log.v(XenaApplication.TAG, "ScribbleActivity::onBeginRawErasing");
+		XenaApplication.log("ScribbleActivity::onBeginRawErasing");
 
 		this.scribbleActivity.touchHelper.setRawDrawingEnabled(false);
 
@@ -323,16 +319,16 @@ public class PenManager extends RawInputCallback {
 		this.scribbleActivity.redraw();
 
 		this.previousErasePoint.set(
-				touchPoint.x / this.scribbleActivity.pathManager.getZoomScale()
-						- this.scribbleActivity.pathManager.getViewportOffset().x,
-				touchPoint.y / this.scribbleActivity.pathManager.getZoomScale()
-						- this.scribbleActivity.pathManager.getViewportOffset().y);
+			touchPoint.x / this.scribbleActivity.pathManager.getZoomScale()
+				- this.scribbleActivity.pathManager.getViewportOffset().x,
+			touchPoint.y / this.scribbleActivity.pathManager.getZoomScale()
+				- this.scribbleActivity.pathManager.getViewportOffset().y);
 	}
 
 	@Override
 	public void onEndRawErasing(boolean b, TouchPoint touchPoint) {
 		if (!this.scribbleActivity.isPenEraseMode
-				&& this.scribbleActivity.penTouchMode != ScribbleActivity.PenTouchMode.DEFAULT) {
+			&& this.scribbleActivity.penTouchMode != ScribbleActivity.PenTouchMode.DEFAULT) {
 			return;
 		}
 
@@ -343,13 +339,13 @@ public class PenManager extends RawInputCallback {
 		// Process this event as a move event.
 		this.onRawErasingTouchPointMoveReceived(touchPoint);
 
-		Log.v(XenaApplication.TAG, "ScribbleActivity::onEndRawErasing");
+		XenaApplication.log("ScribbleActivity::onEndRawErasing");
 	}
 
 	@Override
 	public void onRawErasingTouchPointMoveReceived(TouchPoint touchPoint) {
 		if (!this.scribbleActivity.isPenEraseMode
-				&& this.scribbleActivity.penTouchMode != ScribbleActivity.PenTouchMode.DEFAULT) {
+			&& this.scribbleActivity.penTouchMode != ScribbleActivity.PenTouchMode.DEFAULT) {
 			return;
 		}
 
@@ -361,40 +357,38 @@ public class PenManager extends RawInputCallback {
 
 		// Actual logic to handle erasing.
 		int initialSize = this.scribbleActivity.pathManager.getPathsCount();
-		PointF currentErasePoint = new PointF(
+		PointF currentErasePoint
+			= new PointF(
 				touchPoint.x / this.scribbleActivity.pathManager.getZoomScale()
-						- this.scribbleActivity.pathManager.getViewportOffset().x,
+					- this.scribbleActivity.pathManager.getViewportOffset().x,
 				touchPoint.y / this.scribbleActivity.pathManager.getZoomScale()
-						- this.scribbleActivity.pathManager.getViewportOffset().y);
+					- this.scribbleActivity.pathManager.getViewportOffset().y);
 
 		// Only process this event if significantly different from previous point.
 		if (Geometry.distance(this.previousErasePoint,
-				currentErasePoint) <= PenManager.ERASE_MOVE_EPSILON_PX) {
+			currentErasePoint) <= PenManager.ERASE_MOVE_EPSILON_PX) {
 			return;
 		}
 
-		// Log.v(XenaApplication.TAG,
+		// XenaApplication.log(
 		// "ScribbleActivity::onRawErasingTouchPointMoveReceived "
 		// + currentErasePoint);
 
 		this.debounceEndErase(DEBOUNCE_END_ERASE_DELAY_MS);
 
 		HashSet<Point> chunkIds = new HashSet<Point>();
-		chunkIds.add(
-				this.scribbleActivity.pathManager
-						.getChunkCoordinateForPoint(this.previousErasePoint));
-		chunkIds.add(
-				this.scribbleActivity.pathManager
-						.getChunkCoordinateForPoint(currentErasePoint));
+		chunkIds.add(this.scribbleActivity.pathManager
+			.getChunkCoordinateForPoint(this.previousErasePoint));
+		chunkIds.add(this.scribbleActivity.pathManager
+			.getChunkCoordinateForPoint(currentErasePoint));
 		for (Point chunkId : chunkIds) {
 			// Copy so that concurrent read/writes don't happen.
-			HashSet<Integer> pathIds = new HashSet<Integer>(
-					this.scribbleActivity.pathManager.getChunkForCoordinate(chunkId)
-							.getPathIds());
+			HashSet<Integer> pathIds
+				= new HashSet<Integer>(this.scribbleActivity.pathManager
+					.getChunkForCoordinate(chunkId).getPathIds());
 			for (Integer pathId : pathIds) {
 				if (this.scribbleActivity.pathManager.getPath(pathId)
-						.isIntersectingSegment(
-								this.previousErasePoint, currentErasePoint)) {
+					.isIntersectingSegment(this.previousErasePoint, currentErasePoint)) {
 					this.scribbleActivity.pathManager.removePathId(pathId);
 				}
 			}
@@ -403,7 +397,7 @@ public class PenManager extends RawInputCallback {
 		if (initialSize != this.scribbleActivity.pathManager.getPathsCount()) {
 			this.scribbleActivity.drawBitmapToView(true, true);
 			this.scribbleActivity.svgFileScribe.debounceSave(this.scribbleActivity,
-					this.scribbleActivity.svgUri, this.scribbleActivity.pathManager);
+				this.scribbleActivity.svgUri, this.scribbleActivity.pathManager);
 		}
 
 		this.previousErasePoint.set(currentErasePoint);
@@ -411,7 +405,7 @@ public class PenManager extends RawInputCallback {
 
 	@Override
 	public void onRawErasingTouchPointListReceived(
-			TouchPointList touchPointList) {
+		TouchPointList touchPointList) {
 	}
 
 	@Override

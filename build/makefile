@@ -34,8 +34,10 @@ BUILD = 0
 !ENDIF
 !IF $(BUILD) == 1
 BUILD_NAME = release
+AAPT_BUILD_FLAGS =
 !ELSE
 BUILD_NAME = debug
+AAPT_BUILD_FLAGS = --debug-mode
 !ENDIF
 PROJECT_NAME = xena
 PACKAGE_PATH = com\gilgamesh\$(PROJECT_NAME)
@@ -151,6 +153,7 @@ $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java: $(ADK_DIR).make $(ROOT_DIR)res\layout\* $
 	@ECHO Creating $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java...
 	@IF NOT EXIST $(ROOT_DIR)obj MD $(ROOT_DIR)obj
 	@CALL $(BUILD_TOOLS_DIR)aapt.exe package -f -m \
+		$(AAPT_BUILD_FLAGS) \
 		-S "$(ROOT_DIR)res" \
 		-J "$(ROOT_DIR)src" \
 		-M "$(ROOT_DIR)AndroidManifest.xml" \
@@ -162,7 +165,7 @@ $(ROOT_DIR)priv\$(PROJECT_NAME).debug.keystore: $(JDK_DIR).make
 		-dname "CN=AndroidDebug, O=Android, C=US" \
 		-keystore $(ROOT_DIR)priv\$(PROJECT_NAME).debug.keystore \
 		-storepass android -keypass android \
-		-alias android_debug_key -keyalg RSA -keysize 2048
+		-alias $(PROJECT_NAME)_key -keyalg RSA -keysize 2048
 
 # Compile target: .java to .class.
 $(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class: $(JDK_DIR).make $(ROOT_DIR)lib\.make $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java $(ROOT_DIR)src\$(PACKAGE_PATH)\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\filesystem\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\scribble\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\pdf\*.java
@@ -184,6 +187,7 @@ $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk: $(ADK_DIR).make $(ROOT_DIR)obj
 	@IF NOT EXIST $(ROOT_DIR)bin MD $(ROOT_DIR)bin
 # Generate APK.
 	@CALL SET "JAVA_HOME=$(JDK_DIR)" && $(BUILD_TOOLS_DIR)aapt.exe package -f -m \
+		$(AAPT_BUILD_FLAGS) \
 		-F "$(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).unsigned.unaligned.apk" \
 		-M "$(ROOT_DIR)AndroidManifest.xml" \
 		-S "$(ROOT_DIR)res" \
@@ -223,7 +227,7 @@ $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk: $(ADK_DIR).make $(ROOT_DIR)obj
 	@CALL SET "JAVA_HOME=$(JDK_DIR)" && "$(BUILD_TOOLS_DIR)apksigner.bat" sign \
 		--ks $(ROOT_DIR)priv\$(PROJECT_NAME).$(BUILD_NAME).keystore \
 		--ks-pass pass:android \
-		--ks-key-alias android_debug_key \
+		--ks-key-alias $(PROJECT_NAME)_key \
 		--key-pass pass:android \
 		--out $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk \
 		$(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).unsigned.apk
@@ -233,9 +237,7 @@ build: $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk
 
 # Build and install. App may not run if timings are off.
 run: $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk
-	@ECHO Uninstalling from device...
-	@CALL $(PLATFORM_TOOLS_DIR)adb.exe uninstall $(PACKAGE_NAME) &
-	@CALL $(PLATFORM_TOOLS_DIR)adb.exe install -r $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk
+	@CALL $(PLATFORM_TOOLS_DIR)adb.exe install -g -r $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk
 	@ECHO Cooling down after install...
 	@TIMEOUT /T 2 >NUL
 	@CALL $(PLATFORM_TOOLS_DIR)adb.exe shell am start -n \

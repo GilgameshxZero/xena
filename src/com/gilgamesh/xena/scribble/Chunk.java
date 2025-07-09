@@ -52,7 +52,7 @@ public class Chunk {
 	private PathManager pathManager;
 
 	public Chunk(PathManager pathManager, int width, int height, int offsetX,
-			int offsetY) {
+		int offsetY) {
 		this.pathManager = pathManager;
 		this.OFFSET_X = offsetX;
 		this.OFFSET_Y = offsetY;
