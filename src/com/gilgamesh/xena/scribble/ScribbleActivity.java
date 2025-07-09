@@ -67,16 +67,17 @@ public class ScribbleActivity extends BaseActivity
 	static public final String EXTRA_SVG_PATH = "EXTRA_SVG_PATH";
 	static public final String EXTRA_PDF_PATH = "EXTRA_PDF_PATH";
 	static private final int TEXT_VIEW_PATH_SUFFIX_LENGTH = 24;
-	static private PointF PIXELS_PER_PAGE
+	static private final PointF PIXELS_PER_PAGE
 		= new PointF((int) XenaApplication.DPI * 8.5f, XenaApplication.DPI * 11f);
 
-	DebouncedTask redrawTask = new DebouncedTask(new DebouncedTask.Callback() {
-		@Override
-		public void onRun() {
-			XenaApplication.log("ScribbleActivity::redrawTask.");
-			redraw(true, true);
-		}
-	});
+	final DebouncedTask redrawTask
+		= new DebouncedTask(new DebouncedTask.Callback() {
+			@Override
+			public void onRun() {
+				XenaApplication.log("ScribbleActivity::redrawTask.");
+				redraw(true, true);
+			}
+		});
 
 	private final PdfReader.Callback PDF_READER_CALLBACK
 		= new PdfReader.Callback() {
@@ -90,6 +91,7 @@ public class ScribbleActivity extends BaseActivity
 	PathManager pathManager;
 	SvgFileScribe svgFileScribe;
 	DrawManager drawManager;
+	PanManager panManager;
 	PenManager penManager;
 	TouchManager touchManager;
 	PdfReader pdfReader;
@@ -118,8 +120,6 @@ public class ScribbleActivity extends BaseActivity
 	};
 
 	PenTouchMode penTouchMode = PenTouchMode.DEFAULT;
-
-	PointF panBeginOffset = new PointF();
 
 	// Switching orientation may rebuild the activity.
 	@Override
@@ -154,6 +154,7 @@ public class ScribbleActivity extends BaseActivity
 		});
 
 		this.drawManager = new DrawManager(this);
+		this.panManager = new PanManager(this);
 		this.penManager = new PenManager(this);
 		this.touchManager = new TouchManager(this);
 	}
@@ -193,11 +194,7 @@ public class ScribbleActivity extends BaseActivity
 
 	@Override
 	public void onClick(View v) {
-		long currentTimeMs = System.currentTimeMillis();
-		if (currentTimeMs
-			- this.touchManager.previousIgnoreChainTimeMs <= TouchManager.IGNORE_CHAIN_BOUND_MS) {
-			this.touchManager.previousIgnoreChainTimeMs = currentTimeMs;
-			XenaApplication.log("ScribbleActivity::onClick:IGNORE_CHAIN");
+		if (this.panManager.maybeIgnore(false, System.currentTimeMillis())) {
 			return;
 		}
 
@@ -212,8 +209,8 @@ public class ScribbleActivity extends BaseActivity
 				XenaApplication
 					.log("ScribbleActivity::onClick:activity_scribble_text_view_status.");
 				PointF viewportOffset = this.pathManager.getViewportOffset();
-				this.coordinateEditPalm.setText(String.valueOf(
-					(int) Math.round(TouchManager.PALM_TOUCH_MAJOR_MINOR_THRESHOLD)));
+				this.coordinateEditPalm.setText(String
+					.valueOf((int) Math.round(this.panManager.getPalmTouchThreshold())));
 				this.coordinateEditX.setText(String.valueOf((int) Math
 					.floor(-viewportOffset.x / ScribbleActivity.PIXELS_PER_PAGE.x)));
 				this.coordinateEditY.setText(String.valueOf((int) Math
@@ -262,9 +259,9 @@ public class ScribbleActivity extends BaseActivity
 						* ScribbleActivity.PIXELS_PER_PAGE.x,
 					-Integer.parseInt(this.coordinateEditY.getText().toString())
 						* ScribbleActivity.PIXELS_PER_PAGE.y));
-				this.touchManager.updatePalmTouchThreshold(
+				this.panManager.setPalmTouchThreshold(
 					Float.parseFloat(this.coordinateEditPalm.getText().toString()));
-				this.updateTextViewStatus();
+				this.refreshTextViewStatus();
 				this.coordinateDialog.setVisibility(View.GONE);
 
 				View view = this.getCurrentFocus();
@@ -297,7 +294,7 @@ public class ScribbleActivity extends BaseActivity
 				runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
-						updateTextViewPath(isSaved);
+						refreshTextViewPath(isSaved);
 					}
 				});
 			}
@@ -329,8 +326,8 @@ public class ScribbleActivity extends BaseActivity
 					+ this.svgUri.toString() + ".");
 		}
 
-		this.updateTextViewPath(true);
-		this.updateTextViewStatus();
+		this.refreshTextViewPath(true);
+		this.refreshTextViewStatus();
 
 		this.redraw(true, true);
 		this.openTouchHelperRawDrawing();
@@ -346,7 +343,7 @@ public class ScribbleActivity extends BaseActivity
 		}
 	}
 
-	void updateTextViewStatus() {
+	void refreshTextViewStatus() {
 		PointF viewportOffset = this.pathManager.getViewportOffset();
 		this.textViewStatus.setText(
 			(int) Math.floor(-viewportOffset.x / ScribbleActivity.PIXELS_PER_PAGE.x)
@@ -356,7 +353,7 @@ public class ScribbleActivity extends BaseActivity
 				+ " | " + Math.round(this.pathManager.getZoomScale() * 100) + "%");
 	}
 
-	private void updateTextViewPath(boolean isSaved) {
+	private void refreshTextViewPath(boolean isSaved) {
 		String uriString
 			= this.pdfUri != null ? this.pdfUri.toString() : this.svgUri.toString();
 		this.textViewPath.setText("..." + uriString.substring(

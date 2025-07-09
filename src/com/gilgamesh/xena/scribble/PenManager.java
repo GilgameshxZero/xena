@@ -6,7 +6,6 @@ import com.onyx.android.sdk.pen.RawInputCallback;
 
 import android.graphics.PointF;
 import android.graphics.RectF;
-import android.view.MotionEvent;
 
 public class PenManager extends RawInputCallback {
 	private ScribbleActivity scribbleActivity;
@@ -18,13 +17,13 @@ public class PenManager extends RawInputCallback {
 	@Override
 	public void onBeginRawDrawing(boolean b, TouchPoint touchPoint) {
 		if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_PAN) {
-			this.scribbleActivity.touchManager.onTouchInner(MotionEvent.ACTION_DOWN,
-				touchPoint.x, touchPoint.y, 0, 0, 0, 0);
+			this.scribbleActivity.panManager.onActionDown(0,
+				new PointF(touchPoint.x, touchPoint.y), 0);
 			return;
 		}
 
 		this.scribbleActivity.drawManager
-			.drawBegin(new PointF(touchPoint.x, touchPoint.y));
+			.onDrawBegin(new PointF(touchPoint.x, touchPoint.y));
 	}
 
 	@Override
@@ -38,24 +37,24 @@ public class PenManager extends RawInputCallback {
 				.debounce(DrawManager.DEBOUNCE_END_DRAW_DELAY_MS);
 		} else {
 			this.scribbleActivity.drawManager
-				.drawEnd(new PointF(touchPoint.x, touchPoint.y));
+				.onDrawEnd(new PointF(touchPoint.x, touchPoint.y));
 		}
 	}
 
 	@Override
 	public void onRawDrawingTouchPointMoveReceived(TouchPoint touchPoint) {
 		if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_PAN) {
-			this.scribbleActivity.touchManager.onTouchInner(MotionEvent.ACTION_MOVE,
-				touchPoint.x, touchPoint.y, 0, 0, 0, 0);
+			this.scribbleActivity.panManager.onActionMove(0,
+				new PointF(touchPoint.x, touchPoint.y), 0);
 			return;
 		}
 
 		if (this.scribbleActivity.isPenEraseMode) {
 			this.scribbleActivity.drawManager
-				.eraseMove(new PointF(touchPoint.x, touchPoint.y));
+				.onEraseMove(new PointF(touchPoint.x, touchPoint.y));
 		} else {
 			this.scribbleActivity.drawManager
-				.drawMove(new PointF(touchPoint.x, touchPoint.y));
+				.onDrawMove(new PointF(touchPoint.x, touchPoint.y));
 		}
 	}
 
@@ -72,7 +71,7 @@ public class PenManager extends RawInputCallback {
 		}
 
 		this.scribbleActivity.drawManager
-			.eraseBegin(new PointF(touchPoint.x, touchPoint.y));
+			.onEraseBegin(new PointF(touchPoint.x, touchPoint.y));
 	}
 
 	@Override
@@ -83,7 +82,7 @@ public class PenManager extends RawInputCallback {
 		}
 
 		this.scribbleActivity.drawManager
-			.eraseEnd(new PointF(touchPoint.x, touchPoint.y));
+			.onEraseEnd(new PointF(touchPoint.x, touchPoint.y));
 	}
 
 	@Override
@@ -94,7 +93,7 @@ public class PenManager extends RawInputCallback {
 		}
 
 		this.scribbleActivity.drawManager
-			.eraseMove(new PointF(touchPoint.x, touchPoint.y));
+			.onEraseMove(new PointF(touchPoint.x, touchPoint.y));
 	}
 
 	@Override
