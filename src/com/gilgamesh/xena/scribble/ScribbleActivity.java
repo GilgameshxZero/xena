@@ -85,12 +85,14 @@ public class ScribbleActivity extends BaseActivity
 			}
 		};
 
-	// Managers.
-	SvgFileScribe svgFileScribe;
+	// Managers. Managers use SvgFileScribe, but only when they have been attached
+	// in onScribbleViewReady.
 	PathManager pathManager;
-	PdfReader pdfReader;
+	SvgFileScribe svgFileScribe;
+	DrawManager drawManager;
 	PenManager penManager;
 	TouchManager touchManager;
+	PdfReader pdfReader;
 
 	// General aliases.
 	ScribbleView scribbleView;
@@ -151,10 +153,9 @@ public class ScribbleActivity extends BaseActivity
 			}
 		});
 
-		// Managers use SvgFileScribe, but only when they have been attached in
-		// onScribbleView REady.
-		this.touchManager = new TouchManager(this);
+		this.drawManager = new DrawManager(this);
 		this.penManager = new PenManager(this);
+		this.touchManager = new TouchManager(this);
 	}
 
 	@Override

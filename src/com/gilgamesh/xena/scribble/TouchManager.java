@@ -89,9 +89,9 @@ public class TouchManager implements View.OnTouchListener {
 	public boolean onTouchInner(int eventAction, float eventX0, float eventY0,
 		float eventX1, float eventY1, float touchMajor, float touchMinor) {
 		if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.DEFAULT
-			&& (this.scribbleActivity.penManager.endDrawTask.isAwaiting()
-				|| this.scribbleActivity.penManager.endEraseTask.isAwaiting()
-				|| this.scribbleActivity.penManager.inputCooldownTask.isAwaiting())) {
+			&& (this.scribbleActivity.drawManager.endDrawTask.isAwaiting()
+				|| this.scribbleActivity.drawManager.endEraseTask.isAwaiting()
+				|| this.scribbleActivity.drawManager.inputCooldownTask.isAwaiting())) {
 			return false;
 		}
 
