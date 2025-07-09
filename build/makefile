@@ -49,6 +49,10 @@ LIB_NAMES = \
 repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-base/1.7.6:onyxsdk-base-1.7.6:aar \
 repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-device/1.2.30:onyxsdk-device-1.2.30:aar \
 repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-pen/1.4.11:onyxsdk-pen-1.4.11:aar \
+maven.google.com/androidx/core/core/1.6.0:core-1.6.0:aar \
+maven.google.com/androidx/appcompat/appcompat/1.1.0:appcompat-1.1.0:aar \
+maven.google.com/androidx/annotation/annotation/1.2.0:annotation-1.2.0:jar \
+maven.google.com/androidx/preference/preference/1.2.1:preference-1.2.1:aar \
 repo1.maven.org/maven2/io/reactivex/rxjava2/rxjava/2.2.21:rxjava-2.2.21:jar \
 repo1.maven.org/maven2/io/reactivex/rxjava2/rxandroid/2.1.1:rxandroid-2.1.1:aar \
 repo1.maven.org/maven2/org/reactivestreams/reactive-streams/1.0.4:reactive-streams-1.0.4:jar
