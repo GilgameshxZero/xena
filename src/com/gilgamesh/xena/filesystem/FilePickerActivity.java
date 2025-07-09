@@ -13,8 +13,6 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Environment;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -22,8 +20,6 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
-
-import androidx.preference.PreferenceManager;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -46,101 +42,91 @@ public class FilePickerActivity extends BaseActivity
 	static private final int MARGIN_SIZE_DP = 6;
 	static private final int MARGIN_SIZE_PX
 		= FilePickerActivity.MARGIN_SIZE_DP * XenaApplication.DPI / 160;
-	static private final LayoutParams LISTING_LAYOUT_ROW
+	static private final LayoutParams LISTING_ROW_PARAMS
 		= new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
 
+	private Point LISTING_SIZE;
 	private Point GRID_DIMENSIONS;
 	private int PANES_PER_PAGE;
 	private Point PANE_SIZE;
-	private LayoutParams LISTING_LAYOUT_PANE = null;
+	private LayoutParams LISTING_PARAMS;
 
 	private EditText editText;
-	private LinearLayout layoutListing;
+	private LinearLayout listingLayout;
 
 	private FilePickerTouchManager touchManager;
-	private SharedPreferences sharedPreferences;
 
-	private int page = 0;
+	private boolean ready = false;
+
+	int listingPage = 0;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		this.setContentView(R.layout.activity_file_picker);
 		this.editText = findViewById(R.id.activity_file_picker_edit_text);
-		this.layoutListing = findViewById(R.id.activity_file_picker_layout_listing);
+		this.listingLayout = findViewById(R.id.activity_file_picker_layout_listing);
 
 		this.touchManager = new FilePickerTouchManager(this);
-		this.layoutListing.getViewTreeObserver()
+
+		this.listingLayout.getViewTreeObserver()
 			.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
 				@Override
 				public void onGlobalLayout() {
-					layoutListing.getViewTreeObserver()
+					listingLayout.getViewTreeObserver()
 						.removeOnGlobalLayoutListener(this);
-					onLayoutListingViewReady();
+					onListingReady();
 				}
 			});
-		this.layoutListing.setOnTouchListener(this.touchManager);
-		this.sharedPreferences
-			= PreferenceManager.getDefaultSharedPreferences(this);
+		this.listingLayout.setOnTouchListener(this.touchManager);
 
-		this.editText.setText(this.sharedPreferences.getString(
+		// Default to external storage directory.
+		this.setEditText(XenaApplication.preferences.getString(
 			FilePickerActivity.SHARED_PREFERENCES_EDIT_TEXT_CACHE,
 			Environment.getExternalStorageDirectory().toString() + "/"));
-		this.editText.addTextChangedListener(new TextWatcher() {
-			@Override
-			public void onTextChanged(CharSequence s, int start, int before,
-				int count) {
-			}
-
-			@Override
-			public void beforeTextChanged(CharSequence s, int start, int count,
-				int after) {
-			}
-
-			@Override
-			public void afterTextChanged(Editable s) {
-				page = 0;
-				updateListing();
-			}
-		});
+		this.editText
+			.addTextChangedListener(new FilePickerEditTextChangedListener(this));
 	}
 
-	private void onLayoutListingViewReady() {
+	private void onListingReady() {
 		// Compute constants which depend on LayoutListing sizing.
+		this.LISTING_SIZE
+			= new Point(this.listingLayout.getWidth(),
+				this.listingLayout.getHeight());
 		this.GRID_DIMENSIONS
 			= new Point(
-				this.layoutListing.getWidth() / (FilePickerActivity.MIN_PANE_SIZE_PX.x
+				this.LISTING_SIZE.x / (FilePickerActivity.MIN_PANE_SIZE_PX.x
 					+ FilePickerActivity.MARGIN_SIZE_PX * 2),
-				this.layoutListing.getHeight() / (FilePickerActivity.MIN_PANE_SIZE_PX.y
+				this.LISTING_SIZE.y / (FilePickerActivity.MIN_PANE_SIZE_PX.y
 					+ FilePickerActivity.MARGIN_SIZE_PX * 2));
 		this.PANES_PER_PAGE = this.GRID_DIMENSIONS.x * this.GRID_DIMENSIONS.y;
 		this.PANE_SIZE
 			= new Point(
-				this.layoutListing.getWidth() / this.GRID_DIMENSIONS.x
+				this.LISTING_SIZE.x / this.GRID_DIMENSIONS.x
 					- FilePickerActivity.MARGIN_SIZE_PX * 2,
-				this.layoutListing.getHeight() / this.GRID_DIMENSIONS.y
+				this.LISTING_SIZE.y / this.GRID_DIMENSIONS.y
 					- FilePickerActivity.MARGIN_SIZE_PX * 2);
-		XenaApplication.log("FilePickerActivity::onLayoutListingViewReady: "
-			+ this.layoutListing.getWidth() + ", " + this.layoutListing.getHeight()
-			+ " | " + MIN_PANE_SIZE_PX + " | " + this.GRID_DIMENSIONS + " | "
-			+ this.PANE_SIZE);
-		this.LISTING_LAYOUT_PANE
-			= new LayoutParams(this.PANE_SIZE.x, this.PANE_SIZE.y);
-		this.LISTING_LAYOUT_PANE.setMargins(FilePickerActivity.MARGIN_SIZE_PX,
+		this.LISTING_PARAMS = new LayoutParams(this.PANE_SIZE.x, this.PANE_SIZE.y);
+		this.LISTING_PARAMS.setMargins(FilePickerActivity.MARGIN_SIZE_PX,
 			FilePickerActivity.MARGIN_SIZE_PX, FilePickerActivity.MARGIN_SIZE_PX,
 			FilePickerActivity.MARGIN_SIZE_PX);
 
-		this.updateListing();
+		// Update listingLayout only after layout is ready.
+		XenaApplication.log("FilePickerActivity::onListingReady: LISTING_SIZE = (",
+			this.LISTING_SIZE.x, ", ", this.LISTING_SIZE.y, "), GRID_DIMENSIONS = (",
+			this.GRID_DIMENSIONS, "), PANE_SIZE = (", this.PANE_SIZE, ").");
+		this.ready = true;
+		this.refreshListing();
 	}
 
 	@Override
-	public void onClick(View v) {
-		String path = this.editText.getText().toString();
+	public void onClick(View view) {
+		String originalPath = this.editText.getText().toString(),
+			path = originalPath.substring(0, originalPath.lastIndexOf('/'));
 
-		switch (v.getId()) {
+		switch (view.getId()) {
 			case R.id.activity_file_picker_button_date:
-				path = path.substring(0, path.lastIndexOf('/'));
-				this.editText.setText(
+				this.setEditText(
 					path + "/" + new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
 				this.maybeStartScribbleActivity(true);
 				break;
@@ -148,17 +134,12 @@ public class FilePickerActivity extends BaseActivity
 				this.maybeStartScribbleActivity(true);
 				break;
 			default:
-				TextView textView = (TextView) v;
-				String text = textView.getText().toString();
-				XenaApplication.log("FilePickerActivity::onClick: Text: " + text + ".");
-
-				path = path.substring(0, path.lastIndexOf('/'));
-				if (text.equals("../")) {
-					this.editText.setText(path.substring(0, path.lastIndexOf('/')) + "/");
-				} else {
-					this.editText.setText(path + "/" + text);
-				}
-				this.editText.setSelection(editText.getText().length());
+				String text = ((TextView) view).getText().toString();
+				XenaApplication.log("FilePickerActivity::onClick: Pane, text = \"",
+					text, "\".");
+				this.setEditText(text.equals("../")
+					? path.substring(0, path.lastIndexOf('/')) + "/"
+					: path + "/" + text);
 				this.maybeStartScribbleActivity(false);
 				break;
 		}
@@ -166,6 +147,8 @@ public class FilePickerActivity extends BaseActivity
 
 	@Override
 	protected void onResume() {
+		super.onResume();
+
 		// Force granting of permissions.
 		if (checkSelfPermission(
 			Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
@@ -178,25 +161,30 @@ public class FilePickerActivity extends BaseActivity
 				FilePickerActivity.REQUEST_CODE_READ_WRITE_EXTERNAL_STORAGE);
 		}
 
-		if (this.layoutListing.getWidth() != 0) {
-			this.onLayoutListingViewReady();
+		// Reset listingLayout if resuming.
+		if (this.ready) {
+			this.onListingReady();
 		}
-		super.onResume();
 	}
 
+	// Attempts starting scribble activity using the current path file. Only
+	// starts it if it is of type .svg or .pdf, or forceStart is set.
 	private void maybeStartScribbleActivity(boolean forceStart) {
 		String path = this.editText.getText().toString();
 
-		SharedPreferences.Editor editor = this.sharedPreferences.edit();
+		// Update shared preferences to current path.
+		SharedPreferences.Editor editor = XenaApplication.preferences.edit();
 		editor.putString(FilePickerActivity.SHARED_PREFERENCES_EDIT_TEXT_CACHE,
 			path);
 		editor.commit();
 
+		// Case based on extension.
 		int extensionSeparator = path.lastIndexOf('.');
 		String extension
 			= extensionSeparator == -1 ? "" : path.substring(extensionSeparator + 1);
-		XenaApplication.log("FilePickerActivity::onClick: Extension: " + extension);
-
+		XenaApplication.log(
+			"FilePickerActivity::maybeStartScribbleActivity: extension = \"",
+			extension, "\".");
 		if (extension.equals("svg")) {
 			this.startActivity(new Intent(this, ScribbleActivity.class)
 				.setAction(Intent.ACTION_RUN).addCategory(Intent.CATEGORY_DEFAULT)
@@ -213,16 +201,25 @@ public class FilePickerActivity extends BaseActivity
 		}
 	}
 
-	private void updateListing() {
-		if (this.LISTING_LAYOUT_PANE == null) {
+	private void setEditText(String text) {
+		this.editText.setText(text);
+		this.editText.setSelection(text.length());
+	}
+
+	// Update listing panes with current page and directory.
+	void refreshListing() {
+		// Block calls before listingLayout is ready.
+		if (!this.ready) {
 			return;
 		}
 
-		this.layoutListing.removeAllViews();
+		this.listingLayout.removeAllViews();
 
+		// Get files in current directory.
 		String path = this.editText.getText().toString();
 		path = path.substring(0, path.lastIndexOf('/'));
-		XenaApplication.log("FilePickerActivity::updateListing: " + path);
+		XenaApplication.log("FilePickerActivity::refreshListing: path = \"", path,
+			"\".");
 
 		File[] files = new File(path).listFiles();
 		if (files == null) {
@@ -243,23 +240,23 @@ public class FilePickerActivity extends BaseActivity
 			}
 		});
 
-		// Clamp page.
-		if (this.page < 0) {
-			this.page = 0;
-		}
-		if (this.page * this.PANES_PER_PAGE >= filesList.size()) {
-			this.page = filesList.size() / this.PANES_PER_PAGE;
-		}
+		// Wrap listingPage.
+		final int C_PAGES
+			= (filesList.size() + this.PANES_PER_PAGE) / this.PANES_PER_PAGE;
+		this.listingPage = (this.listingPage % C_PAGES + C_PAGES) % C_PAGES;
 
+		// Add all panes to listingLayout.
 		for (int i = 0; i < this.GRID_DIMENSIONS.y; i++) {
 			LinearLayout row = new LinearLayout(this);
 			for (int j = 0; j < this.GRID_DIMENSIONS.x; j++) {
 				int idx
-					= i * this.GRID_DIMENSIONS.x + j + this.page * this.PANES_PER_PAGE;
+					= i * this.GRID_DIMENSIONS.x + j
+						+ this.listingPage * this.PANES_PER_PAGE;
 				if (idx >= filesList.size()) {
 					break;
 				}
 
+				// Theme pane based on file vs. directory.
 				File file = filesList.get(idx);
 				TextView textView;
 				if (file.isDirectory()) {
@@ -275,19 +272,9 @@ public class FilePickerActivity extends BaseActivity
 				}
 				textView.setText(file.getName() + (file.isDirectory() ? "/" : ""));
 				textView.setOnTouchListener(this.touchManager);
-				row.addView(textView, this.LISTING_LAYOUT_PANE);
+				row.addView(textView, this.LISTING_PARAMS);
 			}
-			this.layoutListing.addView(row, FilePickerActivity.LISTING_LAYOUT_ROW);
+			this.listingLayout.addView(row, FilePickerActivity.LISTING_ROW_PARAMS);
 		}
-	}
-
-	public void incrementPage() {
-		this.page++;
-		this.updateListing();
-	}
-
-	public void decrementPage() {
-		this.page--;
-		this.updateListing();
 	}
 }

@@ -1,8 +1,8 @@
 package com.gilgamesh.xena.scribble;
 
+import com.gilgamesh.algorithm.Geometry;
 import com.gilgamesh.xena.R;
 import com.gilgamesh.xena.XenaApplication;
-import com.gilgamesh.xena.algorithm.Geometry;
 import com.onyx.android.sdk.data.note.TouchPoint;
 
 import android.content.SharedPreferences;
@@ -209,7 +209,7 @@ public class TouchManager implements View.OnTouchListener {
 				if (this.scribbleActivity.isRedrawing) {
 					this.scribbleActivity.redraw();
 				} else {
-					this.scribbleActivity.drawBitmapToView(false, true);
+					this.scribbleActivity.drawBitmapToView(false);
 				}
 
 				// No need to reset raw input capture here, because it is assumed that

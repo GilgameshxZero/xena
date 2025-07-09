@@ -46,15 +46,17 @@ MAIN_CLASS = filesystem.FilePickerActivity
 ROOT_DIR = $(MAKEDIR)\..^\
 # All library files to be declared here.
 LIB_NAMES = \
+repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-pen/1.4.11:onyxsdk-pen-1.4.11:aar \
 repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-base/1.7.6:onyxsdk-base-1.7.6:aar \
 repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-device/1.2.30:onyxsdk-device-1.2.30:aar \
-repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-pen/1.4.11:onyxsdk-pen-1.4.11:aar \
-maven.google.com/androidx/core/core/1.6.0:core-1.6.0:aar \
-maven.google.com/androidx/appcompat/appcompat/1.1.0:appcompat-1.1.0:aar \
-maven.google.com/androidx/annotation/annotation/1.2.0:annotation-1.2.0:jar \
-maven.google.com/androidx/preference/preference/1.2.1:preference-1.2.1:aar \
 repo1.maven.org/maven2/io/reactivex/rxjava2/rxjava/2.2.21:rxjava-2.2.21:jar \
 repo1.maven.org/maven2/io/reactivex/rxjava2/rxandroid/2.1.1:rxandroid-2.1.1:aar \
+maven.google.com/androidx/preference/preference/1.2.1:preference-1.2.1:aar \
+maven.google.com/androidx/appcompat/appcompat/1.1.0:appcompat-1.1.0:aar \
+maven.google.com/androidx/activity/activity/1.0.0:activity-1.0.0:aar \
+maven.google.com/androidx/core/core/1.6.0:core-1.6.0:aar \
+maven.google.com/androidx/fragment/fragment/1.1.0:fragment-1.1.0:aar \
+maven.google.com/androidx/annotation/annotation/1.2.0:annotation-1.2.0:jar \
 repo1.maven.org/maven2/org/reactivestreams/reactive-streams/1.0.4:reactive-streams-1.0.4:jar
 JDK_DOWNLOAD_URI = https://download.java.net/java/GA/jdk17.0.2/dfd4a8d0985749f896bed50d7138ee7f/8/GPL/openjdk-17.0.2_windows-x64_bin.zip
 JDK_DIR = $(ROOT_DIR)java\jdk-17.0.2^\
@@ -241,7 +243,7 @@ build: $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk
 
 # Build and install. App may not run if timings are off.
 run: $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk
-	@CALL $(PLATFORM_TOOLS_DIR)adb.exe install -g -r $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk
+	@CALL $(PLATFORM_TOOLS_DIR)adb.exe install $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk
 	@ECHO Cooling down after install...
 	@TIMEOUT /T 2 >NUL
 	@CALL $(PLATFORM_TOOLS_DIR)adb.exe shell am start -n \

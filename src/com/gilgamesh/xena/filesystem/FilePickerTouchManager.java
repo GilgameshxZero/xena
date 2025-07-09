@@ -5,6 +5,7 @@ import com.gilgamesh.xena.XenaApplication;
 import android.view.MotionEvent;
 import android.view.View;
 
+// This TouchManager is used for both pane elements and the listing as a whole.
 public class FilePickerTouchManager implements View.OnTouchListener {
 	static private final float PAGE_THRESHOLD_DP = 48;
 	static private final float PAGE_THRESHOLD_PX
@@ -19,21 +20,24 @@ public class FilePickerTouchManager implements View.OnTouchListener {
 	}
 
 	@Override
-	public boolean onTouch(View v, MotionEvent event) {
+	public boolean onTouch(View view, MotionEvent event) {
 		switch (event.getAction()) {
 			case MotionEvent.ACTION_DOWN:
 				this.touchDownY = event.getY();
 				return true;
 			case MotionEvent.ACTION_UP:
-				XenaApplication.log("FilePickerActivity::onTouch:ACTION_UP.");
+				XenaApplication.log("FilePickerActivity::onTouch: ACTION_UP.");
+				// Detect drags, or directly call onClick for panes, and consume event.
 				if (event.getY() > this.touchDownY
 					+ FilePickerTouchManager.PAGE_THRESHOLD_PX) {
-					this.filePickerActivity.decrementPage();
+					this.filePickerActivity.listingPage--;
+					this.filePickerActivity.refreshListing();
 				} else if (event.getY() < this.touchDownY
 					- FilePickerTouchManager.PAGE_THRESHOLD_PX) {
-					this.filePickerActivity.incrementPage();
+					this.filePickerActivity.listingPage++;
+					this.filePickerActivity.refreshListing();
 				} else {
-					v.callOnClick();
+					view.callOnClick();
 				}
 				return true;
 			default:
