@@ -132,14 +132,27 @@ public class PdfReader {
 		this.callerViewport = viewport;
 
 		ArrayList<PageBitmap> validPages = new ArrayList<PageBitmap>();
+
 		// Requested bitmaps may not be a contiguous subarray if width differs, and
-		// viewport is on the right. We cannot binary search while guaranteeing
-		// correctness.
-		for (int i = 0; i < pages.length; i++) {
+		// viewport is on the right. However, we can binary search for the
+		// contiguous range on the Y-axis. Can be further optimized with quad-trees.
+		int low = 0, high = pages.length, mid;
+		while (low + 1 < high) {
+			mid = (low + high) / 2;
+			if (this.pages[mid] == null
+				|| viewport.top < this.pages[mid].location.bottom) {
+				high = mid;
+			} else {
+				low = mid;
+			}
+		}
+
+		for (int i = high; i < pages.length; i++) {
 			if (this.pages[i] != null
 				&& RectF.intersects(viewport, this.pages[i].location)) {
 				validPages.add(this.getBitmapForPage(i, true));
-			} else if (validPages.size() > 0) {
+			} else if (this.pages[i] == null
+				|| viewport.bottom < this.pages[i].location.top) {
 				break;
 			}
 		}
