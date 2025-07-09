@@ -9,7 +9,6 @@ import com.gilgamesh.xena.scribble.ScribbleActivity;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
-import android.content.Context;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.net.Uri;
@@ -33,10 +32,40 @@ public class SvgFileScribe {
 		= 12f / XenaApplication.DPI * 160f;
 	static public final int DEBOUNCE_SAVE_MS = 64000;
 
-	static public void loadPathsFromSvg(Context context, Uri uri,
-		PathManager pathManager) {
+	private boolean isSaved = true;
+	private Callback callback;
+
+	private ScribbleActivity scribbleActivity;
+	private Uri uri;
+	private PathManager pathManager;
+
+	public final DebouncedTask saveTask
+		= new DebouncedTask(new DebouncedTask.Callback() {
+			@Override
+			public void onRun() {
+				save();
+				callback.onDebounceSaveUpdate(isSaved);
+			}
+
+			@Override
+			public void onDebounce() {
+				isSaved = false;
+				callback.onDebounceSaveUpdate(isSaved);
+			}
+		});
+
+	public SvgFileScribe(Callback callback, ScribbleActivity scribbleActivity,
+		Uri uri, PathManager pathManager) {
+		this.callback = callback;
+		this.scribbleActivity = scribbleActivity;
+		this.uri = uri;
+		this.pathManager = pathManager;
+	}
+
+	public void load() {
 		try {
-			InputStream in = context.getContentResolver().openInputStream(uri);
+			InputStream in
+				= this.scribbleActivity.getContentResolver().openInputStream(this.uri);
 			try {
 				XmlPullParser parser = Xml.newPullParser();
 				parser.setInput(in, null);
@@ -53,10 +82,10 @@ public class SvgFileScribe {
 							= parser.getAttributeValue(null, "data-xena").split(" ");
 
 						if (data.length > 2) {
-							pathManager.setZoomStepId(Integer.parseInt(data[2]));
+							this.pathManager.setZoomStepId(Integer.parseInt(data[2]));
 						}
 
-						pathManager.setViewportOffset(
+						this.pathManager.setViewportOffset(
 							new PointF(Integer.parseInt(data[0]) * XenaApplication.DPI,
 								Integer.parseInt(data[1]) * XenaApplication.DPI));
 					}
@@ -86,7 +115,7 @@ public class SvgFileScribe {
 						= Integer.parseInt(buffer.toString())
 							/ SvgFileScribe.COORDINATE_SCALE_FACTOR;
 					buffer.setLength(0);
-					CompoundPath path = pathManager.addPath(lastPoint).getValue();
+					CompoundPath path = this.pathManager.addPath(lastPoint).getValue();
 
 					for (i++; i < d.length();) {
 						if (d.charAt(i) == ' ') {
@@ -118,10 +147,10 @@ public class SvgFileScribe {
 						path.addPoint(lastPoint);
 					}
 
-					pathManager.finalizePath(path);
+					this.pathManager.finalizePath(path);
 				}
 				XenaApplication.log("SvgFileScribe::loadPathsFromSvg: Parsed "
-					+ pathManager.getPathsCount() + " paths.");
+					+ this.pathManager.getPathsCount() + " paths.");
 			} catch (IOException e) {
 				Log.e(XenaApplication.TAG,
 					"SvgFileScribe::loadPathsFromSvg: Failed to read file: "
@@ -140,49 +169,19 @@ public class SvgFileScribe {
 		}
 	}
 
-	private boolean isSaved = true;
-	private Callback callback;
-
-	private ScribbleActivity scribbleActivity;
-	private Uri uri;
-	private PathManager pathManager;
-
-	public final DebouncedTask saveTask
-		= new DebouncedTask(new DebouncedTask.Callback() {
-			@Override
-			public void onRun() {
-				save(scribbleActivity, uri, pathManager);
-				callback.onDebounceSaveUpdate(isSaved);
-			}
-
-			@Override
-			public void onDebounce() {
-				isSaved = false;
-				callback.onDebounceSaveUpdate(isSaved);
-			}
-		});
-
-	public SvgFileScribe(Callback callback, ScribbleActivity scribbleActivity,
-		Uri uri, PathManager pathManager) {
-		this.callback = callback;
-		this.scribbleActivity = scribbleActivity;
-		this.uri = uri;
-		this.pathManager = pathManager;
-	}
-
-	private void save(Context context, Uri uri, PathManager pathManager) {
+	private void save() {
 		try {
-			Files.createDirectories(Paths.get(uri.getPath()).getParent());
+			Files.createDirectories(Paths.get(this.uri.getPath()).getParent());
 			OutputStreamWriter outputStreamWriter
-				= new OutputStreamWriter(
-					context.getContentResolver().openOutputStream(uri, "wt"));
+				= new OutputStreamWriter(this.scribbleActivity.getContentResolver()
+					.openOutputStream(this.uri, "wt"));
 			try {
 				RectF containerBox
 					= new RectF(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
 						Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY);
 				StringBuilder stringBuilder = new StringBuilder();
 				Iterator<Map.Entry<Integer, CompoundPath>> iterator
-					= pathManager.getPathsIterator();
+					= this.pathManager.getPathsIterator();
 				while (iterator.hasNext()) {
 					stringBuilder.append("<path d=\"");
 					Iterator<PointF> pointsIterator
@@ -257,12 +256,12 @@ public class SvgFileScribe {
 						+ Math.round(ScribbleActivity.STROKE_WIDTH_DP
 							* SvgFileScribe.COORDINATE_SCALE_FACTOR)
 						+ "\" stroke-linecap=\"round\" stroke-linejoin=\"round\" fill=\"none\" data-xena=\""
-						+ Math
-							.round(pathManager.getViewportOffset().x / XenaApplication.DPI)
+						+ Math.round(
+							this.pathManager.getViewportOffset().x / XenaApplication.DPI)
 						+ ' '
-						+ Math
-							.round(pathManager.getViewportOffset().y / XenaApplication.DPI)
-						+ ' ' + pathManager.getZoomStepId() + "\">"
+						+ Math.round(
+							this.pathManager.getViewportOffset().y / XenaApplication.DPI)
+						+ ' ' + this.pathManager.getZoomStepId() + "\">"
 						+ "<style>@media(prefers-color-scheme:dark){svg{background-color:black;stroke:white;}}</style>\n");
 				outputStreamWriter.write(stringBuilder.toString());
 				outputStreamWriter.write("</svg>\n");

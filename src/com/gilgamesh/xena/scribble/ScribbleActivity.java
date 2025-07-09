@@ -10,13 +10,9 @@ import com.gilgamesh.xena.XenaApplication;
 import com.onyx.android.sdk.pen.TouchHelper;
 
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.PointF;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -34,38 +30,9 @@ public class ScribbleActivity extends BaseActivity
 	static public final float STROKE_WIDTH_PX
 		= ScribbleActivity.STROKE_WIDTH_DP * XenaApplication.DPI / 160;
 
-	// `final` is deceptive for mutable objects.
-	static final Paint PAINT_TENTATIVE_LINE;
-	static {
-		PAINT_TENTATIVE_LINE = new Paint();
-		PAINT_TENTATIVE_LINE.setAntiAlias(true);
-		PAINT_TENTATIVE_LINE.setColor(Color.BLACK);
-		PAINT_TENTATIVE_LINE.setStyle(Paint.Style.STROKE);
-		PAINT_TENTATIVE_LINE.setStrokeJoin(Paint.Join.ROUND);
-		PAINT_TENTATIVE_LINE.setStrokeCap(Paint.Cap.ROUND);
-	}
-	static final Paint PAINT_TRANSPARENT;
-	static {
-		PAINT_TRANSPARENT = new Paint();
-		PAINT_TRANSPARENT.setAntiAlias(true);
-		PAINT_TRANSPARENT
-			.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OUT));
-		PAINT_TRANSPARENT.setColor(Color.TRANSPARENT);
-	}
-	static final Paint PAINT_WHITE;
-	static {
-		PAINT_WHITE = new Paint();
-		PAINT_WHITE.setAntiAlias(true);
-		PAINT_WHITE.setColor(Color.WHITE);
-	}
-	static final Paint PAINT_BITMAP;
-	static {
-		PAINT_BITMAP = new Paint();
-		PAINT_BITMAP.setAntiAlias(true);
-		PAINT_BITMAP.setFilterBitmap(true);
-	}
 	static public final String EXTRA_SVG_PATH = "EXTRA_SVG_PATH";
 	static public final String EXTRA_PDF_PATH = "EXTRA_PDF_PATH";
+
 	static private final int TEXT_VIEW_PATH_SUFFIX_LENGTH = 24;
 	static private final PointF PIXELS_PER_PAGE
 		= new PointF((int) XenaApplication.DPI * 8.5f, XenaApplication.DPI * 11f);
@@ -201,13 +168,13 @@ public class ScribbleActivity extends BaseActivity
 		switch (v.getId()) {
 			case R.id.activity_scribble_text_view_path:
 				XenaApplication
-					.log("ScribbleActivity::onClick:activity_scribble_text_view_path.");
+					.log("ScribbleActivity::onClick: activity_scribble_text_view_path.");
 				this.redraw(true, true);
 				this.svgFileScribe.saveTask.debounce(0);
 				break;
 			case R.id.activity_scribble_text_view_status:
-				XenaApplication
-					.log("ScribbleActivity::onClick:activity_scribble_text_view_status.");
+				XenaApplication.log(
+					"ScribbleActivity::onClick: activity_scribble_text_view_status.");
 				PointF viewportOffset = this.pathManager.getViewportOffset();
 				this.coordinateEditPalm.setText(String
 					.valueOf((int) Math.round(this.panManager.getPalmTouchThreshold())));
@@ -221,7 +188,7 @@ public class ScribbleActivity extends BaseActivity
 				break;
 			case R.id.activity_scribble_draw_erase_toggle:
 				XenaApplication.log(
-					"ScribbleActivity::onClick:activity_scribble_draw_erase_toggle.");
+					"ScribbleActivity::onClick: activity_scribble_draw_erase_toggle.");
 				this.isPenEraseMode = !this.isPenEraseMode;
 				this.drawEraseToggle.setBackgroundResource(this.isPenEraseMode
 					? R.drawable.solid_empty
@@ -230,7 +197,7 @@ public class ScribbleActivity extends BaseActivity
 				break;
 			case R.id.activity_scribble_draw_pan_toggle:
 				XenaApplication
-					.log("ScribbleActivity::onClick:activity_scribble_draw_pan_toggle.");
+					.log("ScribbleActivity::onClick: activity_scribble_draw_pan_toggle.");
 				switch (this.penTouchMode) {
 					case DEFAULT:
 						this.penTouchMode = PenTouchMode.FORCE_DRAW;
@@ -251,9 +218,9 @@ public class ScribbleActivity extends BaseActivity
 				break;
 			case R.id.activity_scribble_coordinate_dialog_set:
 				XenaApplication.log(
-					"ScribbleActivity::onClick:activity_scribble_coordinate_dialog_set. "
-						+ this.coordinateEditX.getText().toString() + " "
-						+ this.coordinateEditY.getText().toString());
+					"ScribbleActivity::onClick: activity_scribble_coordinate_dialog_set, coordinates = (",
+					this.coordinateEditX.getText().toString(), ", ",
+					this.coordinateEditY.getText().toString(), ").");
 				this.pathManager.setViewportOffset(new PointF(
 					-Integer.parseInt(this.coordinateEditX.getText().toString())
 						* ScribbleActivity.PIXELS_PER_PAGE.x,
@@ -286,7 +253,6 @@ public class ScribbleActivity extends BaseActivity
 		String svgPath = this.getIntent().getStringExtra(EXTRA_SVG_PATH);
 		String pdfPath = this.getIntent().getStringExtra(EXTRA_PDF_PATH);
 		this.svgUri = Uri.fromFile(new File(svgPath));
-		SvgFileScribe.loadPathsFromSvg(this, this.svgUri, this.pathManager);
 
 		this.svgFileScribe = new SvgFileScribe(new SvgFileScribe.Callback() {
 			@Override
@@ -299,6 +265,7 @@ public class ScribbleActivity extends BaseActivity
 				});
 			}
 		}, this, this.svgUri, this.pathManager);
+		this.svgFileScribe.load();
 
 		// After these lines, SvgFileScribe may be called from the managers.
 		this.scribbleView.setOnTouchListener(this.touchManager);
@@ -386,10 +353,10 @@ public class ScribbleActivity extends BaseActivity
 		this.setStrokeWidthScale(zoomScale);
 	}
 
+	// Slightly wider than anticipated due to the lack of anti-aliasing on
+	// temporary lines.
 	void setStrokeWidthScale(float scale) {
 		this.touchHelper
 			.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale * 1.2f);
-		ScribbleActivity.PAINT_TENTATIVE_LINE
-			.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale);
 	}
 }
