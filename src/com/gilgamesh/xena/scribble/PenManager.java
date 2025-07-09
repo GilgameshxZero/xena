@@ -57,23 +57,20 @@ public class PenManager extends RawInputCallback {
 	};
 
 	public void cancelRedraw() {
-		this.scribbleActivity.isRedrawing = false;
+		this.scribbleActivity.isAwaitingRedraw = false;
 		this.debounceRedrawTask.cancel();
 	}
 
 	private void debounceRedraw(int delayMs) {
 		this.cancelRedraw();
-		this.scribbleActivity.isRedrawing = true;
-		TimerTask task = new TimerTask() {
+		this.scribbleActivity.isAwaitingRedraw = true;
+		new Timer().schedule(this.debounceRedrawTask = new TimerTask() {
 			@Override
 			public void run() {
-				XenaApplication.log("ScribbleActivity::debounceRedrawTask");
-
-				scribbleActivity.redraw();
+				XenaApplication.log("ScribbleActivity::debounceRedrawTask.");
+				scribbleActivity.redraw(true, true);
 			}
-		};
-		new Timer().schedule(task, delayMs);
-		this.debounceRedrawTask = task;
+		}, delayMs);
 	}
 
 	// Debounce cooldown for input end operations to prevent panning; implements
@@ -184,7 +181,7 @@ public class PenManager extends RawInputCallback {
 				this.scribbleActivity.pathManager
 					.setViewportOffset(this.scribbleActivity.panBeginOffset);
 				this.scribbleActivity.updateTextViewStatus();
-				this.scribbleActivity.drawBitmapToView(true);
+				this.scribbleActivity.redraw(true, false);
 			}
 
 			XenaApplication.log("ScribbleActivity::onTouch:UNDO "
@@ -314,8 +311,7 @@ public class PenManager extends RawInputCallback {
 		this.scribbleActivity.isPanning = false;
 		this.scribbleActivity.isErasing = true;
 
-		this.cancelRedraw();
-		this.scribbleActivity.redraw();
+		this.scribbleActivity.redraw(true, false);
 
 		this.previousErasePoint.set(
 			touchPoint.x / this.scribbleActivity.pathManager.getZoomScale()
@@ -369,10 +365,6 @@ public class PenManager extends RawInputCallback {
 			return;
 		}
 
-		// XenaApplication.log(
-		// "ScribbleActivity::onRawErasingTouchPointMoveReceived "
-		// + currentErasePoint);
-
 		this.debounceEndErase(DEBOUNCE_END_ERASE_DELAY_MS);
 
 		HashSet<Point> chunkIds = new HashSet<Point>();
@@ -394,7 +386,7 @@ public class PenManager extends RawInputCallback {
 		}
 
 		if (initialSize != this.scribbleActivity.pathManager.getPathsCount()) {
-			this.scribbleActivity.drawBitmapToView(true);
+			this.scribbleActivity.redraw(true, false);
 			this.scribbleActivity.svgFileScribe.debounceSave(this.scribbleActivity,
 				this.scribbleActivity.svgUri, this.scribbleActivity.pathManager);
 		}

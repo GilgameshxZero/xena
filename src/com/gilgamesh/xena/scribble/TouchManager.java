@@ -186,34 +186,19 @@ public class TouchManager implements View.OnTouchListener {
 					break;
 				}
 
-			{
-				PointF newOffset
-					= new PointF(
-						this.scribbleActivity.pathManager.getViewportOffset().x
-							+ (touchPoint.x - this.previousPoint.x)
-								/ this.scribbleActivity.pathManager.getZoomScale(),
-						this.scribbleActivity.pathManager.getViewportOffset().y
-							+ (touchPoint.y - this.previousPoint.y)
-								/ this.scribbleActivity.pathManager.getZoomScale());
-				this.scribbleActivity.pathManager.setViewportOffset(newOffset);
-
-				// Do not update text view while dragging.
-				// this.scribbleActivity.updateTextViewStatus();
-			}
+				this.scribbleActivity.pathManager.setViewportOffset(new PointF(
+					this.scribbleActivity.pathManager.getViewportOffset().x
+						+ (touchPoint.x - this.previousPoint.x)
+							/ this.scribbleActivity.pathManager.getZoomScale(),
+					this.scribbleActivity.pathManager.getViewportOffset().y
+						+ (touchPoint.y - this.previousPoint.y)
+							/ this.scribbleActivity.pathManager.getZoomScale()));
 				this.previousPoint.x = touchPoint.x;
 				this.previousPoint.y = touchPoint.y;
 
-				// XenaApplication.log( "ScribbleActivity::onTouch:MOVE "
-				// + pathManager.getViewportOffset());
-
-				if (this.scribbleActivity.isRedrawing) {
-					this.scribbleActivity.redraw();
-				} else {
-					this.scribbleActivity.drawBitmapToView(false);
-				}
-
-				// No need to reset raw input capture here, because it is assumed that
-				// the Boox canvas is clean.
+				// Force redraw if awaiting it.
+				this.scribbleActivity.redraw(this.scribbleActivity.isAwaitingRedraw,
+					false);
 				break;
 			case MotionEvent.ACTION_UP:
 				if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_DRAW) {
@@ -281,8 +266,7 @@ public class TouchManager implements View.OnTouchListener {
 					this.scribbleActivity.svgFileScribe.debounceSave(
 						this.scribbleActivity, this.scribbleActivity.svgUri,
 						this.scribbleActivity.pathManager);
-					this.scribbleActivity.penManager.cancelRedraw();
-					this.scribbleActivity.redraw();
+					this.scribbleActivity.redraw(true, true);
 				} else {
 					// If not panned, treat as a tap.
 					if (eventDurationMs < TouchManager.TAP_UPPER_BOUND_MS
@@ -296,8 +280,7 @@ public class TouchManager implements View.OnTouchListener {
 								.setBackgroundResource(this.scribbleActivity.isPenEraseMode
 									? R.drawable.solid_empty
 									: R.drawable.dotted_empty);
-							this.scribbleActivity.penManager.cancelRedraw();
-							this.scribbleActivity.redraw();
+							this.scribbleActivity.redraw(true, true);
 							this.previousTapTimeMs = 0;
 						} else {
 							XenaApplication.log("TouchManager::onTouch:TAP.");
@@ -322,8 +305,7 @@ public class TouchManager implements View.OnTouchListener {
 						this.scribbleActivity.svgFileScribe.debounceSave(
 							this.scribbleActivity, this.scribbleActivity.svgUri,
 							this.scribbleActivity.pathManager);
-						this.scribbleActivity.penManager.cancelRedraw();
-						this.scribbleActivity.redraw();
+						this.scribbleActivity.redraw(true, true);
 					} else {
 						XenaApplication.log("ScribbleActivity::onTouch:IGNORE");
 						this.previousIgnoreChainTimeMs = currentTimeMs;
@@ -396,8 +378,7 @@ public class TouchManager implements View.OnTouchListener {
 					this.scribbleActivity.setStrokeWidthScale(
 						this.scribbleActivity.pathManager.getZoomScale());
 					this.scribbleActivity.updateTextViewStatus();
-					this.scribbleActivity.penManager.cancelRedraw();
-					this.scribbleActivity.redraw();
+					this.scribbleActivity.redraw(true, true);
 					this.scribbleActivity.svgFileScribe.debounceSave(
 						this.scribbleActivity, this.scribbleActivity.svgUri,
 						this.scribbleActivity.pathManager);

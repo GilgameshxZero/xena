@@ -72,7 +72,7 @@ public class ScribbleActivity extends BaseActivity
 	private final PdfReader.Callback PDF_READER_CALLBACK
 		= new PdfReader.Callback() {
 			public void onPageSizedIntoViewport() {
-				redraw();
+				redraw(true, true);
 			}
 		};
 
@@ -101,7 +101,7 @@ public class ScribbleActivity extends BaseActivity
 	// State is package-private.
 	boolean isDrawing = false;
 	boolean isErasing = false;
-	boolean isRedrawing = false;
+	boolean isAwaitingRedraw = false;
 	boolean isInputCooldown = false;
 	boolean isPanning = false;
 	boolean isPenEraseMode = false;
@@ -113,12 +113,6 @@ public class ScribbleActivity extends BaseActivity
 	PenTouchMode penTouchMode = PenTouchMode.DEFAULT;
 
 	PointF panBeginOffset = new PointF();
-
-	public void redraw() {
-		this.isRedrawing = false;
-		this.drawBitmapToView(true);
-		this.touchHelper.setRawDrawingEnabled(false).setRawDrawingEnabled(true);
-	}
 
 	// Switching orientation may rebuild the activity.
 	@Override
@@ -221,8 +215,7 @@ public class ScribbleActivity extends BaseActivity
 			case R.id.activity_scribble_text_view_path:
 				XenaApplication
 					.log("ScribbleActivity::onClick:activity_scribble_text_view_path.");
-				this.penManager.cancelRedraw();
-				this.redraw();
+				this.redraw(true, true);
 				this.svgFileScribe.debounceSave(ScribbleActivity.this, svgUri,
 					this.pathManager, 0);
 				break;
@@ -237,8 +230,7 @@ public class ScribbleActivity extends BaseActivity
 				this.coordinateEditY.setText(String.valueOf((int) Math
 					.floor(-viewportOffset.y / ScribbleActivity.PIXELS_PER_PAGE.y)));
 				this.coordinateDialog.setVisibility(View.VISIBLE);
-				this.penManager.cancelRedraw();
-				this.redraw();
+				this.redraw(true, true);
 				this.touchHelper.closeRawDrawing();
 				break;
 			case R.id.activity_scribble_draw_erase_toggle:
@@ -248,8 +240,7 @@ public class ScribbleActivity extends BaseActivity
 				this.drawEraseToggle.setBackgroundResource(this.isPenEraseMode
 					? R.drawable.solid_empty
 					: R.drawable.dotted_empty);
-				this.penManager.cancelRedraw();
-				this.redraw();
+				this.redraw(true, true);
 				break;
 			case R.id.activity_scribble_draw_pan_toggle:
 				XenaApplication
@@ -270,8 +261,7 @@ public class ScribbleActivity extends BaseActivity
 						this.openTouchHelperRawDrawing();
 						break;
 				}
-				this.penManager.cancelRedraw();
-				this.redraw();
+				this.redraw(true, true);
 				break;
 			case R.id.activity_scribble_coordinate_dialog_set:
 				XenaApplication.log(
@@ -296,7 +286,7 @@ public class ScribbleActivity extends BaseActivity
 					imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
 				}
 
-				this.drawBitmapToView(true);
+				this.redraw(true, true);
 				this.openTouchHelperRawDrawing();
 				break;
 		}
@@ -327,18 +317,20 @@ public class ScribbleActivity extends BaseActivity
 				new Point(this.scribbleView.getWidth(), this.scribbleView.getHeight()));
 		SvgFileScribe.loadPathsFromSvg(this, this.svgUri, this.pathManager);
 
-		drawBitmapToView(true);
+		this.redraw(true, true);
 
 		this.updateTextViewStatus();
 		this.openTouchHelperRawDrawing();
 	}
 
-	void drawBitmapToView(boolean force) {
-		if (!force && scribbleView.isDrawing()) {
-			return;
+	public void redraw(boolean force, boolean refreshRawDrawing) {
+		this.penManager.cancelRedraw();
+		if (force || !scribbleView.isDrawing()) {
+			this.scribbleView.invalidate();
 		}
-
-		this.scribbleView.invalidate();
+		if (refreshRawDrawing) {
+			this.touchHelper.setRawDrawingEnabled(false).setRawDrawingEnabled(true);
+		}
 	}
 
 	void updateTextViewStatus() {
