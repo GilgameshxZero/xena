@@ -69,6 +69,13 @@ public class ScribbleActivity extends BaseActivity
 	static private PointF PIXELS_PER_PAGE
 		= new PointF((int) XenaApplication.DPI * 8.5f, XenaApplication.DPI * 11f);
 
+	private final PdfReader.Callback PDF_READER_CALLBACK
+		= new PdfReader.Callback() {
+			public void onPageSizedIntoViewport() {
+				redraw();
+			}
+		};
+
 	// Managers.
 	SvgFileScribe svgFileScribe;
 	PathManager pathManager;
@@ -109,7 +116,7 @@ public class ScribbleActivity extends BaseActivity
 
 	public void redraw() {
 		this.isRedrawing = false;
-		this.drawBitmapToView(true, true);
+		this.drawBitmapToView(true);
 		this.touchHelper.setRawDrawingEnabled(false).setRawDrawingEnabled(true);
 	}
 
@@ -289,7 +296,7 @@ public class ScribbleActivity extends BaseActivity
 					imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
 				}
 
-				this.drawBitmapToView(true, true);
+				this.drawBitmapToView(true);
 				this.openTouchHelperRawDrawing();
 				break;
 		}
@@ -302,7 +309,8 @@ public class ScribbleActivity extends BaseActivity
 
 		if (pdfPath != null) {
 			this.pdfUri = Uri.fromFile(new File(pdfPath));
-			this.pdfReader = new PdfReader(this, this.pdfUri);
+			this.pdfReader
+				= new PdfReader(this, this.pdfUri, this.PDF_READER_CALLBACK);
 			XenaApplication.log("ScribbleActivity::parseUri: Received 2 URIs: "
 				+ this.svgUri.toString() + " and " + this.pdfUri.toString() + ".");
 		} else {
@@ -319,23 +327,18 @@ public class ScribbleActivity extends BaseActivity
 				new Point(this.scribbleView.getWidth(), this.scribbleView.getHeight()));
 		SvgFileScribe.loadPathsFromSvg(this, this.svgUri, this.pathManager);
 
-		drawBitmapToView(true, true);
+		drawBitmapToView(true);
 
 		this.updateTextViewStatus();
 		this.openTouchHelperRawDrawing();
 	}
 
-	void drawBitmapToView(boolean force, boolean invalidate) {
+	void drawBitmapToView(boolean force) {
 		if (!force && scribbleView.isDrawing()) {
-			// XenaApplication.log( "Dirty ScribbleView.");
 			return;
 		}
 
-		this.scribbleView.isDirty = true;
-
-		if (invalidate) {
-			this.scribbleView.invalidate();
-		}
+		this.scribbleView.invalidate();
 	}
 
 	void updateTextViewStatus() {

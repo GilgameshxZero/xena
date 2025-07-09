@@ -1,8 +1,7 @@
 package com.gilgamesh.xena.scribble;
 
+import com.gilgamesh.algorithm.Geometry;
 import com.gilgamesh.xena.XenaApplication;
-import com.gilgamesh.xena.algorithm.Geometry;
-
 import com.onyx.android.sdk.data.note.TouchPoint;
 import com.onyx.android.sdk.pen.data.TouchPointList;
 import com.onyx.android.sdk.pen.RawInputCallback;
@@ -185,7 +184,7 @@ public class PenManager extends RawInputCallback {
 				this.scribbleActivity.pathManager
 					.setViewportOffset(this.scribbleActivity.panBeginOffset);
 				this.scribbleActivity.updateTextViewStatus();
-				this.scribbleActivity.drawBitmapToView(true, true);
+				this.scribbleActivity.drawBitmapToView(true);
 			}
 
 			XenaApplication.log("ScribbleActivity::onTouch:UNDO "
@@ -395,7 +394,7 @@ public class PenManager extends RawInputCallback {
 		}
 
 		if (initialSize != this.scribbleActivity.pathManager.getPathsCount()) {
-			this.scribbleActivity.drawBitmapToView(true, true);
+			this.scribbleActivity.drawBitmapToView(true);
 			this.scribbleActivity.svgFileScribe.debounceSave(this.scribbleActivity,
 				this.scribbleActivity.svgUri, this.scribbleActivity.pathManager);
 		}

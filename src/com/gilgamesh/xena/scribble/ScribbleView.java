@@ -6,13 +6,13 @@ import android.graphics.RectF;
 import android.widget.ImageView;
 import android.util.AttributeSet;
 
+import com.gilgamesh.xena.XenaApplication;
 import com.gilgamesh.xena.pdf.PageBitmap;
 
 import android.content.Context;
 
 public class ScribbleView extends ImageView {
 	private boolean isDrawing = false;
-	boolean isDirty = false;
 	ScribbleActivity scribbleActivity = null;
 
 	public ScribbleView(Context context) {
@@ -50,11 +50,6 @@ public class ScribbleView extends ImageView {
 			|| this.scribbleActivity.pathManager == null) {
 			return;
 		}
-
-		// if (!this.isDirty) {
-		// return;
-		// }
-		// this.isDirty = false;
 
 		// Point viewSize = new Point(this.getWidth(), this.getHeight());
 		// PointF viewportOffset = this.scribbleActivity.pathManager

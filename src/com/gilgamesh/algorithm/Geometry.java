@@ -1,4 +1,4 @@
-package com.gilgamesh.xena.algorithm;
+package com.gilgamesh.algorithm;
 
 import android.graphics.PointF;
 
