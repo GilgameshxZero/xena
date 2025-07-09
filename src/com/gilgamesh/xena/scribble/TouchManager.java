@@ -9,7 +9,6 @@ import android.content.SharedPreferences;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -19,19 +18,20 @@ public class TouchManager implements View.OnTouchListener {
 	static private final int FLICK_LOWER_BOUND_MS = 10;
 	static private final int FLICK_UPPER_BOUND_MS = 220;
 	static private final float FLICK_OFFSET_THRESHOLD_DP = 10;
-	static private final float FLICK_OFFSET_THRESHOLD_PX = TouchManager.FLICK_OFFSET_THRESHOLD_DP
-			* XenaApplication.DPI / 160;
+	static private final float FLICK_OFFSET_THRESHOLD_PX
+		= TouchManager.FLICK_OFFSET_THRESHOLD_DP * XenaApplication.DPI / 160;
 	static private final float PAN_DISTANCE_THRESHOLD_DP = 10;
-	static private final float PAN_DISTANCE_THRESHOLD_PX = TouchManager.PAN_DISTANCE_THRESHOLD_DP
-			* XenaApplication.DPI / 160;
+	static private final float PAN_DISTANCE_THRESHOLD_PX
+		= TouchManager.PAN_DISTANCE_THRESHOLD_DP * XenaApplication.DPI / 160;
 	static private final float ZOOM_DISTANCE_BOUND_DP = 25;
-	static private final float ZOOM_DISTANCE_BOUND_PX = TouchManager.ZOOM_DISTANCE_BOUND_DP
-			* XenaApplication.DPI / 160;
+	static private final float ZOOM_DISTANCE_BOUND_PX
+		= TouchManager.ZOOM_DISTANCE_BOUND_DP * XenaApplication.DPI / 160;
 	static private final int ZOOM_LOWER_BOUND_MS = 80;
 	static private final int TAP_UPPER_BOUND_MS = 220;
 	static private final int DOUBLE_TAP_UPPER_BOUND_MS = 360;
 	static final int IGNORE_CHAIN_BOUND_MS = 250;
-	static private final String SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD_CACHE = "SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD_CACHE";
+	static private final String SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD_CACHE
+		= "SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD_CACHE";
 	static float PALM_TOUCH_MAJOR_MINOR_THRESHOLD;
 
 	private PointF previousPoint = new PointF();
@@ -51,13 +51,11 @@ public class TouchManager implements View.OnTouchListener {
 		this.scribbleActivity = scribbleActivity;
 
 		// TODO: Deprecated.
-		this.sharedPreferences = PreferenceManager
-				.getDefaultSharedPreferences(scribbleActivity);
-		TouchManager.PALM_TOUCH_MAJOR_MINOR_THRESHOLD = Float
-				.parseFloat(this.sharedPreferences
-						.getString(
-								TouchManager.SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD_CACHE,
-								"9999"));
+		this.sharedPreferences
+			= PreferenceManager.getDefaultSharedPreferences(scribbleActivity);
+		TouchManager.PALM_TOUCH_MAJOR_MINOR_THRESHOLD
+			= Float.parseFloat(this.sharedPreferences.getString(
+				TouchManager.SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD_CACHE, "9999"));
 	}
 
 	public void updatePalmTouchThreshold(float newThreshold) {
@@ -65,7 +63,7 @@ public class TouchManager implements View.OnTouchListener {
 
 		SharedPreferences.Editor editor = this.sharedPreferences.edit();
 		editor.putString(TouchManager.SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD_CACHE,
-				String.valueOf(newThreshold));
+			String.valueOf(newThreshold));
 		editor.commit();
 	}
 
@@ -78,20 +76,20 @@ public class TouchManager implements View.OnTouchListener {
 			case MotionEvent.ACTION_POINTER_2_DOWN:
 			case MotionEvent.ACTION_POINTER_2_UP:
 				return this.onTouchInner(event.getAction(), event.getX(), event.getY(),
-						event.getX(1), event.getY(1), event.getTouchMajor(1),
-						event.getTouchMinor(1));
+					event.getX(1), event.getY(1), event.getTouchMajor(1),
+					event.getTouchMinor(1));
 			default:
 				return this.onTouchInner(event.getAction(), event.getX(), event.getY(),
-						0, 0, event.getTouchMajor(), event.getTouchMinor());
+					0, 0, event.getTouchMajor(), event.getTouchMinor());
 		}
 	}
 
 	@SuppressWarnings("deprecation")
 	public boolean onTouchInner(int eventAction, float eventX0, float eventY0,
-			float eventX1, float eventY1, float touchMajor, float touchMinor) {
+		float eventX1, float eventY1, float touchMajor, float touchMinor) {
 		if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.DEFAULT
-				&& (this.scribbleActivity.isDrawing || this.scribbleActivity.isErasing
-						|| this.scribbleActivity.isInputCooldown)) {
+			&& (this.scribbleActivity.isDrawing || this.scribbleActivity.isErasing
+				|| this.scribbleActivity.isInputCooldown)) {
 			return false;
 		}
 
@@ -103,17 +101,16 @@ public class TouchManager implements View.OnTouchListener {
 			case MotionEvent.ACTION_DOWN:
 				if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_DRAW) {
 					this.scribbleActivity.penManager.onBeginRawDrawing(false,
-							new TouchPoint(touchPoint.x, touchPoint.y));
+						new TouchPoint(touchPoint.x, touchPoint.y));
 					break;
 				}
 
-				Log.v(XenaApplication.TAG,
-						"ScribbleActivity::onTouch:DOWN " + touchPoint);
+				XenaApplication.log("ScribbleActivity::onTouch:DOWN " + touchPoint);
 
 				if (currentTimeMs
-						- this.previousIgnoreChainTimeMs <= TouchManager.IGNORE_CHAIN_BOUND_MS) {
+					- this.previousIgnoreChainTimeMs <= TouchManager.IGNORE_CHAIN_BOUND_MS) {
 					this.previousIgnoreChainTimeMs = currentTimeMs;
-					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:IGNORE_CHAIN");
+					XenaApplication.log("ScribbleActivity::onTouch:IGNORE_CHAIN");
 					break;
 				}
 
@@ -121,30 +118,30 @@ public class TouchManager implements View.OnTouchListener {
 				// draw/erase event will cancel panning in that case.
 
 				if (this.scribbleActivity.isPanning) {
-					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:RESET "
-							+ touchPoint);
+					XenaApplication.log("ScribbleActivity::onTouch:RESET " + touchPoint);
 				} else {
-					RectF bounds = new RectF(
+					RectF bounds
+						= new RectF(
 							this.scribbleActivity.scribbleView.getWidth()
-									* TouchManager.TOUCH_BORDER_INVALID_RATIO,
+								* TouchManager.TOUCH_BORDER_INVALID_RATIO,
 							this.scribbleActivity.scribbleView.getHeight()
-									* TouchManager.TOUCH_BORDER_INVALID_RATIO,
+								* TouchManager.TOUCH_BORDER_INVALID_RATIO,
 							this.scribbleActivity.scribbleView.getWidth()
-									* (1 - TouchManager.TOUCH_BORDER_INVALID_RATIO),
+								* (1 - TouchManager.TOUCH_BORDER_INVALID_RATIO),
 							this.scribbleActivity.scribbleView.getHeight()
-									* (1 - TouchManager.TOUCH_BORDER_INVALID_RATIO));
+								* (1 - TouchManager.TOUCH_BORDER_INVALID_RATIO));
 					if (bounds.contains(touchPoint.x, touchPoint.y)) {
 						// Only count actions that don't start near the border.
 						this.scribbleActivity.isPanning = true;
 					} else {
-						Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:IGNORE");
+						XenaApplication.log("ScribbleActivity::onTouch:IGNORE");
 						this.previousIgnoreChainTimeMs = currentTimeMs;
 					}
 				}
 
 				if (this.scribbleActivity.isPanning) {
-					this.scribbleActivity.panBeginOffset = this.scribbleActivity.pathManager
-							.getViewportOffset();
+					this.scribbleActivity.panBeginOffset
+						= this.scribbleActivity.pathManager.getViewportOffset();
 					this.previousPoint.x = touchPoint.x;
 					this.previousPoint.y = touchPoint.y;
 					this.actionDownTimeMs = currentTimeMs;
@@ -156,20 +153,20 @@ public class TouchManager implements View.OnTouchListener {
 			case MotionEvent.ACTION_MOVE:
 				if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_DRAW) {
 					this.scribbleActivity.penManager.onRawDrawingTouchPointMoveReceived(
-							new TouchPoint(touchPoint.x, touchPoint.y));
+						new TouchPoint(touchPoint.x, touchPoint.y));
 					break;
 				}
 
 				if (currentTimeMs
-						- this.previousIgnoreChainTimeMs <= TouchManager.IGNORE_CHAIN_BOUND_MS) {
+					- this.previousIgnoreChainTimeMs <= TouchManager.IGNORE_CHAIN_BOUND_MS) {
 					this.previousIgnoreChainTimeMs = currentTimeMs;
-					// Log.v(XenaApplication.TAG,
+					// XenaApplication.log(
 					// "ScribbleActivity::onTouch:IGNORE_CHAIN");
 					break;
 				}
 
 				if (!this.scribbleActivity.isPanning) {
-					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:IGNORE");
+					XenaApplication.log("ScribbleActivity::onTouch:IGNORE");
 					this.previousIgnoreChainTimeMs = currentTimeMs;
 					break;
 				}
@@ -180,25 +177,24 @@ public class TouchManager implements View.OnTouchListener {
 				}
 
 				this.cMoveEvents++;
-				this.actionDownMaxTouchMajorMinor = Math.max(
-						this.actionDownMaxTouchMajorMinor,
+				this.actionDownMaxTouchMajorMinor
+					= Math.max(this.actionDownMaxTouchMajorMinor,
 						Math.max(touchMajor, touchMinor));
 
 				if (this.actionDownMaxTouchMajorMinor >= TouchManager.PALM_TOUCH_MAJOR_MINOR_THRESHOLD
-						|| !this.zoomDownConsumed) {
+					|| !this.zoomDownConsumed) {
 					break;
 				}
 
 			{
-				PointF newOffset = new PointF(
+				PointF newOffset
+					= new PointF(
 						this.scribbleActivity.pathManager.getViewportOffset().x
-								+ (touchPoint.x
-										- this.previousPoint.x)
-										/ this.scribbleActivity.pathManager.getZoomScale(),
+							+ (touchPoint.x - this.previousPoint.x)
+								/ this.scribbleActivity.pathManager.getZoomScale(),
 						this.scribbleActivity.pathManager.getViewportOffset().y
-								+ (touchPoint.y
-										- this.previousPoint.y)
-										/ this.scribbleActivity.pathManager.getZoomScale());
+							+ (touchPoint.y - this.previousPoint.y)
+								/ this.scribbleActivity.pathManager.getZoomScale());
 				this.scribbleActivity.pathManager.setViewportOffset(newOffset);
 
 				// Do not update text view while dragging.
@@ -207,7 +203,7 @@ public class TouchManager implements View.OnTouchListener {
 				this.previousPoint.x = touchPoint.x;
 				this.previousPoint.y = touchPoint.y;
 
-				// Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:MOVE "
+				// XenaApplication.log( "ScribbleActivity::onTouch:MOVE "
 				// + pathManager.getViewportOffset());
 
 				if (this.scribbleActivity.isRedrawing) {
@@ -222,34 +218,33 @@ public class TouchManager implements View.OnTouchListener {
 			case MotionEvent.ACTION_UP:
 				if (this.scribbleActivity.penTouchMode == ScribbleActivity.PenTouchMode.FORCE_DRAW) {
 					this.scribbleActivity.penManager.onEndRawDrawing(false,
-							new TouchPoint(touchPoint.x, touchPoint.y));
+						new TouchPoint(touchPoint.x, touchPoint.y));
 					break;
 				}
 
-				this.actionDownMaxTouchMajorMinor = Math.max(
-						this.actionDownMaxTouchMajorMinor,
+				this.actionDownMaxTouchMajorMinor
+					= Math.max(this.actionDownMaxTouchMajorMinor,
 						Math.max(touchMajor, touchMinor));
-				Log.v(XenaApplication.TAG,
-						"ScribbleActivity::onTouch:UP " + touchPoint + " "
-								+ this.cMoveEvents + " " + this.actionDownMaxTouchMajorMinor);
+				XenaApplication.log("ScribbleActivity::onTouch:UP " + touchPoint + " "
+					+ this.cMoveEvents + " " + this.actionDownMaxTouchMajorMinor);
 
 				if (currentTimeMs
-						- this.previousIgnoreChainTimeMs <= TouchManager.IGNORE_CHAIN_BOUND_MS) {
+					- this.previousIgnoreChainTimeMs <= TouchManager.IGNORE_CHAIN_BOUND_MS) {
 					this.previousIgnoreChainTimeMs = currentTimeMs;
-					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:IGNORE_CHAIN");
+					XenaApplication.log("ScribbleActivity::onTouch:IGNORE_CHAIN");
 					break;
 				}
 
 				if (this.actionDownMaxTouchMajorMinor >= TouchManager.PALM_TOUCH_MAJOR_MINOR_THRESHOLD) {
-					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:IGNORE");
+					XenaApplication.log("ScribbleActivity::onTouch:IGNORE");
 					this.previousIgnoreChainTimeMs = currentTimeMs;
 					break;
 				}
 
 				if (!this.scribbleActivity.isPanning
-						|| this.zoomDownConsumed == false) {
+					|| this.zoomDownConsumed == false) {
 					this.zoomDownConsumed = true;
-					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:IGNORE");
+					XenaApplication.log("ScribbleActivity::onTouch:IGNORE");
 					this.previousIgnoreChainTimeMs = currentTimeMs;
 					break;
 				}
@@ -260,82 +255,77 @@ public class TouchManager implements View.OnTouchListener {
 				this.scribbleActivity.isPanning = false;
 
 				// Detect flicks.
-				float flickOffsetX = this.scribbleActivity.pathManager
-						.getViewportOffset().x
+				float flickOffsetX
+					= this.scribbleActivity.pathManager.getViewportOffset().x
 						+ touchPoint.x - this.previousPoint.x
 						- this.scribbleActivity.panBeginOffset.x;
-				float flickOffsetY = this.scribbleActivity.pathManager
-						.getViewportOffset().y
+				float flickOffsetY
+					= this.scribbleActivity.pathManager.getViewportOffset().y
 						+ touchPoint.y - this.previousPoint.y
 						- this.scribbleActivity.panBeginOffset.y;
 				if (eventDurationMs >= TouchManager.FLICK_LOWER_BOUND_MS
-						&& eventDurationMs <= TouchManager.FLICK_UPPER_BOUND_MS
-						&& Math
-								.abs(flickOffsetY) >= TouchManager.FLICK_OFFSET_THRESHOLD_PX) {
-					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:FLICK");
+					&& eventDurationMs <= TouchManager.FLICK_UPPER_BOUND_MS
+					&& Math.abs(flickOffsetY) >= TouchManager.FLICK_OFFSET_THRESHOLD_PX) {
+					XenaApplication.log("ScribbleActivity::onTouch:FLICK");
 
 					// Determine flick direction.
-					int direction = flickOffsetY > 0
-							? 1
-							: -1;
+					int direction = flickOffsetY > 0 ? 1 : -1;
 
-					this.scribbleActivity.pathManager.setViewportOffset(new PointF(
-							this.scribbleActivity.panBeginOffset.x,
+					this.scribbleActivity.pathManager.setViewportOffset(
+						new PointF(this.scribbleActivity.panBeginOffset.x,
 							this.scribbleActivity.panBeginOffset.y
-									+ direction * this.scribbleActivity.scribbleView.getHeight()
-											* TouchManager.FLICK_MOVE_RATIO
-											/ this.scribbleActivity.pathManager.getZoomScale()));
+								+ direction * this.scribbleActivity.scribbleView.getHeight()
+									* TouchManager.FLICK_MOVE_RATIO
+									/ this.scribbleActivity.pathManager.getZoomScale()));
 					this.scribbleActivity.updateTextViewStatus();
 					this.scribbleActivity.svgFileScribe.debounceSave(
-							this.scribbleActivity,
-							this.scribbleActivity.svgUri,
-							this.scribbleActivity.pathManager);
+						this.scribbleActivity, this.scribbleActivity.svgUri,
+						this.scribbleActivity.pathManager);
 					this.scribbleActivity.penManager.cancelRedraw();
 					this.scribbleActivity.redraw();
 				} else {
 					// If not panned, treat as a tap.
 					if (eventDurationMs < TouchManager.TAP_UPPER_BOUND_MS
-							&& this.cMoveEvents == 0) {
+						&& this.cMoveEvents == 0) {
 						if (currentTimeMs
-								- this.previousTapTimeMs <= TouchManager.DOUBLE_TAP_UPPER_BOUND_MS) {
-							Log.v(XenaApplication.TAG, "TouchManager::onTouch:DOUBLE_TAP.");
-							this.scribbleActivity.isPenEraseMode = !this.scribbleActivity.isPenEraseMode;
-							this.scribbleActivity.drawEraseToggle.setBackgroundResource(
-									this.scribbleActivity.isPenEraseMode
-											? R.drawable.solid_empty
-											: R.drawable.dotted_empty);
+							- this.previousTapTimeMs <= TouchManager.DOUBLE_TAP_UPPER_BOUND_MS) {
+							XenaApplication.log("TouchManager::onTouch:DOUBLE_TAP.");
+							this.scribbleActivity.isPenEraseMode
+								= !this.scribbleActivity.isPenEraseMode;
+							this.scribbleActivity.drawEraseToggle
+								.setBackgroundResource(this.scribbleActivity.isPenEraseMode
+									? R.drawable.solid_empty
+									: R.drawable.dotted_empty);
 							this.scribbleActivity.penManager.cancelRedraw();
 							this.scribbleActivity.redraw();
 							this.previousTapTimeMs = 0;
 						} else {
-							Log.v(XenaApplication.TAG, "TouchManager::onTouch:TAP.");
+							XenaApplication.log("TouchManager::onTouch:TAP.");
 							this.previousTapTimeMs = currentTimeMs;
 						}
 					} else if (eventDurationMs > TouchManager.FLICK_UPPER_BOUND_MS
-							&& Math.sqrt(flickOffsetX * flickOffsetX
-									+ flickOffsetY * flickOffsetY) >= PAN_DISTANCE_THRESHOLD_PX) {
-						Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:PAN");
+						&& Math.sqrt(flickOffsetX * flickOffsetX
+							+ flickOffsetY * flickOffsetY) >= PAN_DISTANCE_THRESHOLD_PX) {
+						XenaApplication.log("ScribbleActivity::onTouch:PAN");
 
-						PointF newOffset = new PointF(
+						PointF newOffset
+							= new PointF(
 								this.scribbleActivity.pathManager.getViewportOffset().x
-										+ (touchPoint.x
-												- this.previousPoint.x)
-												/ this.scribbleActivity.pathManager.getZoomScale(),
+									+ (touchPoint.x - this.previousPoint.x)
+										/ this.scribbleActivity.pathManager.getZoomScale(),
 								this.scribbleActivity.pathManager.getViewportOffset().y
-										+ (touchPoint.y
-												- this.previousPoint.y)
-												/ this.scribbleActivity.pathManager.getZoomScale());
+									+ (touchPoint.y - this.previousPoint.y)
+										/ this.scribbleActivity.pathManager.getZoomScale());
 						this.scribbleActivity.pathManager.setViewportOffset(newOffset);
 
 						this.scribbleActivity.updateTextViewStatus();
 						this.scribbleActivity.svgFileScribe.debounceSave(
-								this.scribbleActivity,
-								this.scribbleActivity.svgUri,
-								this.scribbleActivity.pathManager);
+							this.scribbleActivity, this.scribbleActivity.svgUri,
+							this.scribbleActivity.pathManager);
 						this.scribbleActivity.penManager.cancelRedraw();
 						this.scribbleActivity.redraw();
 					} else {
-						Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:IGNORE");
+						XenaApplication.log("ScribbleActivity::onTouch:IGNORE");
 						this.previousIgnoreChainTimeMs = currentTimeMs;
 					}
 				}
@@ -343,79 +333,76 @@ public class TouchManager implements View.OnTouchListener {
 			// Deprecated events may still be used by Boox API.
 			case MotionEvent.ACTION_POINTER_DOWN:
 			case MotionEvent.ACTION_POINTER_2_DOWN:
-				Log.v(XenaApplication.TAG,
-						"ScribbleActivity::onTouch:ACTION_POINTER_DOWN "
-								+ this.zoomBeginDistance);
-				this.actionDownMaxTouchMajorMinor = Math.max(
-						this.actionDownMaxTouchMajorMinor,
+				XenaApplication.log("ScribbleActivity::onTouch:ACTION_POINTER_DOWN "
+					+ this.zoomBeginDistance);
+				this.actionDownMaxTouchMajorMinor
+					= Math.max(this.actionDownMaxTouchMajorMinor,
 						Math.max(touchMajor, touchMinor));
 
 				if (currentTimeMs
-						- this.previousIgnoreChainTimeMs <= TouchManager.IGNORE_CHAIN_BOUND_MS) {
+					- this.previousIgnoreChainTimeMs <= TouchManager.IGNORE_CHAIN_BOUND_MS) {
 					this.previousIgnoreChainTimeMs = currentTimeMs;
-					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:IGNORE_CHAIN");
+					XenaApplication.log("ScribbleActivity::onTouch:IGNORE_CHAIN");
 					break;
 				}
 
-				this.zoomBeginDistance = Geometry.distance(touchPoint,
-						new PointF(eventX1, eventY1));
+				this.zoomBeginDistance
+					= Geometry.distance(touchPoint, new PointF(eventX1, eventY1));
 				this.zoomDownTimeMs = currentTimeMs;
 				this.zoomDownConsumed = false;
 				break;
 			case MotionEvent.ACTION_POINTER_UP:
 			case MotionEvent.ACTION_POINTER_2_UP:
-				float zoomEndDistance = Geometry.distance(touchPoint,
-						new PointF(eventX1, eventY1));
-				this.actionDownMaxTouchMajorMinor = Math.max(
-						this.actionDownMaxTouchMajorMinor,
+				float zoomEndDistance
+					= Geometry.distance(touchPoint, new PointF(eventX1, eventY1));
+				this.actionDownMaxTouchMajorMinor
+					= Math.max(this.actionDownMaxTouchMajorMinor,
 						Math.max(touchMajor, touchMinor));
-				Log.v(XenaApplication.TAG,
-						"ScribbleActivity::onTouch:ACTION_POINTER_UP " + zoomEndDistance
-								+ " " + this.actionDownMaxTouchMajorMinor);
+				XenaApplication.log("ScribbleActivity::onTouch:ACTION_POINTER_UP "
+					+ zoomEndDistance + " " + this.actionDownMaxTouchMajorMinor);
 
 				boolean wasConsumed = this.zoomDownConsumed;
 				this.zoomDownConsumed = true;
 
 				if (currentTimeMs
-						- this.previousIgnoreChainTimeMs <= TouchManager.IGNORE_CHAIN_BOUND_MS) {
+					- this.previousIgnoreChainTimeMs <= TouchManager.IGNORE_CHAIN_BOUND_MS) {
 					this.previousIgnoreChainTimeMs = currentTimeMs;
-					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:IGNORE_CHAIN");
+					XenaApplication.log("ScribbleActivity::onTouch:IGNORE_CHAIN");
 					break;
 				}
 
 				if (currentTimeMs
-						- this.zoomDownTimeMs < TouchManager.ZOOM_LOWER_BOUND_MS
-						|| wasConsumed
-						|| this.actionDownMaxTouchMajorMinor >= TouchManager.PALM_TOUCH_MAJOR_MINOR_THRESHOLD) {
-					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:IGNORE");
+					- this.zoomDownTimeMs < TouchManager.ZOOM_LOWER_BOUND_MS
+					|| wasConsumed
+					|| this.actionDownMaxTouchMajorMinor >= TouchManager.PALM_TOUCH_MAJOR_MINOR_THRESHOLD) {
+					XenaApplication.log("ScribbleActivity::onTouch:IGNORE");
 					this.previousIgnoreChainTimeMs = currentTimeMs;
 					break;
 				}
 
 				boolean zoomChanged = false;
 				if (this.zoomBeginDistance
-						- zoomEndDistance >= TouchManager.ZOOM_DISTANCE_BOUND_PX) {
+					- zoomEndDistance >= TouchManager.ZOOM_DISTANCE_BOUND_PX) {
 					this.scribbleActivity.pathManager.zoomOut();
 					zoomChanged = true;
 				} else if (zoomEndDistance
-						- this.zoomBeginDistance >= TouchManager.ZOOM_DISTANCE_BOUND_PX) {
+					- this.zoomBeginDistance >= TouchManager.ZOOM_DISTANCE_BOUND_PX) {
 					this.scribbleActivity.pathManager.zoomIn();
 					zoomChanged = true;
 				}
 
 				if (zoomChanged) {
-					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:ZOOM");
+					XenaApplication.log("ScribbleActivity::onTouch:ZOOM");
 					this.scribbleActivity.setStrokeWidthScale(
-							this.scribbleActivity.pathManager.getZoomScale());
+						this.scribbleActivity.pathManager.getZoomScale());
 					this.scribbleActivity.updateTextViewStatus();
 					this.scribbleActivity.penManager.cancelRedraw();
 					this.scribbleActivity.redraw();
 					this.scribbleActivity.svgFileScribe.debounceSave(
-							this.scribbleActivity,
-							this.scribbleActivity.svgUri,
-							this.scribbleActivity.pathManager);
+						this.scribbleActivity, this.scribbleActivity.svgUri,
+						this.scribbleActivity.pathManager);
 				} else {
-					Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:IGNORE");
+					XenaApplication.log("ScribbleActivity::onTouch:IGNORE");
 					this.previousIgnoreChainTimeMs = currentTimeMs;
 				}
 
@@ -423,9 +410,8 @@ public class TouchManager implements View.OnTouchListener {
 				this.scribbleActivity.isPanning = false;
 				break;
 			default:
-				Log.v(XenaApplication.TAG,
-						"ScribbleActivity::onTouch:OTHER " + eventAction);
-				Log.v(XenaApplication.TAG, "ScribbleActivity::onTouch:IGNORE");
+				XenaApplication.log("ScribbleActivity::onTouch:OTHER " + eventAction);
+				XenaApplication.log("ScribbleActivity::onTouch:IGNORE");
 				this.previousIgnoreChainTimeMs = currentTimeMs;
 				break;
 		}

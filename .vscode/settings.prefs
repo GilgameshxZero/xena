@@ -1,2 +1,16 @@
+org.eclipse.jdt.core.formatter.tabulation.size=2
+org.eclipse.jdt.core.formatter.indentation.size=2
+org.eclipse.jdt.core.formatter.continuation_indentation=1
+org.eclipse.jdt.core.formatter.continuation_indentation_for_array_initializer=1
+
 org.eclipse.jdt.core.formatter.lineSplit=80
 org.eclipse.jdt.core.formatter.comment.line_length=80
+org.eclipse.jdt.core.formatter.join_wrapped_lines=true
+org.eclipse.jdt.core.formatter.join_lines_in_comments=true
+org.eclipse.jdt.core.formatter.join_lines_comments=true
+org.eclipse.jdt.core.formatter.wrap_before_assignment_operator=true
+
+org.eclipse.jdt.core.formatter.alignment_for_assignment=createAlignmentValue(false, WRAP_COMPACT, INDENT_DEFAULT)
+org.eclipse.jdt.core.formatter.alignment_for_conditional_expression=createAlignmentValue(false, WRAP_COMPACT, INDENT_DEFAULT)
+org.eclipse.jdt.core.formatter.alignment_for_binary_expression=createAlignmentValue(false, WRAP_COMPACT, INDENT_DEFAULT)
+// org.eclipse.jdt.core.formatter.alignment_for_relational_operator=createAlignmentValue(false, WRAP_COMPACT, INDENT_DEFAULT)

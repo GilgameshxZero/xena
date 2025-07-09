@@ -1,31 +1,25 @@
 package com.gilgamesh.xena.scribble;
 
 import com.gilgamesh.xena.filesystem.SvgFileScribe;
-import com.gilgamesh.xena.pdf.PageBitmap;
 import com.gilgamesh.xena.pdf.PdfReader;
+import com.gilgamesh.xena.BaseActivity;
 import com.gilgamesh.xena.R;
 import com.gilgamesh.xena.XenaApplication;
 
 import com.onyx.android.sdk.pen.TouchHelper;
 
-import android.app.Activity;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.graphics.PointF;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -33,11 +27,11 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.io.File;
 
-public class ScribbleActivity extends Activity
-		implements View.OnClickListener {
+public class ScribbleActivity extends BaseActivity
+	implements View.OnClickListener {
 	static public final float STROKE_WIDTH_DP = 2.5f;
-	static public final float STROKE_WIDTH_PX = ScribbleActivity.STROKE_WIDTH_DP
-			* XenaApplication.DPI / 160;
+	static public final float STROKE_WIDTH_PX
+		= ScribbleActivity.STROKE_WIDTH_DP * XenaApplication.DPI / 160;
 
 	// `final` is deceptive for mutable objects.
 	static final Paint PAINT_TENTATIVE_LINE;
@@ -54,7 +48,7 @@ public class ScribbleActivity extends Activity
 		PAINT_TRANSPARENT = new Paint();
 		PAINT_TRANSPARENT.setAntiAlias(true);
 		PAINT_TRANSPARENT
-				.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OUT));
+			.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OUT));
 		PAINT_TRANSPARENT.setColor(Color.TRANSPARENT);
 	}
 	static final Paint PAINT_WHITE;
@@ -72,8 +66,8 @@ public class ScribbleActivity extends Activity
 	static public final String EXTRA_SVG_PATH = "EXTRA_SVG_PATH";
 	static public final String EXTRA_PDF_PATH = "EXTRA_PDF_PATH";
 	static private final int TEXT_VIEW_PATH_SUFFIX_LENGTH = 24;
-	static private PointF PIXELS_PER_PAGE = new PointF(
-			(int) XenaApplication.DPI * 8.5f, XenaApplication.DPI * 11f);
+	static private PointF PIXELS_PER_PAGE
+		= new PointF((int) XenaApplication.DPI * 8.5f, XenaApplication.DPI * 11f);
 
 	// Managers.
 	SvgFileScribe svgFileScribe;
@@ -106,9 +100,7 @@ public class ScribbleActivity extends Activity
 	boolean isPenEraseMode = false;
 
 	static public enum PenTouchMode {
-		DEFAULT,
-		FORCE_DRAW,
-		FORCE_PAN
+		DEFAULT, FORCE_DRAW, FORCE_PAN
 	};
 
 	PenTouchMode penTouchMode = PenTouchMode.DEFAULT;
@@ -129,20 +121,19 @@ public class ScribbleActivity extends Activity
 
 		this.textViewPath = findViewById(R.id.activity_scribble_text_view_path);
 		this.textViewStatus = findViewById(R.id.activity_scribble_text_view_status);
-		this.drawEraseToggle = findViewById(
-				R.id.activity_scribble_draw_erase_toggle);
-		this.drawPanToggle = findViewById(
-				R.id.activity_scribble_draw_pan_toggle);
-		this.coordinateDialog = findViewById(
-				R.id.activity_scribble_coordinate_dialog);
-		this.coordinateEditPalm = findViewById(
-				R.id.activity_scribble_coordinate_dialog_edit_palm);
+		this.drawEraseToggle
+			= findViewById(R.id.activity_scribble_draw_erase_toggle);
+		this.drawPanToggle = findViewById(R.id.activity_scribble_draw_pan_toggle);
+		this.coordinateDialog
+			= findViewById(R.id.activity_scribble_coordinate_dialog);
+		this.coordinateEditPalm
+			= findViewById(R.id.activity_scribble_coordinate_dialog_edit_palm);
 		this.coordinateEditPalm.setTransformationMethod(null);
-		this.coordinateEditX = findViewById(
-				R.id.activity_scribble_coordinate_dialog_edit_x);
+		this.coordinateEditX
+			= findViewById(R.id.activity_scribble_coordinate_dialog_edit_x);
 		this.coordinateEditX.setTransformationMethod(null);
-		this.coordinateEditY = findViewById(
-				R.id.activity_scribble_coordinate_dialog_edit_y);
+		this.coordinateEditY
+			= findViewById(R.id.activity_scribble_coordinate_dialog_edit_y);
 		this.coordinateEditY.setTransformationMethod(null);
 
 		this.svgFileScribe = new SvgFileScribe(new SvgFileScribe.Callback() {
@@ -179,14 +170,11 @@ public class ScribbleActivity extends Activity
 
 	@Override
 	protected void onResume() {
-		this.touchHelper
-				.setRawDrawingEnabled(false)
-				.setLimitRect(
-						new Rect(0, 0, this.scribbleView.getWidth(),
-								this.scribbleView.getHeight()),
-						this.getRawDrawingExclusions())
-				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
-				.setRawDrawingEnabled(true);
+		this.touchHelper.setRawDrawingEnabled(false)
+			.setLimitRect(new Rect(0, 0, this.scribbleView.getWidth(),
+				this.scribbleView.getHeight()), this.getRawDrawingExclusions())
+			.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
+			.setRawDrawingEnabled(true);
 		if (this.pathManager != null) {
 			this.setStrokeWidthScale(this.pathManager.getZoomScale());
 		}
@@ -200,7 +188,7 @@ public class ScribbleActivity extends Activity
 		// processed/moved elsewhere already.
 		if (!this.svgFileScribe.getIsSaved()) {
 			this.svgFileScribe.debounceSave(ScribbleActivity.this, svgUri,
-					this.pathManager, 0);
+				this.pathManager, 0);
 		}
 		this.touchHelper.setRawDrawingEnabled(false);
 		super.onPause();
@@ -216,51 +204,49 @@ public class ScribbleActivity extends Activity
 	public void onClick(View v) {
 		long currentTimeMs = System.currentTimeMillis();
 		if (currentTimeMs
-				- this.touchManager.previousIgnoreChainTimeMs <= TouchManager.IGNORE_CHAIN_BOUND_MS) {
+			- this.touchManager.previousIgnoreChainTimeMs <= TouchManager.IGNORE_CHAIN_BOUND_MS) {
 			this.touchManager.previousIgnoreChainTimeMs = currentTimeMs;
-			Log.v(XenaApplication.TAG, "ScribbleActivity::onClick:IGNORE_CHAIN");
+			XenaApplication.log("ScribbleActivity::onClick:IGNORE_CHAIN");
 			return;
 		}
 
 		switch (v.getId()) {
 			case R.id.activity_scribble_text_view_path:
-				Log.v(XenaApplication.TAG,
-						"ScribbleActivity::onClick:activity_scribble_text_view_path.");
+				XenaApplication
+					.log("ScribbleActivity::onClick:activity_scribble_text_view_path.");
 				this.penManager.cancelRedraw();
 				this.redraw();
 				this.svgFileScribe.debounceSave(ScribbleActivity.this, svgUri,
-						this.pathManager, 0);
+					this.pathManager, 0);
 				break;
 			case R.id.activity_scribble_text_view_status:
-				Log.v(XenaApplication.TAG,
-						"ScribbleActivity::onClick:activity_scribble_text_view_status.");
+				XenaApplication
+					.log("ScribbleActivity::onClick:activity_scribble_text_view_status.");
 				PointF viewportOffset = this.pathManager.getViewportOffset();
-				this.coordinateEditPalm.setText(
-						String.valueOf(
-								(int) Math
-										.round(TouchManager.PALM_TOUCH_MAJOR_MINOR_THRESHOLD)));
-				this.coordinateEditX.setText(String.valueOf((int) Math.floor(
-						-viewportOffset.x / ScribbleActivity.PIXELS_PER_PAGE.x)));
-				this.coordinateEditY.setText(String.valueOf((int) Math.floor(
-						-viewportOffset.y / ScribbleActivity.PIXELS_PER_PAGE.y)));
+				this.coordinateEditPalm.setText(String.valueOf(
+					(int) Math.round(TouchManager.PALM_TOUCH_MAJOR_MINOR_THRESHOLD)));
+				this.coordinateEditX.setText(String.valueOf((int) Math
+					.floor(-viewportOffset.x / ScribbleActivity.PIXELS_PER_PAGE.x)));
+				this.coordinateEditY.setText(String.valueOf((int) Math
+					.floor(-viewportOffset.y / ScribbleActivity.PIXELS_PER_PAGE.y)));
 				this.coordinateDialog.setVisibility(View.VISIBLE);
 				this.penManager.cancelRedraw();
 				this.redraw();
 				this.touchHelper.closeRawDrawing();
 				break;
 			case R.id.activity_scribble_draw_erase_toggle:
-				Log.v(XenaApplication.TAG,
-						"ScribbleActivity::onClick:activity_scribble_draw_erase_toggle.");
+				XenaApplication.log(
+					"ScribbleActivity::onClick:activity_scribble_draw_erase_toggle.");
 				this.isPenEraseMode = !this.isPenEraseMode;
-				this.drawEraseToggle
-						.setBackgroundResource(this.isPenEraseMode ? R.drawable.solid_empty
-								: R.drawable.dotted_empty);
+				this.drawEraseToggle.setBackgroundResource(this.isPenEraseMode
+					? R.drawable.solid_empty
+					: R.drawable.dotted_empty);
 				this.penManager.cancelRedraw();
 				this.redraw();
 				break;
 			case R.id.activity_scribble_draw_pan_toggle:
-				Log.v(XenaApplication.TAG,
-						"ScribbleActivity::onClick:activity_scribble_draw_pan_toggle.");
+				XenaApplication
+					.log("ScribbleActivity::onClick:activity_scribble_draw_pan_toggle.");
 				switch (this.penTouchMode) {
 					case DEFAULT:
 						this.penTouchMode = PenTouchMode.FORCE_DRAW;
@@ -281,23 +267,24 @@ public class ScribbleActivity extends Activity
 				this.redraw();
 				break;
 			case R.id.activity_scribble_coordinate_dialog_set:
-				Log.v(XenaApplication.TAG,
-						"ScribbleActivity::onClick:activity_scribble_coordinate_dialog_set. "
-								+ this.coordinateEditX.getText().toString() + " "
-								+ this.coordinateEditY.getText().toString());
+				XenaApplication.log(
+					"ScribbleActivity::onClick:activity_scribble_coordinate_dialog_set. "
+						+ this.coordinateEditX.getText().toString() + " "
+						+ this.coordinateEditY.getText().toString());
 				this.pathManager.setViewportOffset(new PointF(
-						-Integer.parseInt(this.coordinateEditX.getText().toString())
-								* ScribbleActivity.PIXELS_PER_PAGE.x,
-						-Integer.parseInt(this.coordinateEditY.getText().toString())
-								* ScribbleActivity.PIXELS_PER_PAGE.y));
-				this.touchManager.updatePalmTouchThreshold(Float
-						.parseFloat(this.coordinateEditPalm.getText().toString()));
+					-Integer.parseInt(this.coordinateEditX.getText().toString())
+						* ScribbleActivity.PIXELS_PER_PAGE.x,
+					-Integer.parseInt(this.coordinateEditY.getText().toString())
+						* ScribbleActivity.PIXELS_PER_PAGE.y));
+				this.touchManager.updatePalmTouchThreshold(
+					Float.parseFloat(this.coordinateEditPalm.getText().toString()));
 				this.updateTextViewStatus();
 				this.coordinateDialog.setVisibility(View.GONE);
 
 				View view = this.getCurrentFocus();
 				if (view != null) {
-					InputMethodManager imm = (InputMethodManager) getSystemService(
+					InputMethodManager imm
+						= (InputMethodManager) getSystemService(
 							Context.INPUT_METHOD_SERVICE);
 					imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
 				}
@@ -316,23 +303,19 @@ public class ScribbleActivity extends Activity
 		if (pdfPath != null) {
 			this.pdfUri = Uri.fromFile(new File(pdfPath));
 			this.pdfReader = new PdfReader(this, this.pdfUri);
-			Log.v(XenaApplication.TAG,
-					"ScribbleActivity::parseUri: Received 2 URIs: "
-							+ this.svgUri.toString()
-							+ " and "
-							+ this.pdfUri.toString() + ".");
+			XenaApplication.log("ScribbleActivity::parseUri: Received 2 URIs: "
+				+ this.svgUri.toString() + " and " + this.pdfUri.toString() + ".");
 		} else {
-			Log.v(XenaApplication.TAG,
-					"ScribbleActivity::parseUri: Received 1 URI: "
-							+ this.svgUri.toString()
-							+ ".");
+			XenaApplication.log("ScribbleActivity::parseUri: Received 1 URI: "
+				+ this.svgUri.toString() + ".");
 		}
 
 		this.updateTextViewPath(true);
 	}
 
 	private void initDrawing() {
-		this.pathManager = new PathManager(
+		this.pathManager
+			= new PathManager(
 				new Point(this.scribbleView.getWidth(), this.scribbleView.getHeight()));
 		SvgFileScribe.loadPathsFromSvg(this, this.svgUri, this.pathManager);
 
@@ -344,7 +327,7 @@ public class ScribbleActivity extends Activity
 
 	void drawBitmapToView(boolean force, boolean invalidate) {
 		if (!force && scribbleView.isDrawing()) {
-			// Log.v(XenaApplication.TAG, "Dirty ScribbleView.");
+			// XenaApplication.log( "Dirty ScribbleView.");
 			return;
 		}
 
@@ -357,32 +340,31 @@ public class ScribbleActivity extends Activity
 
 	void updateTextViewStatus() {
 		PointF viewportOffset = this.pathManager.getViewportOffset();
-		this.textViewStatus.setText((int) Math.floor(
-				-viewportOffset.x / ScribbleActivity.PIXELS_PER_PAGE.x)
+		this.textViewStatus.setText(
+			(int) Math.floor(-viewportOffset.x / ScribbleActivity.PIXELS_PER_PAGE.x)
 				+ ", "
-				+ (int) Math.floor(
-						-viewportOffset.y / ScribbleActivity.PIXELS_PER_PAGE.y)
-				+ " | "
-				+ Math.round(this.pathManager.getZoomScale() * 100) + "%");
+				+ (int) Math
+					.floor(-viewportOffset.y / ScribbleActivity.PIXELS_PER_PAGE.y)
+				+ " | " + Math.round(this.pathManager.getZoomScale() * 100) + "%");
 	}
 
 	void updateTextViewPath(boolean isSaved) {
-		String uriString = this.pdfUri != null ? this.pdfUri.toString()
-				: this.svgUri.toString();
-		this.textViewPath.setText("..." + uriString.substring(uriString.length()
-				- ScribbleActivity.TEXT_VIEW_PATH_SUFFIX_LENGTH));
+		String uriString
+			= this.pdfUri != null ? this.pdfUri.toString() : this.svgUri.toString();
+		this.textViewPath.setText("..." + uriString.substring(
+			uriString.length() - ScribbleActivity.TEXT_VIEW_PATH_SUFFIX_LENGTH));
 		this.textViewPath.setBackgroundResource(
-				isSaved ? R.drawable.solid_empty : R.drawable.dotted_empty);
+			isSaved ? R.drawable.solid_empty : R.drawable.dotted_empty);
 	}
 
 	ArrayList<Rect> getRawDrawingExclusions() {
 		ArrayList<Rect> exclusions = new ArrayList<Rect>();
 		exclusions.add(
-				new Rect(this.drawEraseToggle.getLeft(), this.drawEraseToggle.getTop(),
-						this.drawEraseToggle.getRight(), this.drawEraseToggle.getBottom()));
-		exclusions.add(
-				new Rect(this.drawPanToggle.getLeft(), this.drawPanToggle.getTop(),
-						this.drawPanToggle.getRight(), this.drawPanToggle.getBottom()));
+			new Rect(this.drawEraseToggle.getLeft(), this.drawEraseToggle.getTop(),
+				this.drawEraseToggle.getRight(), this.drawEraseToggle.getBottom()));
+		exclusions
+			.add(new Rect(this.drawPanToggle.getLeft(), this.drawPanToggle.getTop(),
+				this.drawPanToggle.getRight(), this.drawPanToggle.getBottom()));
 		return exclusions;
 	}
 
@@ -392,19 +374,17 @@ public class ScribbleActivity extends Activity
 			zoomScale = this.pathManager.getZoomScale();
 		}
 		this.touchHelper
-				.setLimitRect(
-						new Rect(0, 0, this.scribbleView.getWidth(),
-								this.scribbleView.getHeight()),
-						this.getRawDrawingExclusions())
-				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
-				.openRawDrawing().setRawDrawingEnabled(true);
+			.setLimitRect(new Rect(0, 0, this.scribbleView.getWidth(),
+				this.scribbleView.getHeight()), this.getRawDrawingExclusions())
+			.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL).openRawDrawing()
+			.setRawDrawingEnabled(true);
 		this.setStrokeWidthScale(zoomScale);
 	}
 
 	void setStrokeWidthScale(float scale) {
 		this.touchHelper
-				.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale * 1.2f);
+			.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale * 1.2f);
 		ScribbleActivity.PAINT_TENTATIVE_LINE
-				.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale);
+			.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale);
 	}
 }

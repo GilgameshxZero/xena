@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import com.gilgamesh.xena.XenaApplication;
 import com.gilgamesh.xena.scribble.ScribbleActivity;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.PointF;
@@ -23,29 +22,25 @@ public class PdfReader {
 
 	private PdfRenderer renderer;
 	private PageBitmap[] pages;
-	private ScribbleActivity scribbleActivity;
-	private Uri uri;
 	private int pageCount;
 	private PointF pointScale = new PointF();
 	private boolean sizingDone = false;
 
 	public PdfReader(ScribbleActivity scribbleActivity, Uri uri) {
-		this.scribbleActivity = scribbleActivity;
-		this.uri = uri;
 
 		// 72 because PDFs render at 72dpi.
 		this.pointScale.x = XenaApplication.DPI / 72f;
 		this.pointScale.y = XenaApplication.DPI / 72f;
 
 		try {
-			this.renderer = new PdfRenderer(scribbleActivity.getContentResolver()
-					.openFileDescriptor(uri, "r"));
+			this.renderer
+				= new PdfRenderer(
+					scribbleActivity.getContentResolver().openFileDescriptor(uri, "r"));
 			// TODO: renderer should be closed, but there is no destructor to close
 			// it.
 		} catch (IOException e) {
 			Log.e(XenaApplication.TAG,
-					"PdfReader::PdfReader: Failed to parse file: "
-							+ e.toString() + ".");
+				"PdfReader::PdfReader: Failed to parse file: " + e.toString() + ".");
 		}
 
 		this.pageCount = renderer.getPageCount();
@@ -56,12 +51,13 @@ public class PdfReader {
 			public void run() {
 				float nextTop = 0;
 				for (int i = 0; i < pageCount; i++) {
-					Log.v("Xena", "PdfReader::PdfReader: Sized page " + i + ".");
+					XenaApplication.log("PdfReader::PdfReader: Sized page " + i + ".");
 					Page page = renderer.openPage(i);
 					Point pageSize = new Point(page.getWidth(), page.getHeight());
 					page.close();
 					pages[i] = new PageBitmap();
-					pages[i].location = new RectF(0, nextTop, pageSize.x * pointScale.x,
+					pages[i].location
+						= new RectF(0, nextTop, pageSize.x * pointScale.x,
 							nextTop + pageSize.y * pointScale.y);
 					nextTop += pageSize.y * pointScale.y;
 				}
@@ -72,8 +68,7 @@ public class PdfReader {
 			}
 		});
 
-		Log.v(XenaApplication.TAG,
-				"PdfReader::PdfReader: Found " + pageCount + " pages.");
+		XenaApplication.log("PdfReader::PdfReader: Found " + pageCount + " pages.");
 	}
 
 	// Caches bitmaps.
@@ -84,17 +79,15 @@ public class PdfReader {
 
 		if (this.pages[pageIdx].bitmap == null) {
 			Page page = renderer.openPage(pageIdx);
-			this.pages[pageIdx].bitmap = Bitmap.createBitmap(
+			this.pages[pageIdx].bitmap
+				= Bitmap.createBitmap(
 					Math.round(page.getWidth() * this.pointScale.x * RENDER_SCALE),
 					Math.round(page.getHeight() * this.pointScale.y * RENDER_SCALE),
 					Bitmap.Config.ARGB_8888);
 			page.render(this.pages[pageIdx].bitmap, null, null,
-					Page.RENDER_MODE_FOR_DISPLAY);
-			Log.v(XenaApplication.TAG,
-					"PdfReader::PdfReader: Rendered page " + pageIdx + ": "
-							+ page.getWidth()
-							+ "x"
-							+ page.getHeight() + ".");
+				Page.RENDER_MODE_FOR_DISPLAY);
+			XenaApplication.log("PdfReader::PdfReader: Rendered page " + pageIdx
+				+ ": " + page.getWidth() + "x" + page.getHeight() + ".");
 			page.close();
 			// Bitmap bitmap = Bitmap.createBitmap(
 			// Math.round(page.getWidth() * this.pointScale.x),
