@@ -184,7 +184,8 @@ public class TouchManager implements View.OnTouchListener {
 						this.actionDownMaxTouchMajorMinor,
 						Math.max(touchMajor, touchMinor));
 
-				if (this.actionDownMaxTouchMajorMinor >= TouchManager.PALM_TOUCH_MAJOR_MINOR_THRESHOLD) {
+				if (this.actionDownMaxTouchMajorMinor >= TouchManager.PALM_TOUCH_MAJOR_MINOR_THRESHOLD
+						|| !this.zoomDownConsumed) {
 					break;
 				}
 

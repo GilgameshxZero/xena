@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import com.gilgamesh.xena.XenaApplication;
+import com.gilgamesh.xena.scribble.ScribbleActivity;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.graphics.pdf.PdfRenderer;
@@ -17,16 +19,18 @@ import android.util.Log;
 
 // Pages are laid out vertically, left-aligned at 0.
 public class PdfReader {
-	static private final float RENDER_SCALE = 2f;
+	static private final float RENDER_SCALE = 1f;
 
+	private PdfRenderer renderer;
 	private PageBitmap[] pages;
-	private Context context;
+	private ScribbleActivity scribbleActivity;
 	private Uri uri;
 	private int pageCount;
 	private PointF pointScale = new PointF();
+	private boolean sizingDone = false;
 
-	public PdfReader(Context context, Uri uri) {
-		this.context = context;
+	public PdfReader(ScribbleActivity scribbleActivity, Uri uri) {
+		this.scribbleActivity = scribbleActivity;
 		this.uri = uri;
 
 		// 72 because PDFs render at 72dpi.
@@ -34,107 +38,118 @@ public class PdfReader {
 		this.pointScale.y = XenaApplication.DPI / 72f;
 
 		try {
-			PdfRenderer renderer = new PdfRenderer(context.getContentResolver()
+			this.renderer = new PdfRenderer(scribbleActivity.getContentResolver()
 					.openFileDescriptor(uri, "r"));
-			this.pageCount = renderer.getPageCount();
-			this.pages = new PageBitmap[this.pageCount];
-			float nextTop = 0;
-			for (int i = 0; i < this.pageCount; i++) {
-				Page page = renderer.openPage(i);
-				this.pages[i] = new PageBitmap();
-				this.pages[i].location = new RectF(0, nextTop, page.getWidth()
-						* this.pointScale.x,
-						nextTop + page.getHeight() * this.pointScale.y);
-				nextTop += page.getHeight() * this.pointScale.y;
-				page.close();
-			}
-			renderer.close();
-
-			Log.v(XenaApplication.TAG,
-					"PdfReader::PdfReader: Found " + pageCount + " pages.");
+			// TODO: renderer should be closed, but there is no destructor to close
+			// it.
 		} catch (IOException e) {
 			Log.e(XenaApplication.TAG,
 					"PdfReader::PdfReader: Failed to parse file: "
 							+ e.toString() + ".");
 		}
+
+		this.pageCount = renderer.getPageCount();
+		this.pages = new PageBitmap[this.pageCount];
+
+		AsyncTask.execute(new Runnable() {
+			@Override
+			public void run() {
+				float nextTop = 0;
+				for (int i = 0; i < pageCount; i++) {
+					Log.v("Xena", "PdfReader::PdfReader: Sized page " + i + ".");
+					Page page = renderer.openPage(i);
+					Point pageSize = new Point(page.getWidth(), page.getHeight());
+					page.close();
+					pages[i] = new PageBitmap();
+					pages[i].location = new RectF(0, nextTop, pageSize.x * pointScale.x,
+							nextTop + pageSize.y * pointScale.y);
+					nextTop += pageSize.y * pointScale.y;
+				}
+
+				// Call redraw when done.
+				sizingDone = true;
+				scribbleActivity.redraw();
+			}
+		});
+
+		Log.v(XenaApplication.TAG,
+				"PdfReader::PdfReader: Found " + pageCount + " pages.");
 	}
 
 	// Caches bitmaps.
-	private PageBitmap getBitmapForPage(int pageIdx, boolean preRender) {
-		if (preRender) {
-			// Pre-render surrounding pages.
-			AsyncTask.execute(new Runnable() {
-				@Override
-				public void run() {
-					getBitmapForPage(pageIdx - 1, false);
-					getBitmapForPage(pageIdx + 1, false);
-				}
-			});
-		}
-
+	private synchronized PageBitmap getBitmapForPage(int pageIdx) {
 		if (pageIdx < 0 || pageIdx >= this.pages.length) {
 			return null;
 		}
 
 		if (this.pages[pageIdx].bitmap == null) {
-			try {
-				PdfRenderer renderer = new PdfRenderer(context.getContentResolver()
-						.openFileDescriptor(uri, "r"));
-				Page page = renderer.openPage(pageIdx);
-				Log.v(XenaApplication.TAG,
-						"PdfReader::PdfReader: Rendered page " + pageIdx + ": "
-								+ page.getWidth()
-								+ "x"
-								+ page.getHeight() + ".");
-				this.pages[pageIdx].bitmap = Bitmap.createBitmap(
-						Math.round(page.getWidth() * this.pointScale.x * RENDER_SCALE),
-						Math.round(page.getHeight() * this.pointScale.y * RENDER_SCALE),
-						Bitmap.Config.ARGB_8888);
-				page.render(this.pages[pageIdx].bitmap, null, null,
-						Page.RENDER_MODE_FOR_DISPLAY);
-				// Bitmap bitmap = Bitmap.createBitmap(
-				// Math.round(page.getWidth() * this.pointScale.x),
-				// Math.round(page.getHeight() * this.pointScale.y),
-				// Bitmap.Config.ARGB_8888);
-				// page.render(bitmap, null, null, Page.RENDER_MODE_FOR_DISPLAY);
-				// int cPixels = bitmap.getWidth() * bitmap.getHeight();
-				// int pixels[] = new int[cPixels];
-				// bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0,
-				// bitmap.getWidth(),
-				// bitmap.getHeight());
-				// this.pages[pageIdx].bitmap = Bitmap.createBitmap(
-				// Math.round(page.getWidth() * this.pointScale.x),
-				// Math.round(page.getHeight() * this.pointScale.y),
-				// Bitmap.Config.ALPHA_8);
-				// for (int i = 0; i < cPixels; i++) {
-				// Color color = Color.valueOf(pixels[i]);
-				// pixels[i] = (int) ((1 - (color.red() + color.green() + color.blue())
-				// / 3)
-				// * color.alpha() * 255) << 24;
-				// }
-				// this.pages[pageIdx].bitmap.setPixels(pixels, 0, bitmap.getWidth(), 0,
-				// 0,
-				// bitmap.getWidth(), bitmap.getHeight());
-				page.close();
-				renderer.close();
-			} catch (IOException e) {
-				Log.e(XenaApplication.TAG,
-						"PdfReader::PdfReader: Failed to read page " + pageIdx + ": "
-								+ e.toString() + ".");
-			}
+			Page page = renderer.openPage(pageIdx);
+			this.pages[pageIdx].bitmap = Bitmap.createBitmap(
+					Math.round(page.getWidth() * this.pointScale.x * RENDER_SCALE),
+					Math.round(page.getHeight() * this.pointScale.y * RENDER_SCALE),
+					Bitmap.Config.ARGB_8888);
+			page.render(this.pages[pageIdx].bitmap, null, null,
+					Page.RENDER_MODE_FOR_DISPLAY);
+			Log.v(XenaApplication.TAG,
+					"PdfReader::PdfReader: Rendered page " + pageIdx + ": "
+							+ page.getWidth()
+							+ "x"
+							+ page.getHeight() + ".");
+			page.close();
+			// Bitmap bitmap = Bitmap.createBitmap(
+			// Math.round(page.getWidth() * this.pointScale.x),
+			// Math.round(page.getHeight() * this.pointScale.y),
+			// Bitmap.Config.ARGB_8888);
+			// page.render(bitmap, null, null, Page.RENDER_MODE_FOR_DISPLAY);
+			// int cPixels = bitmap.getWidth() * bitmap.getHeight();
+			// int pixels[] = new int[cPixels];
+			// bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0,
+			// bitmap.getWidth(),
+			// bitmap.getHeight());
+			// this.pages[pageIdx].bitmap = Bitmap.createBitmap(
+			// Math.round(page.getWidth() * this.pointScale.x),
+			// Math.round(page.getHeight() * this.pointScale.y),
+			// Bitmap.Config.ALPHA_8);
+			// for (int i = 0; i < cPixels; i++) {
+			// Color color = Color.valueOf(pixels[i]);
+			// pixels[i] = (int) ((1 - (color.red() + color.green() + color.blue())
+			// / 3)
+			// * color.alpha() * 255) << 24;
+			// }
+			// this.pages[pageIdx].bitmap.setPixels(pixels, 0, bitmap.getWidth(), 0,
+			// 0,
+			// bitmap.getWidth(), bitmap.getHeight());
 		}
+
 		return this.pages[pageIdx];
 	}
 
 	// Returns PageBitmaps which intersect a rectangle viewport.
 	public ArrayList<PageBitmap> getBitmapsForViewport(RectF viewport) {
 		ArrayList<PageBitmap> validPages = new ArrayList<PageBitmap>();
-		for (int i = 0; i < this.pageCount; i++) {
-			if (RectF.intersects(viewport, this.pages[i].location)) {
-				validPages.add(this.getBitmapForPage(i, true));
-			} else if (validPages.size() > 0) {
-				break;
+		if (this.sizingDone) {
+			int firstPage = this.pageCount, lastPage = 0;
+			for (int i = 0; i < this.pageCount; i++) {
+				if (RectF.intersects(viewport, this.pages[i].location)) {
+					validPages.add(this.getBitmapForPage(i));
+					firstPage = Math.min(firstPage, i);
+					lastPage = Math.max(lastPage, i);
+				} else if (validPages.size() > 0) {
+					break;
+				}
 			}
+
+			final int finalFirstPage = firstPage;
+			final int finalLastPage = lastPage;
+			AsyncTask.execute(new Runnable() {
+				@Override
+				public void run() {
+					getBitmapForPage(finalFirstPage - 2);
+					getBitmapForPage(finalFirstPage - 1);
+					getBitmapForPage(finalLastPage + 1);
+					getBitmapForPage(finalLastPage + 2);
+				}
+			});
 		}
 		return validPages;
 	}
