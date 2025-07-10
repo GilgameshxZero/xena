@@ -375,7 +375,7 @@ public class ScribbleActivity extends BaseActivity
 		switch (this.brushMode) {
 			case DEFAULT:
 				this.touchHelper
-					.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale);
+					.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale * 1.15f);
 				break;
 			case CHARCOAL:
 				this.touchHelper

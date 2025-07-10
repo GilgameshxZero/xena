@@ -28,7 +28,7 @@ public class PdfReader {
 	static private final PointF POINT_SCALE
 		= new PointF(XenaApplication.DPI / PdfReader.PDF_DPI,
 			XenaApplication.DPI / PdfReader.PDF_DPI);
-	static private final float RENDER_SCALE = 2f;
+	static private final float RENDER_SCALE = 1f;
 
 	private PdfRenderer renderer;
 	private PageBitmap[] pages;
