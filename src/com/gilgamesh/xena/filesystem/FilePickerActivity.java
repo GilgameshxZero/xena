@@ -53,6 +53,8 @@ public class FilePickerActivity extends BaseActivity
 
 	private EditText editText;
 	private LinearLayout listingLayout;
+	private LinearLayout modal;
+	private EditText modalEditPalm;
 
 	private FilePickerTouchManager touchManager;
 
@@ -63,9 +65,13 @@ public class FilePickerActivity extends BaseActivity
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		this.setContentView(R.layout.activity_file_picker);
-		this.editText = findViewById(R.id.activity_file_picker_edit_text);
-		this.listingLayout = findViewById(R.id.activity_file_picker_layout_listing);
+		this.setContentView(R.layout.file_picker_activity);
+		this.editText = findViewById(R.id.file_picker_activity_edit_text);
+		this.listingLayout = findViewById(R.id.file_picker_activity_layout_listing);
+		this.modal = findViewById(R.id.file_picker_activity_modal);
+		this.modalEditPalm
+			= findViewById(R.id.file_picker_activity_modal_edit_palm);
+		this.modalEditPalm.setTransformationMethod(null);
 
 		this.touchManager = new FilePickerTouchManager(this);
 
@@ -125,13 +131,26 @@ public class FilePickerActivity extends BaseActivity
 			path = originalPath.substring(0, originalPath.lastIndexOf('/'));
 
 		switch (view.getId()) {
-			case R.id.activity_file_picker_button_date:
+			case R.id.file_picker_activity_button_settings:
+				this.modalEditPalm.setText(String
+					.valueOf((int) Math.round(XenaApplication.getPalmTouchThreshold())));
+				this.modal.setVisibility(View.VISIBLE);
+				break;
+			case R.id.file_picker_activity_button_date:
 				this.setEditText(
 					path + "/" + new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
 				this.maybeStartScribbleActivity(true);
 				break;
-			case R.id.activity_file_picker_button_go:
+			case R.id.file_picker_activity_button_svg:
 				this.maybeStartScribbleActivity(true);
+				break;
+			case R.id.file_picker_activity_modal_button_cancel:
+				this.modal.setVisibility(View.GONE);
+				break;
+			case R.id.file_picker_activity_modal_button_set:
+				XenaApplication.setPalmTouchThreshold(
+					Float.parseFloat(this.modalEditPalm.getText().toString()));
+				this.modal.setVisibility(View.GONE);
 				break;
 			default:
 				String text = ((TextView) view).getText().toString();

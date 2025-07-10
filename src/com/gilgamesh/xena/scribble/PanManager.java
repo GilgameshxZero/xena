@@ -5,7 +5,6 @@ import com.gilgamesh.xena.XenaApplication;
 import com.gilgamesh.xena.algorithm.Geometry;
 import com.gilgamesh.xena.filesystem.SvgFileScribe;
 
-import android.content.SharedPreferences;
 import android.graphics.PointF;
 
 // Used by PanManager and alt-mode PenManager.
@@ -31,11 +30,6 @@ public class PanManager {
 
 	static private final int IGNORE_CHAIN_BOUND_MS = 210;
 
-	static private final String SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD_CACHE
-		= "SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD_CACHE";
-	static private final float PALM_TOUCH_THRESHOLD_DEFAULT = 9999;
-	static private float PALM_TOUCH_THRESHOLD;
-
 	PointF panBeginOffset;
 	private PointF previousPoint;
 	private long actionDownTimeMs;
@@ -51,24 +45,6 @@ public class PanManager {
 
 	public PanManager(ScribbleActivity scribbleActivity) {
 		this.scribbleActivity = scribbleActivity;
-
-		PanManager.PALM_TOUCH_THRESHOLD
-			= Float.parseFloat(XenaApplication.preferences.getString(
-				PanManager.SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD_CACHE,
-				String.valueOf(PanManager.PALM_TOUCH_THRESHOLD_DEFAULT)));
-	}
-
-	public void setPalmTouchThreshold(float newThreshold) {
-		PanManager.PALM_TOUCH_THRESHOLD = newThreshold;
-
-		SharedPreferences.Editor editor = XenaApplication.preferences.edit();
-		editor.putString(PanManager.SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD_CACHE,
-			String.valueOf(newThreshold));
-		editor.commit();
-	}
-
-	public float getPalmTouchThreshold() {
-		return PanManager.PALM_TOUCH_THRESHOLD;
 	}
 
 	// Chain ignores if force is false, otherwise always ignore.
@@ -132,7 +108,7 @@ public class PanManager {
 		if (this.maybeIgnore(false, currentTimeMs)) {
 			return;
 		}
-		if (this.actionSizeMax >= PanManager.PALM_TOUCH_THRESHOLD) {
+		if (this.actionSizeMax >= XenaApplication.PALM_TOUCH_THRESHOLD) {
 			this.maybeIgnore(true, currentTimeMs);
 			return;
 		}
@@ -221,7 +197,7 @@ public class PanManager {
 
 			if (currentTimeMs - this.zoomDownTimeMs < PanManager.ZOOM_LOWER_BOUND_MS
 				|| wasMatched
-				|| this.actionSizeMax >= PanManager.PALM_TOUCH_THRESHOLD) {
+				|| this.actionSizeMax >= XenaApplication.PALM_TOUCH_THRESHOLD) {
 				this.maybeIgnore(true, currentTimeMs);
 				return;
 			}
@@ -264,7 +240,7 @@ public class PanManager {
 
 		this.actionSizeMax = Math.max(this.actionSizeMax, sizeMax);
 		if (!this.scribbleActivity.isPanning
-			|| this.actionSizeMax >= PanManager.PALM_TOUCH_THRESHOLD
+			|| this.actionSizeMax >= XenaApplication.PALM_TOUCH_THRESHOLD
 			|| !this.zoomDownMatched) {
 			this.maybeIgnore(true, currentTimeMs);
 			return;

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:gravity="center"
+	android:background="@android:color/white"
+	android:visibility="gone">
+	<LinearLayout
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:orientation="vertical"
+		android:gravity="right"
+		android:background="@drawable/solid_empty"
+		android:padding="6dp">
+		<LinearLayout
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:orientation="horizontal"
+			android:gravity="center"
+			android:background="@android:color/white">
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_margin="6dp"
+				android:padding="6dp"
+				android:textColor="@android:color/black"
+				android:textSize="24dp"
+				android:background="@android:color/white"
+				android:text="Palm size =" />
+			<EditText android:id="@+id/file_picker_activity_modal_edit_palm"
+				android:layout_width="100dp"
+				android:layout_height="wrap_content"
+				android:gravity="center"
+				android:inputType="numberPassword"
+				android:textColor="@android:color/black"
+				android:background="@drawable/solid_empty"
+				android:layout_margin="6dp"
+				android:padding="6dp"
+				android:textSize="24dp" />
+		</LinearLayout>
+		<LinearLayout
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:orientation="horizontal"
+			android:gravity="center"
+			android:background="@android:color/white">
+			<Button android:id="@+id/file_picker_activity_modal_button_cancel"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_margin="6dp"
+				android:padding="6dp"
+				android:textSize="24dp"
+				android:textColor="@android:color/black"
+				android:background="@drawable/solid_empty"
+				android:text="CANCEL"
+				android:onClick="onClick" />
+			<Button android:id="@+id/file_picker_activity_modal_button_set"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_margin="6dp"
+				android:padding="6dp"
+				android:textSize="24dp"
+				android:textColor="@android:color/black"
+				android:background="@drawable/solid_empty"
+				android:text="SET"
+				android:onClick="onClick" />
+		</LinearLayout>
+	</LinearLayout>
+</LinearLayout>
