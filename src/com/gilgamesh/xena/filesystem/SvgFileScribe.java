@@ -46,8 +46,12 @@ public class SvgFileScribe {
 		= new DebouncedTask(new DebouncedTask.Callback() {
 			@Override
 			public void onRun() {
-				save();
-				callback.onDebounceSaveUpdate(isSaved);
+				executor.execute(new Runnable() {
+					public void run() {
+						save();
+						callback.onDebounceSaveUpdate(isSaved);
+					}
+				});
 			}
 
 			@Override
@@ -200,122 +204,116 @@ public class SvgFileScribe {
 
 	// Save runs async, and must care for concurrency with PathManager.
 	private void save() {
-		this.executor.execute(new Runnable() {
-			public void run() {
-				try {
-					Files.createDirectories(Paths.get(uri.getPath()).getParent());
-					OutputStreamWriter outputStreamWriter
-						= new OutputStreamWriter(scribbleActivity.getContentResolver()
-							.openOutputStream(uri, "wt"));
-					try {
-						RectF containerBox
-							= new RectF(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
-								Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY);
-						StringBuilder stringBuilder = new StringBuilder();
-						Iterator<Map.Entry<Integer, CompoundPath>> iterator
-							= pathManager.getPathsIterator();
-						while (iterator.hasNext()) {
-							stringBuilder.append("<path d=\"");
-							Iterator<PointF> pointsIterator
-								= iterator.next().getValue().points.iterator();
-							PointF point = pointsIterator.next();
-							stringBuilder.append("M"
-								+ Math.round(point.x * SvgFileScribe.COORDINATE_SCALE_FACTOR)
-								+ " "
-								+ Math.round(point.y * SvgFileScribe.COORDINATE_SCALE_FACTOR)
-								+ "l");
-							containerBox.union(point.x, point.y);
+		try {
+			Files.createDirectories(Paths.get(uri.getPath()).getParent());
+			OutputStreamWriter outputStreamWriter
+				= new OutputStreamWriter(
+					scribbleActivity.getContentResolver().openOutputStream(uri, "wt"));
+			try {
+				RectF containerBox
+					= new RectF(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
+						Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY);
+				StringBuilder stringBuilder = new StringBuilder();
+				Iterator<Map.Entry<Integer, CompoundPath>> iterator
+					= pathManager.getPathsIterator();
+				while (iterator.hasNext()) {
+					stringBuilder.append("<path d=\"");
+					Iterator<PointF> pointsIterator
+						= iterator.next().getValue().points.iterator();
+					PointF point = pointsIterator.next();
+					stringBuilder.append("M"
+						+ Math.round(point.x * SvgFileScribe.COORDINATE_SCALE_FACTOR) + " "
+						+ Math.round(point.y * SvgFileScribe.COORDINATE_SCALE_FACTOR)
+						+ "l");
+					containerBox.union(point.x, point.y);
 
-							PointF nextPoint, pointDelta = new PointF(0, 0),
-								roundError = new PointF(0, 0);
-							String[] pointDeltaS = new String[2];
-							while (pointsIterator.hasNext()) {
-								nextPoint = pointsIterator.next();
+					PointF nextPoint, pointDelta = new PointF(0, 0),
+						roundError = new PointF(0, 0);
+					String[] pointDeltaS = new String[2];
+					while (pointsIterator.hasNext()) {
+						nextPoint = pointsIterator.next();
 
-								// Minimize ` -`.
-								pointDelta.x
-									= nextPoint.x * SvgFileScribe.COORDINATE_SCALE_FACTOR
-										- point.x * SvgFileScribe.COORDINATE_SCALE_FACTOR
-										+ roundError.x;
-								pointDelta.y
-									= nextPoint.y * SvgFileScribe.COORDINATE_SCALE_FACTOR
-										- point.y * SvgFileScribe.COORDINATE_SCALE_FACTOR
-										+ roundError.y;
-								roundError.x = pointDelta.x - Math.round(pointDelta.x);
-								roundError.y = pointDelta.y - Math.round(pointDelta.y);
-								pointDeltaS[0] = String.valueOf(Math.round(pointDelta.x));
-								pointDeltaS[1] = String.valueOf(Math.round(pointDelta.y));
-								if (pointDeltaS[0].charAt(0) != '-') {
-									stringBuilder.append(" ");
-								}
-								stringBuilder.append(pointDeltaS[0]);
-								if (pointDeltaS[1].charAt(0) != '-') {
-									stringBuilder.append(" ");
-								}
-								stringBuilder.append(pointDeltaS[1]);
-
-								point = nextPoint;
-								containerBox.union(point.x, point.y);
-							}
-							stringBuilder.append("\"/>\n");
+						// Minimize ` -`.
+						pointDelta.x
+							= nextPoint.x * SvgFileScribe.COORDINATE_SCALE_FACTOR
+								- point.x * SvgFileScribe.COORDINATE_SCALE_FACTOR
+								+ roundError.x;
+						pointDelta.y
+							= nextPoint.y * SvgFileScribe.COORDINATE_SCALE_FACTOR
+								- point.y * SvgFileScribe.COORDINATE_SCALE_FACTOR
+								+ roundError.y;
+						roundError.x = pointDelta.x - Math.round(pointDelta.x);
+						roundError.y = pointDelta.y - Math.round(pointDelta.y);
+						pointDeltaS[0] = String.valueOf(Math.round(pointDelta.x));
+						pointDeltaS[1] = String.valueOf(Math.round(pointDelta.y));
+						if (pointDeltaS[0].charAt(0) != '-') {
+							stringBuilder.append(" ");
 						}
+						stringBuilder.append(pointDeltaS[0]);
+						if (pointDeltaS[1].charAt(0) != '-') {
+							stringBuilder.append(" ");
+						}
+						stringBuilder.append(pointDeltaS[1]);
 
-						containerBox.left
-							-= ScribbleActivity.STROKE_WIDTH_DP
-								* SvgFileScribe.COORDINATE_SCALE_FACTOR;
-						containerBox.top
-							-= ScribbleActivity.STROKE_WIDTH_DP
-								* SvgFileScribe.COORDINATE_SCALE_FACTOR;
-						containerBox.right
-							+= ScribbleActivity.STROKE_WIDTH_DP
-								* SvgFileScribe.COORDINATE_SCALE_FACTOR;
-						containerBox.bottom
-							+= ScribbleActivity.STROKE_WIDTH_DP
-								* SvgFileScribe.COORDINATE_SCALE_FACTOR;
-						outputStreamWriter
-							.write("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\""
-								+ Math.round(Math.floor(
-									containerBox.left * SvgFileScribe.COORDINATE_SCALE_FACTOR))
-								+ " "
-								+ Math.round(Math.floor(
-									containerBox.top * SvgFileScribe.COORDINATE_SCALE_FACTOR))
-								+ " "
-								+ Math.round(Math.ceil((containerBox.right - containerBox.left))
-									* SvgFileScribe.COORDINATE_SCALE_FACTOR)
-								+ " "
-								+ Math.round(Math.ceil((containerBox.bottom - containerBox.top))
-									* SvgFileScribe.COORDINATE_SCALE_FACTOR)
-								+ "\" stroke=\"black\" stroke-width=\""
-								+ Math.round(ScribbleActivity.STROKE_WIDTH_DP
-									* SvgFileScribe.COORDINATE_SCALE_FACTOR)
-								+ "\" stroke-linecap=\"round\" stroke-linejoin=\"round\" fill=\"none\" data-xena=\""
-								+ Math.round(
-									pathManager.getViewportOffset().x / XenaApplication.DPI)
-								+ ' '
-								+ Math.round(
-									pathManager.getViewportOffset().y / XenaApplication.DPI)
-								+ ' ' + pathManager.getZoomStepId() + "\">"
-								+ "<style>@media(prefers-color-scheme:dark){svg{background-color:black;stroke:white;}}</style>\n");
-						outputStreamWriter.write(stringBuilder.toString());
-						outputStreamWriter.write("</svg>\n");
-
-						XenaApplication
-							.log("SvgFileScribe::save: Saved to " + uri.toString() + ".");
-						isSaved = true;
-					} catch (IOException e) {
-						Log.e(XenaApplication.TAG,
-							"SvgFileScribe::save: Failed to write to file: " + e.toString()
-								+ ".");
-					} finally {
-						outputStreamWriter.close();
+						point = nextPoint;
+						containerBox.union(point.x, point.y);
 					}
-				} catch (IOException e) {
-					Log.e(XenaApplication.TAG,
-						"SvgFileScribe::save: Failed to write to file: " + e.toString()
-							+ ".");
+					stringBuilder.append("\"/>\n");
 				}
+
+				containerBox.left
+					-= ScribbleActivity.STROKE_WIDTH_DP
+						* SvgFileScribe.COORDINATE_SCALE_FACTOR;
+				containerBox.top
+					-= ScribbleActivity.STROKE_WIDTH_DP
+						* SvgFileScribe.COORDINATE_SCALE_FACTOR;
+				containerBox.right
+					+= ScribbleActivity.STROKE_WIDTH_DP
+						* SvgFileScribe.COORDINATE_SCALE_FACTOR;
+				containerBox.bottom
+					+= ScribbleActivity.STROKE_WIDTH_DP
+						* SvgFileScribe.COORDINATE_SCALE_FACTOR;
+				outputStreamWriter
+					.write("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\""
+						+ Math.round(Math
+							.floor(containerBox.left * SvgFileScribe.COORDINATE_SCALE_FACTOR))
+						+ " "
+						+ Math.round(Math
+							.floor(containerBox.top * SvgFileScribe.COORDINATE_SCALE_FACTOR))
+						+ " "
+						+ Math.round(Math.ceil((containerBox.right - containerBox.left))
+							* SvgFileScribe.COORDINATE_SCALE_FACTOR)
+						+ " "
+						+ Math.round(Math.ceil((containerBox.bottom - containerBox.top))
+							* SvgFileScribe.COORDINATE_SCALE_FACTOR)
+						+ "\" stroke=\"black\" stroke-width=\""
+						+ Math.round(ScribbleActivity.STROKE_WIDTH_DP
+							* SvgFileScribe.COORDINATE_SCALE_FACTOR)
+						+ "\" stroke-linecap=\"round\" stroke-linejoin=\"round\" fill=\"none\" data-xena=\""
+						+ Math
+							.round(pathManager.getViewportOffset().x / XenaApplication.DPI)
+						+ ' '
+						+ Math
+							.round(pathManager.getViewportOffset().y / XenaApplication.DPI)
+						+ ' ' + pathManager.getZoomStepId() + "\">"
+						+ "<style>@media(prefers-color-scheme:dark){svg{background-color:black;stroke:white;}}</style>\n");
+				outputStreamWriter.write(stringBuilder.toString());
+				outputStreamWriter.write("</svg>\n");
+
+				XenaApplication
+					.log("SvgFileScribe::save: Saved to " + uri.toString() + ".");
+				isSaved = true;
+			} catch (IOException e) {
+				Log.e(XenaApplication.TAG,
+					"SvgFileScribe::save: Failed to write to file: " + e.toString()
+						+ ".");
+			} finally {
+				outputStreamWriter.close();
 			}
-		});
+		} catch (IOException e) {
+			Log.e(XenaApplication.TAG,
+				"SvgFileScribe::save: Failed to write to file: " + e.toString() + ".");
+		}
 	}
 
 	// Returns true iff no save task is not pending or failed.

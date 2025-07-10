@@ -14,10 +14,11 @@
 
 	<item name="scribble_activity" type="id" />
 	<item name="scribble_activity_scribble_view" type="id" />
+	<item name="scribble_activity_controls" type="id" />
+	<item name="scribble_activity_draw_pan_toggle" type="id" />
 	<item name="scribble_activity_text_path" type="id" />
 	<item name="scribble_activity_text_status" type="id" />
 	<item name="scribble_activity_draw_erase_toggle" type="id" />
-	<item name="scribble_activity_draw_pan_toggle" type="id" />
 
 	<item name="scribble_activity_modal" type="id" />
 	<item name="scribble_activity_modal_edit_x" type="id" />

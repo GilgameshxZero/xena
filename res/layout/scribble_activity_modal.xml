@@ -24,9 +24,9 @@
 				android:layout_margin="6dp"
 				android:padding="6dp"
 				android:textColor="@android:color/black"
-				android:textSize="24dp"
+				android:textSize="28dp"
 				android:background="@android:color/white"
-				android:text="X (Letter) =" />
+				android:text="X (letter) =" />
 			<EditText android:id="@+id/scribble_activity_modal_edit_x"
 				android:layout_width="100dp"
 				android:layout_height="wrap_content"
@@ -36,7 +36,7 @@
 				android:background="@drawable/solid_empty"
 				android:layout_margin="6dp"
 				android:padding="6dp"
-				android:textSize="24dp" />
+				android:textSize="28dp" />
 		</LinearLayout>
 		<LinearLayout
 			android:layout_width="wrap_content"
@@ -50,9 +50,9 @@
 				android:layout_margin="6dp"
 				android:padding="6dp"
 				android:textColor="@android:color/black"
-				android:textSize="24dp"
+				android:textSize="28dp"
 				android:background="@android:color/white"
-				android:text="Y (Letter) =" />
+				android:text="Y (letter) =" />
 			<EditText android:id="@+id/scribble_activity_modal_edit_y"
 				android:layout_width="100dp"
 				android:layout_height="wrap_content"
@@ -62,7 +62,7 @@
 				android:background="@drawable/solid_empty"
 				android:layout_margin="6dp"
 				android:padding="6dp"
-				android:textSize="24dp" />
+				android:textSize="28dp" />
 		</LinearLayout>
 		<LinearLayout
 			android:layout_width="wrap_content"
@@ -75,7 +75,7 @@
 				android:layout_height="wrap_content"
 				android:layout_margin="6dp"
 				android:padding="6dp"
-				android:textSize="24dp"
+				android:textSize="28dp"
 				android:textColor="@android:color/black"
 				android:background="@drawable/solid_empty"
 				android:text="CANCEL"
@@ -85,7 +85,7 @@
 				android:layout_height="wrap_content"
 				android:layout_margin="6dp"
 				android:padding="6dp"
-				android:textSize="24dp"
+				android:textSize="28dp"
 				android:textColor="@android:color/black"
 				android:background="@drawable/solid_empty"
 				android:text="SET"
