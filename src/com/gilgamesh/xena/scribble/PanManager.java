@@ -211,7 +211,9 @@ public class PanManager {
 
 			if (zoomChanged) {
 				XenaApplication.log("PanManager::onActionUp: ZOOM.");
-				this.scribbleActivity.setStrokeWidthScale(zoomScale);
+				// Boox API is buggy, so we need to close & open here.
+				this.scribbleActivity.touchHelper.closeRawDrawing();
+				this.scribbleActivity.openTouchHelperRawDrawing();
 				this.scribbleActivity.refreshTextViewStatus();
 				this.scribbleActivity.redraw(true);
 				this.scribbleActivity.svgFileScribe.saveTask

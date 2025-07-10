@@ -371,13 +371,11 @@ public class ScribbleActivity extends BaseActivity
 		this.setStrokeWidthScale(zoomScale);
 	}
 
-	// Slightly wider than anticipated due to the lack of anti-aliasing on
-	// temporary lines.
 	void setStrokeWidthScale(float scale) {
 		switch (this.brushMode) {
 			case DEFAULT:
 				this.touchHelper
-					.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale * 1.2f);
+					.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale);
 				break;
 			case CHARCOAL:
 				this.touchHelper
