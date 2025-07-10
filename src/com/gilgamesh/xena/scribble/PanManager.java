@@ -37,7 +37,6 @@ public class PanManager {
 	private long zoomDownTimeMs;
 	private float zoomBeginDistance;
 	// POINTER events may fire multiple times; only take normal sequences.
-	private boolean zoomDownMatched = true;
 	private long previousTapTimeMs = 0;
 	private long previousIgnoreChainTimeMs = 0;
 
@@ -93,7 +92,9 @@ public class PanManager {
 		} else {
 			this.zoomBeginDistance = Geometry.distance(this.previousPoint, position);
 			this.zoomDownTimeMs = currentTimeMs;
-			this.zoomDownMatched = false;
+
+			// Disable panning while computing zoom.
+			this.scribbleActivity.isPanning = false;
 		}
 	}
 
@@ -117,12 +118,10 @@ public class PanManager {
 			= this.scribbleActivity.pathManager.getViewportOffset();
 		float zoomScale = this.scribbleActivity.pathManager.getZoomScale();
 		if (idx == 0) {
-			if (!this.scribbleActivity.isPanning || this.zoomDownMatched == false) {
-				this.zoomDownMatched = true;
+			if (!this.scribbleActivity.isPanning) {
 				this.maybeIgnore(true, currentTimeMs);
 				return;
 			}
-			this.zoomDownMatched = true;
 
 			// Note: ACTION_UP is not guaranteed to fire after ACTION_DOWN.
 			this.scribbleActivity.isPanning = false;
@@ -192,11 +191,9 @@ public class PanManager {
 			}
 		} else {
 			float zoomEndDistance = Geometry.distance(this.previousPoint, position);
-			boolean wasMatched = this.zoomDownMatched, zoomChanged = false;
-			this.zoomDownMatched = true;
+			boolean zoomChanged = false;
 
 			if (currentTimeMs - this.zoomDownTimeMs < PanManager.ZOOM_LOWER_BOUND_MS
-				|| wasMatched
 				|| this.actionSizeMax >= XenaApplication.PALM_TOUCH_THRESHOLD) {
 				this.maybeIgnore(true, currentTimeMs);
 				return;
@@ -222,9 +219,6 @@ public class PanManager {
 			} else {
 				this.maybeIgnore(true, currentTimeMs);
 			}
-
-			// Cancel panning by remaining finger.
-			this.scribbleActivity.isPanning = false;
 		}
 	}
 
@@ -232,16 +226,16 @@ public class PanManager {
 		long currentTimeMs = System.currentTimeMillis(),
 			eventDurationMs = currentTimeMs - this.actionDownTimeMs;
 
-		// Don't process until we exit flick range.
+		// Don't process until we exit flick range. Not panning may be caused by
+		// zoom; don't necessarily ignore.
 		if (this.maybeIgnore(false, currentTimeMs)
-			|| eventDurationMs <= PanManager.FLICK_UPPER_BOUND_MS) {
+			|| eventDurationMs <= PanManager.FLICK_UPPER_BOUND_MS
+			|| !this.scribbleActivity.isPanning) {
 			return;
 		}
 
 		this.actionSizeMax = Math.max(this.actionSizeMax, sizeMax);
-		if (!this.scribbleActivity.isPanning
-			|| this.actionSizeMax >= XenaApplication.PALM_TOUCH_THRESHOLD
-			|| !this.zoomDownMatched) {
+		if (this.actionSizeMax >= XenaApplication.PALM_TOUCH_THRESHOLD) {
 			this.maybeIgnore(true, currentTimeMs);
 			return;
 		}
