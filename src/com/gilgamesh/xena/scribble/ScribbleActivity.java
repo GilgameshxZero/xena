@@ -16,6 +16,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -54,6 +55,7 @@ public class ScribbleActivity extends BaseActivity
 	// Managers. Managers use SvgFileScribe, but only when they have been attached
 	// in onScribbleViewReady.
 	PathManager pathManager;
+	RasterManager rasterManager;
 	SvgFileScribe svgFileScribe;
 	DrawManager drawManager;
 	PanManager panManager;
@@ -67,10 +69,12 @@ public class ScribbleActivity extends BaseActivity
 	Uri svgUri;
 	// pdfUri is null if no PDF is loaded.
 	private Uri pdfUri;
-	private TextView textViewPath;
-	private TextView textViewStatus;
-	View drawEraseToggle;
+	private LinearLayout controls;
 	private View drawPanToggle;
+	private TextView textViewStatus;
+	private ImageView artToggle;
+	private TextView textViewPath;
+	View drawEraseToggle;
 	private LinearLayout modal;
 	private EditText modalEditX;
 	private EditText modalEditY;
@@ -85,17 +89,25 @@ public class ScribbleActivity extends BaseActivity
 
 	PenTouchMode penTouchMode = PenTouchMode.DEFAULT;
 
+	static public enum BrushMode {
+		DEFAULT, CHARCOAL
+	};
+
+	BrushMode brushMode = BrushMode.DEFAULT;
+
 	// Switching orientation may rebuild the activity.
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		this.setContentView(R.layout.scribble_activity);
 
-		this.textViewPath = findViewById(R.id.scribble_activity_text_path);
+		this.controls = findViewById(R.id.scribble_activity_controls);
+		this.drawPanToggle = findViewById(R.id.scribble_activity_draw_pan_toggle);
 		this.textViewStatus = findViewById(R.id.scribble_activity_text_status);
+		this.artToggle = findViewById(R.id.scribble_activity_art_toggle);
+		this.textViewPath = findViewById(R.id.scribble_activity_text_path);
 		this.drawEraseToggle
 			= findViewById(R.id.scribble_activity_draw_erase_toggle);
-		this.drawPanToggle = findViewById(R.id.scribble_activity_draw_pan_toggle);
 		this.modal = findViewById(R.id.scribble_activity_modal);
 		this.modalEditX = findViewById(R.id.scribble_activity_modal_edit_x);
 		this.modalEditX.setTransformationMethod(null);
@@ -119,12 +131,8 @@ public class ScribbleActivity extends BaseActivity
 
 	@Override
 	protected void onResume() {
-		if (this.touchHelper != null) {
-			this.touchHelper.setRawDrawingEnabled(false)
-				.setLimitRect(new Rect(0, 0, this.scribbleView.getWidth(),
-					this.scribbleView.getHeight()), this.getRawDrawingExclusions())
-				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
-				.setRawDrawingEnabled(true);
+		if (this.touchHelper != null && !this.touchHelper.isRawDrawingCreated()) {
+			this.openTouchHelperRawDrawing();
 		}
 		if (this.pathManager != null) {
 			this.setStrokeWidthScale(this.pathManager.getZoomScale());
@@ -140,13 +148,17 @@ public class ScribbleActivity extends BaseActivity
 		if (!this.svgFileScribe.isSaved()) {
 			this.svgFileScribe.saveTask.debounce(0);
 		}
-		this.touchHelper.setRawDrawingEnabled(false);
+		if (this.touchHelper != null && this.touchHelper.isRawDrawingCreated()) {
+			this.touchHelper.closeRawDrawing();
+		}
 		super.onPause();
 	}
 
 	@Override
 	protected void onDestroy() {
-		this.touchHelper.closeRawDrawing();
+		if (this.touchHelper != null && this.touchHelper.isRawDrawingCreated()) {
+			this.touchHelper.closeRawDrawing();
+		}
 		super.onDestroy();
 	}
 
@@ -157,33 +169,6 @@ public class ScribbleActivity extends BaseActivity
 		}
 
 		switch (v.getId()) {
-			case R.id.scribble_activity_text_path:
-				XenaApplication
-					.log("ScribbleActivity::onClick: scribble_activity_text_path.");
-				this.redraw(this.redrawTask.isAwaiting());
-				this.svgFileScribe.saveTask.debounce(0);
-				break;
-			case R.id.scribble_activity_text_status:
-				XenaApplication
-					.log("ScribbleActivity::onClick: scribble_activity_text_status.");
-				PointF viewportOffset = this.pathManager.getViewportOffset();
-				this.modalEditX.setText(String.valueOf((int) Math
-					.floor(-viewportOffset.x / ScribbleActivity.PIXELS_PER_PAGE.x)));
-				this.modalEditY.setText(String.valueOf((int) Math
-					.floor(-viewportOffset.y / ScribbleActivity.PIXELS_PER_PAGE.y)));
-				this.modal.setVisibility(View.VISIBLE);
-				this.redraw(this.redrawTask.isAwaiting());
-				this.touchHelper.closeRawDrawing();
-				break;
-			case R.id.scribble_activity_draw_erase_toggle:
-				XenaApplication.log(
-					"ScribbleActivity::onClick: scribble_activity_draw_erase_toggle.");
-				this.isPenEraseMode = !this.isPenEraseMode;
-				this.drawEraseToggle.setBackgroundResource(this.isPenEraseMode
-					? R.drawable.solid_empty
-					: R.drawable.dotted_empty);
-				this.redraw(this.redrawTask.isAwaiting());
-				break;
 			case R.id.scribble_activity_draw_pan_toggle:
 				XenaApplication
 					.log("ScribbleActivity::onClick: scribble_activity_draw_pan_toggle.");
@@ -203,6 +188,51 @@ public class ScribbleActivity extends BaseActivity
 						this.openTouchHelperRawDrawing();
 						break;
 				}
+				this.redraw(this.redrawTask.isAwaiting());
+				break;
+			case R.id.scribble_activity_text_status:
+				XenaApplication
+					.log("ScribbleActivity::onClick: scribble_activity_text_status.");
+				PointF viewportOffset = this.pathManager.getViewportOffset();
+				this.modalEditX.setText(String.valueOf((int) Math
+					.floor(-viewportOffset.x / ScribbleActivity.PIXELS_PER_PAGE.x)));
+				this.modalEditY.setText(String.valueOf((int) Math
+					.floor(-viewportOffset.y / ScribbleActivity.PIXELS_PER_PAGE.y)));
+				this.modal.setVisibility(View.VISIBLE);
+				this.redraw(this.redrawTask.isAwaiting());
+				this.touchHelper.closeRawDrawing();
+				break;
+			case R.id.scribble_activity_art_toggle:
+				XenaApplication
+					.log("ScribbleActivity::onClick: scribble_activity_art_toggle.");
+				switch (this.brushMode) {
+					case DEFAULT:
+						this.touchHelper.closeRawDrawing();
+						this.brushMode = BrushMode.CHARCOAL;
+						this.artToggle.setBackgroundResource(R.drawable.solid_empty);
+						this.openTouchHelperRawDrawing();
+						break;
+					case CHARCOAL:
+						this.touchHelper.closeRawDrawing();
+						this.brushMode = BrushMode.DEFAULT;
+						this.artToggle.setBackgroundResource(R.drawable.dotted_empty);
+						this.openTouchHelperRawDrawing();
+						break;
+				}
+				break;
+			case R.id.scribble_activity_text_path:
+				XenaApplication
+					.log("ScribbleActivity::onClick: scribble_activity_text_path.");
+				this.redraw(this.redrawTask.isAwaiting());
+				this.svgFileScribe.saveTask.debounce(0);
+				break;
+			case R.id.scribble_activity_draw_erase_toggle:
+				XenaApplication.log(
+					"ScribbleActivity::onClick: scribble_activity_draw_erase_toggle.");
+				this.isPenEraseMode = !this.isPenEraseMode;
+				this.drawEraseToggle.setBackgroundResource(this.isPenEraseMode
+					? R.drawable.solid_empty
+					: R.drawable.dotted_empty);
 				this.redraw(this.redrawTask.isAwaiting());
 				break;
 			case R.id.scribble_activity_modal_button_cancel:
@@ -232,6 +262,7 @@ public class ScribbleActivity extends BaseActivity
 		this.pathManager
 			= new PathManager(
 				new Point(this.scribbleView.getWidth(), this.scribbleView.getHeight()));
+		this.rasterManager = new RasterManager();
 
 		String svgPath = this.getIntent().getStringExtra(EXTRA_SVG_PATH);
 		String pdfPath = this.getIntent().getStringExtra(EXTRA_PDF_PATH);
@@ -273,16 +304,9 @@ public class ScribbleActivity extends BaseActivity
 		this.refreshTextViewStatus();
 
 		// Set raw drawing exclusions only after text views have been set.
-		this.touchHelper
-			= TouchHelper.create(scribbleView, this.penManager)
-				.setRawDrawingEnabled(false)
-				.setLimitRect(new Rect(0, 0, this.scribbleView.getWidth(),
-					this.scribbleView.getHeight()), this.getRawDrawingExclusions())
-				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
-				.setRawDrawingEnabled(true);
-
-		this.redraw(true);
+		this.touchHelper = TouchHelper.create(scribbleView, this.penManager);
 		this.openTouchHelperRawDrawing();
+		this.redraw(false);
 	}
 
 	// Always "invalidates", i.e. sets scribbleView dirty, and guarantees a redraw
@@ -317,8 +341,11 @@ public class ScribbleActivity extends BaseActivity
 
 	ArrayList<Rect> getRawDrawingExclusions() {
 		// Empty list is required to void any previous exclusions.
+		// Failing to exclude controls may result in non-responsive touch after
+		// clicking with the stylus.
 		ArrayList<Rect> exclusions = new ArrayList<Rect>();
-		exclusions.add(new Rect());
+		exclusions.add(new Rect(this.controls.getLeft(), this.controls.getTop(),
+			this.controls.getRight(), this.controls.getBottom()));
 		return exclusions;
 	}
 
@@ -327,18 +354,35 @@ public class ScribbleActivity extends BaseActivity
 		if (this.pathManager != null) {
 			zoomScale = this.pathManager.getZoomScale();
 		}
-		this.touchHelper
-			.setLimitRect(new Rect(0, 0, this.scribbleView.getWidth(),
-				this.scribbleView.getHeight()), this.getRawDrawingExclusions())
-			.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL).openRawDrawing()
-			.setRawDrawingEnabled(true);
+		this.touchHelper.setLimitRect(new Rect(0, 0, this.scribbleView.getWidth(),
+			this.scribbleView.getHeight()), this.getRawDrawingExclusions());
+		this.touchHelper.openRawDrawing().setRawDrawingEnabled(true);
+		switch (this.brushMode) {
+			case DEFAULT:
+				this.touchHelper.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
+					.setStrokeColor(0xff000000);
+				break;
+			case CHARCOAL:
+				// CHARCOAL_V2 also works as a variant of CHARCOAL.
+				this.touchHelper.setStrokeStyle(TouchHelper.STROKE_STYLE_CHARCOAL)
+					.setStrokeColor(0xff000000);
+				break;
+		}
 		this.setStrokeWidthScale(zoomScale);
 	}
 
 	// Slightly wider than anticipated due to the lack of anti-aliasing on
 	// temporary lines.
 	void setStrokeWidthScale(float scale) {
-		this.touchHelper
-			.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale * 1.2f);
+		switch (this.brushMode) {
+			case DEFAULT:
+				this.touchHelper
+					.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale * 1.2f);
+				break;
+			case CHARCOAL:
+				this.touchHelper
+					.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale * 3f);
+				break;
+		}
 	}
 }
