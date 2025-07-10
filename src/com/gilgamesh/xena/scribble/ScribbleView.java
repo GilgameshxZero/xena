@@ -70,8 +70,7 @@ public class ScribbleView extends ImageView {
 
 		// Together with `synchronized`, allows non-forcing queued invalidates.
 		if (!this.isDirty.getAndSet(false)) {
-			XenaApplication.log("ScribbleView::onDraw: Consumed draw.");
-			return;
+			XenaApplication.log("ScribbleView::onDraw: Refreshing.");
 		}
 		XenaApplication.log("ScribbleView::onDraw: Drawing.");
 

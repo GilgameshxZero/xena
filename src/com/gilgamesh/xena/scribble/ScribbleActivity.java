@@ -252,13 +252,6 @@ public class ScribbleActivity extends BaseActivity
 
 		// After these lines, SvgFileScribe may be called from the managers.
 		this.scribbleView.setOnTouchListener(this.touchManager);
-		this.touchHelper
-			= TouchHelper.create(scribbleView, this.penManager)
-				.setRawDrawingEnabled(false)
-				.setLimitRect(new Rect(0, 0, this.scribbleView.getWidth(),
-					this.scribbleView.getHeight()), this.getRawDrawingExclusions())
-				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
-				.setRawDrawingEnabled(true);
 
 		// At this point, ScribbleActivity is ready to draw.
 
@@ -278,6 +271,15 @@ public class ScribbleActivity extends BaseActivity
 
 		this.refreshTextViewPath(true);
 		this.refreshTextViewStatus();
+
+		// Set raw drawing exclusions only after text views have been set.
+		this.touchHelper
+			= TouchHelper.create(scribbleView, this.penManager)
+				.setRawDrawingEnabled(false)
+				.setLimitRect(new Rect(0, 0, this.scribbleView.getWidth(),
+					this.scribbleView.getHeight()), this.getRawDrawingExclusions())
+				.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
+				.setRawDrawingEnabled(true);
 
 		this.redraw(true);
 		this.openTouchHelperRawDrawing();
@@ -301,7 +303,7 @@ public class ScribbleActivity extends BaseActivity
 				+ ", "
 				+ (int) Math
 					.floor(-viewportOffset.y / ScribbleActivity.PIXELS_PER_PAGE.y)
-				+ " | " + Math.round(this.pathManager.getZoomScale() * 100) + "%");
+				+ " @ " + Math.round(this.pathManager.getZoomScale() * 100) + "%");
 	}
 
 	private void refreshTextViewPath(boolean isSaved) {
@@ -314,13 +316,9 @@ public class ScribbleActivity extends BaseActivity
 	}
 
 	ArrayList<Rect> getRawDrawingExclusions() {
+		// Empty list is required to void any previous exclusions.
 		ArrayList<Rect> exclusions = new ArrayList<Rect>();
-		exclusions.add(
-			new Rect(this.drawEraseToggle.getLeft(), this.drawEraseToggle.getTop(),
-				this.drawEraseToggle.getRight(), this.drawEraseToggle.getBottom()));
-		exclusions
-			.add(new Rect(this.drawPanToggle.getLeft(), this.drawPanToggle.getTop(),
-				this.drawPanToggle.getRight(), this.drawPanToggle.getBottom()));
+		exclusions.add(new Rect());
 		return exclusions;
 	}
 
