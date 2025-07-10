@@ -37,6 +37,13 @@
 			android:gravity="center"
 			android:onClick="onClick"
 			android:text="Loading..." />
+		<ImageView android:id="@+id/scribble_activity_art_toggle"
+			android:layout_width="49dp"
+			android:layout_height="49dp"
+			android:layout_margin="6dp"
+			android:src="@drawable/icon"
+			android:background="@drawable/dotted_empty"
+			android:onClick="onClick" />
 		<TextView android:id="@+id/scribble_activity_text_path"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
