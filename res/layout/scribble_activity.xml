@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/scribble_activity"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:background="@android:color/white">
+	<com.gilgamesh.xena.scribble.ScribbleView
+		android:id="@+id/scribble_activity_scribble_view"
+		android:layout_width="match_parent" android:layout_height="match_parent"
+		android:layout_alignParentLeft="true"
+		android:layout_alignParentTop="true"
+	/>
+	<TextView android:id="@+id/scribble_activity_text_path"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignParentLeft="true"
+		android:layout_alignParentBottom="true"
+		android:layout_margin="6dp"
+		android:padding="6dp"
+		android:textColor="@android:color/black"
+		android:textSize="24dp"
+		android:background="@drawable/solid_empty"
+		android:maxLines="1"
+		android:gravity="top"
+		android:onClick="onClick" />
+	<TextView android:id="@+id/scribble_activity_text_status"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignParentLeft="true"
+		android:layout_alignParentBottom="true"
+		android:layout_marginTop="6dp"
+		android:layout_marginRight="6dp"
+		android:layout_marginBottom="54dp"
+		android:layout_marginLeft="6dp"
+		android:padding="6dp"
+		android:textColor="@android:color/black"
+		android:textSize="24dp"
+		android:background="@drawable/solid_empty"
+		android:maxLines="1"
+		android:gravity="top"
+		android:onClick="onClick"
+		android:text="Loading..." />
+	<View android:id="@+id/scribble_activity_draw_erase_toggle"
+		android:layout_width="48dp"
+		android:layout_height="48dp"
+		android:layout_alignParentRight="true"
+		android:layout_alignParentTop="true"
+		android:layout_margin="6dp"
+		android:background="@drawable/dotted_empty"
+		android:onClick="onClick" />
+	<View android:id="@+id/scribble_activity_draw_pan_toggle"
+		android:layout_width="48dp"
+		android:layout_height="48dp"
+		android:layout_alignParentTop="true"
+		android:layout_alignParentLeft="true"
+		android:layout_margin="6dp"
+		android:background="@drawable/dotted_empty"
+		android:onClick="onClick" />
+	<include
+		android:id="@+id/scribble_activity_modal"
+		layout="@layout/scribble_activity_modal" />
+</RelativeLayout>

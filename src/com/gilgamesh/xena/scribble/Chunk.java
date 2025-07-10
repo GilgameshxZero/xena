@@ -2,8 +2,6 @@ package com.gilgamesh.xena.scribble;
 
 import java.util.HashSet;
 
-import com.gilgamesh.xena.XenaApplication;
-
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;

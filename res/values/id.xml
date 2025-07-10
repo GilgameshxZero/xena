@@ -1,19 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<item name="activity_file_picker" type="id" />
-	<item name="activity_file_picker_button_date" type="id" />
-	<item name="activity_file_picker_edit_text" type="id" />
-	<item name="activity_file_picker_button_go" type="id" />
-	<item name="activity_file_picker_layout_listing" type="id" />
+	<item name="file_picker_activity" type="id" />
+	<item name="file_picker_activity_button_date" type="id" />
+	<item name="file_picker_activity_button_settings" type="id" />
+	<item name="file_picker_activity_edit_text" type="id" />
+	<item name="file_picker_activity_button_svg" type="id" />
+	<item name="file_picker_activity_layout_listing" type="id" />
 
-	<item name="activity_scribble_scribble_view" type="id" />
-	<item name="activity_scribble_text_view_path" type="id" />
-	<item name="activity_scribble_text_view_status" type="id" />
-	<item name="activity_scribble_draw_erase_toggle" type="id" />
-	<item name="activity_scribble_draw_pan_toggle" type="id" />
-	<item name="activity_scribble_coordinate_dialog" type="id" />
-	<item name="activity_scribble_coordinate_dialog_edit_palm" type="id" />
-	<item name="activity_scribble_coordinate_dialog_edit_x" type="id" />
-	<item name="activity_scribble_coordinate_dialog_edit_y" type="id" />
-	<item name="activity_scribble_coordinate_dialog_set" type="id" />
+	<item name="file_picker_activity_modal" type="id" />
+	<item name="file_picker_activity_modal_edit_palm" type="id" />
+	<item name="file_picker_activity_modal_button_cancel" type="id" />
+	<item name="file_picker_activity_modal_button_set" type="id" />
+
+	<item name="scribble_activity" type="id" />
+	<item name="scribble_activity_scribble_view" type="id" />
+	<item name="scribble_activity_text_path" type="id" />
+	<item name="scribble_activity_text_status" type="id" />
+	<item name="scribble_activity_draw_erase_toggle" type="id" />
+	<item name="scribble_activity_draw_pan_toggle" type="id" />
+
+	<item name="scribble_activity_modal" type="id" />
+	<item name="scribble_activity_modal_edit_x" type="id" />
+	<item name="scribble_activity_modal_edit_y" type="id" />
+	<item name="scribble_activity_modal_button_cancel" type="id" />
+	<item name="scribble_activity_modal_button_set" type="id" />
 </resources>

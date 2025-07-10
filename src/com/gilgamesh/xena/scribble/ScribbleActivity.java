@@ -9,14 +9,12 @@ import com.gilgamesh.xena.XenaApplication;
 
 import com.onyx.android.sdk.pen.TouchHelper;
 
-import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.PointF;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -73,10 +71,9 @@ public class ScribbleActivity extends BaseActivity
 	private TextView textViewStatus;
 	View drawEraseToggle;
 	private View drawPanToggle;
-	private LinearLayout coordinateDialog;
-	private EditText coordinateEditPalm;
-	private EditText coordinateEditX;
-	private EditText coordinateEditY;
+	private LinearLayout modal;
+	private EditText modalEditX;
+	private EditText modalEditY;
 
 	// State is package-private.
 	boolean isPanning = false;
@@ -92,26 +89,20 @@ public class ScribbleActivity extends BaseActivity
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		this.setContentView(R.layout.activity_scribble);
+		this.setContentView(R.layout.scribble_activity);
 
-		this.textViewPath = findViewById(R.id.activity_scribble_text_view_path);
-		this.textViewStatus = findViewById(R.id.activity_scribble_text_view_status);
+		this.textViewPath = findViewById(R.id.scribble_activity_text_path);
+		this.textViewStatus = findViewById(R.id.scribble_activity_text_status);
 		this.drawEraseToggle
-			= findViewById(R.id.activity_scribble_draw_erase_toggle);
-		this.drawPanToggle = findViewById(R.id.activity_scribble_draw_pan_toggle);
-		this.coordinateDialog
-			= findViewById(R.id.activity_scribble_coordinate_dialog);
-		this.coordinateEditPalm
-			= findViewById(R.id.activity_scribble_coordinate_dialog_edit_palm);
-		this.coordinateEditPalm.setTransformationMethod(null);
-		this.coordinateEditX
-			= findViewById(R.id.activity_scribble_coordinate_dialog_edit_x);
-		this.coordinateEditX.setTransformationMethod(null);
-		this.coordinateEditY
-			= findViewById(R.id.activity_scribble_coordinate_dialog_edit_y);
-		this.coordinateEditY.setTransformationMethod(null);
+			= findViewById(R.id.scribble_activity_draw_erase_toggle);
+		this.drawPanToggle = findViewById(R.id.scribble_activity_draw_pan_toggle);
+		this.modal = findViewById(R.id.scribble_activity_modal);
+		this.modalEditX = findViewById(R.id.scribble_activity_modal_edit_x);
+		this.modalEditX.setTransformationMethod(null);
+		this.modalEditY = findViewById(R.id.scribble_activity_modal_edit_y);
+		this.modalEditY.setTransformationMethod(null);
 
-		this.scribbleView = findViewById(R.id.activity_scribble_scribble_view);
+		this.scribbleView = findViewById(R.id.scribble_activity_scribble_view);
 		this.scribbleView.scribbleActivity = this;
 		this.scribbleView.post(new Runnable() {
 			@Override
@@ -166,38 +157,36 @@ public class ScribbleActivity extends BaseActivity
 		}
 
 		switch (v.getId()) {
-			case R.id.activity_scribble_text_view_path:
+			case R.id.scribble_activity_text_path:
 				XenaApplication
-					.log("ScribbleActivity::onClick: activity_scribble_text_view_path.");
+					.log("ScribbleActivity::onClick: scribble_activity_text_path.");
 				this.redraw(this.redrawTask.isAwaiting());
 				this.svgFileScribe.saveTask.debounce(0);
 				break;
-			case R.id.activity_scribble_text_view_status:
-				XenaApplication.log(
-					"ScribbleActivity::onClick: activity_scribble_text_view_status.");
+			case R.id.scribble_activity_text_status:
+				XenaApplication
+					.log("ScribbleActivity::onClick: scribble_activity_text_status.");
 				PointF viewportOffset = this.pathManager.getViewportOffset();
-				this.coordinateEditPalm.setText(String
-					.valueOf((int) Math.round(this.panManager.getPalmTouchThreshold())));
-				this.coordinateEditX.setText(String.valueOf((int) Math
+				this.modalEditX.setText(String.valueOf((int) Math
 					.floor(-viewportOffset.x / ScribbleActivity.PIXELS_PER_PAGE.x)));
-				this.coordinateEditY.setText(String.valueOf((int) Math
+				this.modalEditY.setText(String.valueOf((int) Math
 					.floor(-viewportOffset.y / ScribbleActivity.PIXELS_PER_PAGE.y)));
-				this.coordinateDialog.setVisibility(View.VISIBLE);
+				this.modal.setVisibility(View.VISIBLE);
 				this.redraw(this.redrawTask.isAwaiting());
 				this.touchHelper.closeRawDrawing();
 				break;
-			case R.id.activity_scribble_draw_erase_toggle:
+			case R.id.scribble_activity_draw_erase_toggle:
 				XenaApplication.log(
-					"ScribbleActivity::onClick: activity_scribble_draw_erase_toggle.");
+					"ScribbleActivity::onClick: scribble_activity_draw_erase_toggle.");
 				this.isPenEraseMode = !this.isPenEraseMode;
 				this.drawEraseToggle.setBackgroundResource(this.isPenEraseMode
 					? R.drawable.solid_empty
 					: R.drawable.dotted_empty);
 				this.redraw(this.redrawTask.isAwaiting());
 				break;
-			case R.id.activity_scribble_draw_pan_toggle:
+			case R.id.scribble_activity_draw_pan_toggle:
 				XenaApplication
-					.log("ScribbleActivity::onClick: activity_scribble_draw_pan_toggle.");
+					.log("ScribbleActivity::onClick: scribble_activity_draw_pan_toggle.");
 				switch (this.penTouchMode) {
 					case DEFAULT:
 						this.penTouchMode = PenTouchMode.FORCE_DRAW;
@@ -216,30 +205,24 @@ public class ScribbleActivity extends BaseActivity
 				}
 				this.redraw(this.redrawTask.isAwaiting());
 				break;
-			case R.id.activity_scribble_coordinate_dialog_set:
+			case R.id.scribble_activity_modal_button_cancel:
 				XenaApplication.log(
-					"ScribbleActivity::onClick: activity_scribble_coordinate_dialog_set, coordinates = (",
-					this.coordinateEditX.getText().toString(), ", ",
-					this.coordinateEditY.getText().toString(), ").");
+					"ScribbleActivity::onClick: scribble_activity_modal_button_cancel.");
+				this.modal.setVisibility(View.GONE);
+				this.openTouchHelperRawDrawing();
+				break;
+			case R.id.scribble_activity_modal_button_set:
+				XenaApplication.log(
+					"ScribbleActivity::onClick: scribble_activity_modal_button_set, coordinates = (",
+					this.modalEditX.getText().toString(), ", ",
+					this.modalEditY.getText().toString(), ").");
 				this.pathManager.setViewportOffset(new PointF(
-					-Integer.parseInt(this.coordinateEditX.getText().toString())
+					-Integer.parseInt(this.modalEditX.getText().toString())
 						* ScribbleActivity.PIXELS_PER_PAGE.x,
-					-Integer.parseInt(this.coordinateEditY.getText().toString())
+					-Integer.parseInt(this.modalEditY.getText().toString())
 						* ScribbleActivity.PIXELS_PER_PAGE.y));
-				this.panManager.setPalmTouchThreshold(
-					Float.parseFloat(this.coordinateEditPalm.getText().toString()));
 				this.refreshTextViewStatus();
-				this.coordinateDialog.setVisibility(View.GONE);
-
-				View view = this.getCurrentFocus();
-				if (view != null) {
-					InputMethodManager imm
-						= (InputMethodManager) getSystemService(
-							Context.INPUT_METHOD_SERVICE);
-					imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-				}
-
-				// this.redraw(true);
+				this.modal.setVisibility(View.GONE);
 				this.openTouchHelperRawDrawing();
 				break;
 		}
