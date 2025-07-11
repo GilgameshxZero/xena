@@ -231,11 +231,7 @@ public class ScribbleActivity extends BaseActivity
 			case R.id.scribble_activity_draw_erase_toggle:
 				XenaApplication.log(
 					"ScribbleActivity::onClick: scribble_activity_draw_erase_toggle.");
-				this.isPenEraseMode = !this.isPenEraseMode;
-				this.drawEraseToggle.setBackgroundResource(this.isPenEraseMode
-					? R.drawable.solid_empty
-					: R.drawable.dotted_empty);
-				this.redraw(this.redrawTask.isAwaiting());
+				this.toggleDrawErase();
 				break;
 			case R.id.scribble_activity_modal_button_cancel:
 				XenaApplication.log(
@@ -321,6 +317,10 @@ public class ScribbleActivity extends BaseActivity
 		this.scribbleView.invalidate();
 		if (refreshRawDrawing) {
 			this.touchHelper.setRawDrawingEnabled(false).setRawDrawingEnabled(true);
+
+			// Maybe reset to eraser mode.
+			this.touchHelper.setEraserRawDrawingEnabled(this.isPenEraseMode);
+			this.touchHelper.setBrushRawDrawingEnabled(!this.isPenEraseMode);
 		}
 	}
 
@@ -353,6 +353,15 @@ public class ScribbleActivity extends BaseActivity
 		return exclusions;
 	}
 
+	void toggleDrawErase() {
+		this.isPenEraseMode = !this.isPenEraseMode;
+		this.drawEraseToggle.setBackgroundResource(
+			this.isPenEraseMode ? R.drawable.solid_empty : R.drawable.dotted_empty);
+		this.redraw(this.redrawTask.isAwaiting());
+		this.touchHelper.setEraserRawDrawingEnabled(this.isPenEraseMode);
+		this.touchHelper.setBrushRawDrawingEnabled(!this.isPenEraseMode);
+	}
+
 	void openTouchHelperRawDrawing() {
 		float zoomScale = 1f;
 		if (this.pathManager != null) {
@@ -361,6 +370,11 @@ public class ScribbleActivity extends BaseActivity
 		this.touchHelper.setLimitRect(new Rect(0, 0, this.scribbleView.getWidth(),
 			this.scribbleView.getHeight()), this.getRawDrawingExclusions());
 		this.touchHelper.openRawDrawing().setRawDrawingEnabled(true);
+		this.refreshStrokeStyle();
+		this.setStrokeWidthScale(zoomScale);
+	}
+
+	private void refreshStrokeStyle() {
 		switch (this.brushMode) {
 			case DEFAULT:
 				this.touchHelper.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
@@ -372,7 +386,6 @@ public class ScribbleActivity extends BaseActivity
 					.setStrokeColor(0xff000000);
 				break;
 		}
-		this.setStrokeWidthScale(zoomScale);
 	}
 
 	void setStrokeWidthScale(float scale) {
