@@ -26,12 +26,12 @@
 				android:textColor="@android:color/black"
 				android:textSize="28dp"
 				android:background="@android:color/white"
-				android:text="Palm size =" />
+				android:text="Palm threshold:" />
 			<EditText android:id="@+id/file_picker_activity_modal_edit_palm"
 				android:layout_width="100dp"
 				android:layout_height="wrap_content"
 				android:gravity="center"
-				android:inputType="numberPassword"
+				android:inputType="number"
 				android:textColor="@android:color/black"
 				android:background="@drawable/solid_empty"
 				android:layout_margin="6dp"

@@ -71,7 +71,6 @@ public class FilePickerActivity extends BaseActivity
 		this.modal = findViewById(R.id.file_picker_activity_modal);
 		this.modalEditPalm
 			= findViewById(R.id.file_picker_activity_modal_edit_palm);
-		this.modalEditPalm.setTransformationMethod(null);
 
 		this.touchManager = new FilePickerTouchManager(this);
 
@@ -101,10 +100,11 @@ public class FilePickerActivity extends BaseActivity
 				this.listingLayout.getHeight());
 		this.GRID_DIMENSIONS
 			= new Point(
-				this.LISTING_SIZE.x / (FilePickerActivity.MIN_PANE_SIZE_PX.x
-					+ FilePickerActivity.MARGIN_SIZE_PX * 2),
-				this.LISTING_SIZE.y / (FilePickerActivity.MIN_PANE_SIZE_PX.y
-					+ FilePickerActivity.MARGIN_SIZE_PX * 2));
+				Math.max(1,
+					this.LISTING_SIZE.x / (FilePickerActivity.MIN_PANE_SIZE_PX.x
+						+ FilePickerActivity.MARGIN_SIZE_PX * 2)),
+				Math.max(1, this.LISTING_SIZE.y / (FilePickerActivity.MIN_PANE_SIZE_PX.y
+					+ FilePickerActivity.MARGIN_SIZE_PX * 2)));
 		this.PANES_PER_PAGE = this.GRID_DIMENSIONS.x * this.GRID_DIMENSIONS.y;
 		this.PANE_SIZE
 			= new Point(

@@ -24,6 +24,7 @@
 	<item name="scribble_activity_modal" type="id" />
 	<item name="scribble_activity_modal_edit_x" type="id" />
 	<item name="scribble_activity_modal_edit_y" type="id" />
+	<item name="scribble_activity_modal_edit_zoom" type="id" />
 	<item name="scribble_activity_modal_button_cancel" type="id" />
 	<item name="scribble_activity_modal_button_set" type="id" />
 </resources>

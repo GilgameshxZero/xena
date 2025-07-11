@@ -78,6 +78,7 @@ public class ScribbleActivity extends BaseActivity
 	private LinearLayout modal;
 	private EditText modalEditX;
 	private EditText modalEditY;
+	private EditText modalEditZoom;
 
 	// State is package-private.
 	boolean isPanning = false;
@@ -110,9 +111,8 @@ public class ScribbleActivity extends BaseActivity
 			= findViewById(R.id.scribble_activity_draw_erase_toggle);
 		this.modal = findViewById(R.id.scribble_activity_modal);
 		this.modalEditX = findViewById(R.id.scribble_activity_modal_edit_x);
-		this.modalEditX.setTransformationMethod(null);
 		this.modalEditY = findViewById(R.id.scribble_activity_modal_edit_y);
-		this.modalEditY.setTransformationMethod(null);
+		this.modalEditZoom = findViewById(R.id.scribble_activity_modal_edit_zoom);
 
 		this.scribbleView = findViewById(R.id.scribble_activity_scribble_view);
 		this.scribbleView.scribbleActivity = this;
@@ -198,6 +198,8 @@ public class ScribbleActivity extends BaseActivity
 					.floor(-viewportOffset.x / ScribbleActivity.PIXELS_PER_PAGE.x)));
 				this.modalEditY.setText(String.valueOf((int) Math
 					.floor(-viewportOffset.y / ScribbleActivity.PIXELS_PER_PAGE.y)));
+				this.modalEditZoom
+					.setText(String.valueOf(this.pathManager.getZoomStepId()));
 				this.modal.setVisibility(View.VISIBLE);
 				this.redraw(this.redrawTask.isAwaiting());
 				this.touchHelper.closeRawDrawing();
@@ -251,6 +253,8 @@ public class ScribbleActivity extends BaseActivity
 						* ScribbleActivity.PIXELS_PER_PAGE.x,
 					-Integer.parseInt(this.modalEditY.getText().toString())
 						* ScribbleActivity.PIXELS_PER_PAGE.y));
+				this.pathManager.setZoomStepId(
+					Integer.parseInt(this.modalEditZoom.getText().toString()));
 				this.refreshTextViewStatus();
 				this.modal.setVisibility(View.GONE);
 				this.openTouchHelperRawDrawing();
@@ -372,15 +376,16 @@ public class ScribbleActivity extends BaseActivity
 	}
 
 	void setStrokeWidthScale(float scale) {
+		float scaledWidth = ScribbleActivity.STROKE_WIDTH_PX * scale;
 		switch (this.brushMode) {
 			case DEFAULT:
-				this.touchHelper
-					.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale * 1.15f);
+				scaledWidth *= 1.15f;
 				break;
 			case CHARCOAL:
-				this.touchHelper
-					.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * scale * 3f);
+				scaledWidth *= 3f;
 				break;
 		}
+		this.touchHelper.setStrokeWidth(scaledWidth);
+		ScribbleView.PAINT_TENTATIVE.setStrokeWidth(scaledWidth);
 	}
 }
