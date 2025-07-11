@@ -5,6 +5,7 @@ import com.gilgamesh.xena.algorithm.Geometry;
 import com.gilgamesh.xena.filesystem.SvgFileScribe;
 import com.gilgamesh.xena.multithreading.DebouncedTask;
 
+import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.PointF;
 
@@ -69,6 +70,7 @@ public class DrawManager {
 
 			// The new path has already been loaded by the PathManager. Conclude
 			// it by drawing it onto the chunk bitmaps here.
+			scribbleActivity.scribbleView.tentativePath = null;
 			scribbleActivity.redrawTask
 				.debounce(DrawManager.DEBOUNCE_REDRAW_DELAY_MS);
 			inputCooldownTask.debounce(DrawManager.DEBOUNCE_INPUT_COOLDOWN_DELAY_MS);
@@ -124,14 +126,18 @@ public class DrawManager {
 		XenaApplication.log("DrawManager::onDrawBegin.");
 		this.scribbleActivity.redrawTask.cancel();
 		this.endDrawTask.debounce(-1);
+
+		PointF viewportOffset
+			= this.scribbleActivity.pathManager.getViewportOffset();
+		float zoomScale = this.scribbleActivity.pathManager.getZoomScale();
 		this.currentPath
 			= this.scribbleActivity.pathManager
-				.addPath(new PointF(
-					position.x / this.scribbleActivity.pathManager.getZoomScale()
-						- this.scribbleActivity.pathManager.getViewportOffset().x,
-					position.y / this.scribbleActivity.pathManager.getZoomScale()
-						- this.scribbleActivity.pathManager.getViewportOffset().y))
+				.addPath(new PointF(position.x / zoomScale - viewportOffset.x,
+					position.y / zoomScale - viewportOffset.y))
 				.getValue();
+		this.scribbleActivity.scribbleView.tentativePath = new Path();
+		this.scribbleActivity.scribbleView.tentativePath.moveTo(position.x,
+			position.y);
 	}
 
 	public void onDrawEnd(PointF position) {
@@ -156,20 +162,24 @@ public class DrawManager {
 
 		this.endDrawTask.debounce(-1);
 
-		PointF lastPoint = currentPath.points.get(currentPath.points.size() - 1);
-		PointF newPoint
-			= new PointF(
-				position.x / this.scribbleActivity.pathManager.getZoomScale()
-					- this.scribbleActivity.pathManager.getViewportOffset().x,
-				position.y / this.scribbleActivity.pathManager.getZoomScale()
-					- this.scribbleActivity.pathManager.getViewportOffset().y);
+		PointF viewportOffset
+			= this.scribbleActivity.pathManager.getViewportOffset();
+		float zoomScale = this.scribbleActivity.pathManager.getZoomScale();
+		PointF lastPoint
+			= this.currentPath.points.get(this.currentPath.points.size() - 1),
+			newPoint
+				= new PointF(position.x / zoomScale - viewportOffset.x,
+					position.y / zoomScale - viewportOffset.y);
 
-		if (currentPath.points.size() > 1 && Geometry.distance(lastPoint,
+		if (this.currentPath.points.size() > 1 && Geometry.distance(lastPoint,
 			newPoint) < DrawManager.DRAW_MOVE_EPSILON_PX) {
 			return;
 		}
 
-		currentPath.addPoint(newPoint);
+		this.currentPath.addPoint(newPoint);
+		this.scribbleActivity.scribbleView.tentativePath.lineTo(position.x,
+			position.y);
+		this.scribbleActivity.redraw(false);
 	}
 
 	public void onEraseBegin(PointF position) {

@@ -9,6 +9,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -28,10 +29,23 @@ public class ScribbleView extends ImageView {
 		PAINT_WHITE.setAntiAlias(true);
 		PAINT_WHITE.setColor(Color.WHITE);
 	}
+	static final Paint PAINT_TENTATIVE;
+	static {
+		PAINT_TENTATIVE = new Paint();
+		PAINT_TENTATIVE.setAntiAlias(true);
+		PAINT_TENTATIVE.setColor(Color.BLACK);
+		PAINT_TENTATIVE.setStyle(Paint.Style.STROKE);
+		PAINT_TENTATIVE.setStrokeJoin(Paint.Join.ROUND);
+		PAINT_TENTATIVE.setStrokeCap(Paint.Cap.ROUND);
+		PAINT_TENTATIVE.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX);
+	}
 
 	private AtomicBoolean isDirty = new AtomicBoolean();
 	private PointF viewportOffset, viewSize = new PointF();
 	private float zoomScale;
+
+	// Drawn atop all other bitmaps.
+	Path tentativePath = null;
 
 	ScribbleActivity scribbleActivity = null;
 
@@ -110,6 +124,10 @@ public class ScribbleView extends ImageView {
 					(this.viewportOffset.y + chunk.OFFSET_Y
 						+ this.scribbleActivity.pathManager.CHUNK_SIZE.y) * this.zoomScale),
 				ScribbleView.PAINT_BITMAP);
+		}
+
+		if (this.tentativePath != null) {
+			canvas.drawPath(this.tentativePath, ScribbleView.PAINT_TENTATIVE);
 		}
 	}
 }

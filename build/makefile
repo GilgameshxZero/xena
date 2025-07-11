@@ -127,7 +127,8 @@ avdmanager: $(ADK_DIR).make
 	"$(ADK_DIR)cmdline-tools\bin\avdmanager" $(ARGS)
 
 # Ensure that ~/.android/avd/<avd-name>/config.ini has the correct `image.
-# sysdir.1` relative property.
+# sysdir.1` relative property. Density (DPI) should probably be increased as
+# well.
 emulator: $(ADK_DIR).make
 	@CALL SET "JAVA_HOME=$(JDK_DIR)" && \
 	"$(ADK_DIR)emulator\emulator" $(ARGS)
