@@ -156,14 +156,8 @@ public class PanManager {
 					if (currentTimeMs
 						- this.previousTapTimeMs <= PanManager.DOUBLE_TAP_UPPER_BOUND_MS) {
 						XenaApplication.log("PanManager::onActionUp: DOUBLE_TAP.");
-						this.scribbleActivity.isPenEraseMode
-							= !this.scribbleActivity.isPenEraseMode;
-						this.scribbleActivity.drawEraseToggle
-							.setBackgroundResource(this.scribbleActivity.isPenEraseMode
-								? R.drawable.solid_empty
-								: R.drawable.dotted_empty);
-						this.scribbleActivity.redraw(true);
 						this.previousTapTimeMs = 0;
+						this.scribbleActivity.toggleDrawErase();
 					} else {
 						XenaApplication.log("PanManager::onActionUp: TAP.");
 						this.previousTapTimeMs = currentTimeMs;

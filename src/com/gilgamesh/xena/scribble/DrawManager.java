@@ -22,7 +22,7 @@ public class DrawManager {
 	static private final int DEBOUNCE_REDRAW_DELAY_MS = 64000;
 
 	// For a short bit after draw or erase, touch events are disabled.
-	static private final int DEBOUNCE_INPUT_COOLDOWN_DELAY_MS = 50;
+	static private final int DEBOUNCE_INPUT_COOLDOWN_DELAY_MS = 0;
 
 	// Drawing end/begin pairs may fire within milliseconds. In this case,
 	// ignore both events. We accomplish this with a debounce on the end events.
@@ -195,7 +195,8 @@ public class DrawManager {
 		this.endEraseTask.debounce(DrawManager.DEBOUNCE_END_ERASE_DELAY_MS);
 		this.scribbleActivity.isPanning = false;
 
-		this.scribbleActivity.redraw(true);
+		// Only refresh if needed.
+		this.scribbleActivity.redraw(this.scribbleActivity.redrawTask.isAwaiting());
 
 		this.previousErasePoint.set(
 			position.x / this.scribbleActivity.pathManager.getZoomScale()
