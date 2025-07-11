@@ -1,6 +1,5 @@
 package com.gilgamesh.xena.scribble;
 
-import com.gilgamesh.xena.R;
 import com.gilgamesh.xena.XenaApplication;
 import com.gilgamesh.xena.algorithm.Geometry;
 import com.gilgamesh.xena.filesystem.SvgFileScribe;
