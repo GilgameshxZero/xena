@@ -322,11 +322,7 @@ public class ScribbleActivity extends BaseActivity
 		this.redrawTask.cancel();
 		this.scribbleView.invalidate();
 		if (refreshRawDrawing) {
-			this.touchHelper.setRawDrawingEnabled(false).setRawDrawingEnabled(true);
-
-			// Maybe reset to eraser mode.
-			this.touchHelper.setEraserRawDrawingEnabled(this.isPenEraseMode);
-			this.touchHelper.setBrushRawDrawingEnabled(!this.isPenEraseMode);
+			this.refreshRawDrawing();
 		}
 	}
 
@@ -375,9 +371,18 @@ public class ScribbleActivity extends BaseActivity
 		}
 		this.touchHelper.setLimitRect(new Rect(0, 0, this.scribbleView.getWidth(),
 			this.scribbleView.getHeight()), this.getRawDrawingExclusions());
-		this.touchHelper.openRawDrawing().setRawDrawingEnabled(true);
+		this.touchHelper.openRawDrawing();
+		this.refreshRawDrawing();
 		this.refreshStrokeStyle();
 		this.setStrokeWidthScale(zoomScale);
+	}
+
+	public void refreshRawDrawing() {
+		this.touchHelper.setRawDrawingEnabled(false).setRawDrawingEnabled(true).enableFingerTouch(true);
+
+		// Maybe reset to eraser mode.
+		this.touchHelper.setEraserRawDrawingEnabled(this.isPenEraseMode);
+		this.touchHelper.setBrushRawDrawingEnabled(!this.isPenEraseMode);
 	}
 
 	private void refreshStrokeStyle() {

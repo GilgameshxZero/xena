@@ -57,6 +57,7 @@ public class FilePickerActivity extends BaseActivity
 	private LinearLayout modal;
 	private EditText modalEditPalm;
 	private ImageView modalEditPanUpdate;
+	private EditText modalEditDrawRefresh;
 
 	private FilePickerTouchManager touchManager;
 
@@ -76,6 +77,8 @@ public class FilePickerActivity extends BaseActivity
 			= findViewById(R.id.file_picker_activity_modal_edit_palm);
 		this.modalEditPanUpdate
 			= findViewById(R.id.file_picker_activity_modal_edit_pan_update);
+		this.modalEditDrawRefresh
+			= findViewById(R.id.file_picker_activity_modal_edit_draw_refresh);
 
 		this.touchManager = new FilePickerTouchManager(this);
 
@@ -148,6 +151,8 @@ public class FilePickerActivity extends BaseActivity
 					.setBackgroundResource(this.tentativeModalEditPanUpdateState
 						? R.drawable.solid_filled
 						: R.drawable.solid_empty);
+				this.modalEditDrawRefresh
+					.setText(String.valueOf(XenaApplication.getDrawEndRefresh()));
 				this.modal.setVisibility(View.VISIBLE);
 				break;
 			case R.id.file_picker_activity_button_date:
@@ -174,6 +179,8 @@ public class FilePickerActivity extends BaseActivity
 					Integer.parseInt(this.modalEditPalm.getText().toString()));
 				XenaApplication
 					.setPanUpdateEnabled(this.tentativeModalEditPanUpdateState);
+				XenaApplication.setDrawEndRefresh(
+					Integer.parseInt(this.modalEditDrawRefresh.getText().toString()));
 				this.modal.setVisibility(View.GONE);
 				break;
 			default:

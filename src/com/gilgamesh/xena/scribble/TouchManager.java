@@ -46,6 +46,7 @@ public class TouchManager implements View.OnTouchListener {
 					event.getAction(), ".");
 				this.scribbleActivity.panManager.maybeIgnore(true,
 					System.currentTimeMillis());
+				this.scribbleActivity.redraw(true);
 				return false;
 		}
 

@@ -5,7 +5,6 @@ import com.gilgamesh.xena.algorithm.Geometry;
 import com.gilgamesh.xena.filesystem.SvgFileScribe;
 import com.gilgamesh.xena.multithreading.DebouncedTask;
 
-import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.PointF;
 
@@ -19,7 +18,6 @@ public class DrawManager {
 	static private final float ERASE_MOVE_EPSILON_DP = 4f;
 	static private final float ERASE_MOVE_EPSILON_PX
 		= DrawManager.ERASE_MOVE_EPSILON_DP * XenaApplication.DPI / 160;
-	static private final int DEBOUNCE_REDRAW_DELAY_MS = 64000;
 
 	// For a short bit after draw or erase, touch events are disabled.
 	static private final int DEBOUNCE_INPUT_COOLDOWN_DELAY_MS = 0;
@@ -70,9 +68,9 @@ public class DrawManager {
 
 			// The new path has already been loaded by the PathManager. Conclude
 			// it by drawing it onto the chunk bitmaps here.
-			scribbleActivity.scribbleView.tentativePath = null;
-			scribbleActivity.redrawTask
-				.debounce(DrawManager.DEBOUNCE_REDRAW_DELAY_MS);
+			scribbleActivity.scribbleView.tentativePath.reset();
+			scribbleActivity.redrawTask.debounce(XenaApplication.getDrawEndRefresh());
+			// scribbleActivity.refreshRawDrawing();
 			inputCooldownTask.debounce(DrawManager.DEBOUNCE_INPUT_COOLDOWN_DELAY_MS);
 
 			scribbleActivity.pathManager.finalizePath(currentPath);
@@ -135,7 +133,6 @@ public class DrawManager {
 				.addPath(new PointF(position.x / zoomScale - viewportOffset.x,
 					position.y / zoomScale - viewportOffset.y))
 				.getValue();
-		this.scribbleActivity.scribbleView.tentativePath = new Path();
 		this.scribbleActivity.scribbleView.tentativePath.moveTo(position.x,
 			position.y);
 	}
