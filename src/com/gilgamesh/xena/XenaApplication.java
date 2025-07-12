@@ -23,7 +23,7 @@ public class XenaApplication extends Application {
 	static private boolean PAN_UPDATE_ENABLED;
 	static private final String SHARED_PREFERENCES_DRAW_END_REFRESH
 		= "SHARED_PREFERENCES_DRAW_END_REFRESH";
-	static private final int DRAW_END_REFRESH_DEFAULT = 64000;
+	static private final int DRAW_END_REFRESH_DEFAULT = 60000;
 	static private int DRAW_END_REFRESH;
 
 	static public boolean IS_DEBUG = false;

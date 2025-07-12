@@ -32,7 +32,7 @@ public class SvgFileScribe {
 
 	static public final float COORDINATE_SCALE_FACTOR
 		= 12f / XenaApplication.DPI * 160f;
-	static public final int DEBOUNCE_SAVE_MS = 64000;
+	static public final int DEBOUNCE_SAVE_MS = 60000;
 
 	private boolean isSaved = true;
 	private Callback callback;

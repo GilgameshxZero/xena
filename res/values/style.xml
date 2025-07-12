@@ -4,8 +4,9 @@
 		<!-- Layout params cannot be specified in a style which will be applied via theming. -->
 		<item name="android:padding">12dp</item>
 		<item name="android:textSize">30dp</item>
-		<item name="android:maxLines">1</item>
-		<item name="android:gravity">top</item>
+		<item name="android:ellipsize">start</item>
+		<item name="android:singleLine">true</item>
+		<item name="android:gravity">left|center_vertical</item>
 		<item name="android:textColor">@android:color/black</item>
 		<item name="android:background">@drawable/solid_empty</item>
 		<item name="android:onClick">onClick</item>
@@ -13,8 +14,9 @@
 	<style name="file_picker_pane_file">
 		<item name="android:padding">12dp</item>
 		<item name="android:textSize">30dp</item>
-		<item name="android:maxLines">1</item>
-		<item name="android:gravity">top</item>
+		<item name="android:ellipsize">start</item>
+		<item name="android:singleLine">true</item>
+		<item name="android:gravity">left|center_vertical</item>
 		<item name="android:textColor">@android:color/black</item>
 		<item name="android:background">@drawable/dotted_empty</item>
 		<item name="android:onClick">onClick</item>
