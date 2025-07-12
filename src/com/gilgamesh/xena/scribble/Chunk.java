@@ -2,6 +2,8 @@ package com.gilgamesh.xena.scribble;
 
 import java.util.HashSet;
 
+import com.gilgamesh.xena.XenaApplication;
+
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -64,6 +66,9 @@ public class Chunk {
 	// Adding a path will render it onto the bitmap. A path may be added again to
 	// re-render it.
 	public void addPath(CompoundPath path) {
+		XenaApplication.log("Chunk::addPath: Rendering path ", path.ID,
+			" onto chunk ", this.OFFSET_X / this.pathManager.CHUNK_SIZE.x, ", ",
+			this.OFFSET_Y / this.pathManager.CHUNK_SIZE.y, ".");
 		this.pathIds.add(path.ID);
 		Path offsetPath = new Path(path.path);
 		offsetPath.offset(-this.OFFSET_X, -this.OFFSET_Y);

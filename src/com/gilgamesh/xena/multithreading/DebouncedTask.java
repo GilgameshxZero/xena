@@ -28,9 +28,9 @@ public class DebouncedTask {
 	// Negative delay means a task that is scheduled in infinity time, but is
 	// always awaiting.
 	public void debounce(int delayMs) {
-		this.isAwaiting = true;
 		this.task.cancel();
-		if (delayMs >= 0) {
+		if (delayMs > 0) {
+			this.isAwaiting = true;
 			// Split into a few steps in case of multi-threading errors.
 			TimerTask newTask = new TimerTask() {
 				@Override
@@ -41,6 +41,11 @@ public class DebouncedTask {
 			};
 			new Timer().schedule(newTask, delayMs);
 			this.task = newTask;
+		} else if (delayMs == 0) {
+			this.isAwaiting = false;
+			callback.onRun();
+		} else if (delayMs < 0) {
+			this.isAwaiting = true;
 		}
 		this.callback.onDebounce();
 	}

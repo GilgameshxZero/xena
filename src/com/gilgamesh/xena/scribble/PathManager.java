@@ -57,21 +57,15 @@ public class PathManager {
 					= new Point((int) Math.floor(currentPoint.x / CHUNK_SIZE.x),
 						(int) Math.floor(currentPoint.y / CHUNK_SIZE.y));
 				Chunk chunk = chunks.get(chunkCoordinate);
-				if (chunk != null) {
-					if (!chunk.getPathIds().contains(path.ID)) {
-						chunk.addPath(path.ID);
-						path.containingChunks.add(chunkCoordinate);
-						XenaApplication
-							.log("PathManager::addPath: Added path " + path.ID + " to chunk "
-								+ chunkCoordinate.x + ", " + chunkCoordinate.y + ".");
-					}
-				} else {
+				if (chunk == null) {
 					chunk
 						= new Chunk(that, CHUNK_SIZE.x, CHUNK_SIZE.y,
 							chunkCoordinate.x * CHUNK_SIZE.x,
 							chunkCoordinate.y * CHUNK_SIZE.y);
-					chunk.addPath(path.ID);
 					chunks.put(chunkCoordinate, chunk);
+				}
+				if (!chunk.getPathIds().contains(path.ID)) {
+					chunk.addPath(path.ID);
 					path.containingChunks.add(chunkCoordinate);
 					XenaApplication
 						.log("PathManager::addPath: Added path " + path.ID + " to chunk "

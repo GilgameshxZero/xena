@@ -159,6 +159,8 @@ public class ScribbleActivity extends BaseActivity
 		if (this.touchHelper != null && this.touchHelper.isRawDrawingCreated()) {
 			this.touchHelper.closeRawDrawing();
 		}
+		this.svgFileScribe.shutdown();
+		this.pdfReader.shutdown();
 		super.onDestroy();
 	}
 
@@ -169,6 +171,9 @@ public class ScribbleActivity extends BaseActivity
 		}
 
 		switch (v.getId()) {
+			case R.id.scribble_activity_exit:
+				this.finish();
+				break;
 			case R.id.scribble_activity_draw_pan_toggle:
 				XenaApplication
 					.log("ScribbleActivity::onClick: scribble_activity_draw_pan_toggle.");

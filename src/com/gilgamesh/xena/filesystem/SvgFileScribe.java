@@ -84,6 +84,12 @@ public class SvgFileScribe {
 						XmlPullParser parser = Xml.newPullParser();
 						parser.setInput(in, null);
 						while (parser.getEventType() != XmlPullParser.END_DOCUMENT) {
+							if (executor.isShutdown()) {
+								XenaApplication
+									.log("SvgFileScribe::load: task shutdown.");
+								break;
+							}
+
 							parser.next();
 
 							if (parser.getEventType() != XmlPullParser.START_TAG) {
@@ -319,5 +325,10 @@ public class SvgFileScribe {
 	// Returns true iff no save task is not pending or failed.
 	public boolean isSaved() {
 		return this.isSaved;
+	}
+
+	// Save task will not be interrupted, only load.
+	public void shutdown() {
+		this.executor.shutdown();
 	}
 }

@@ -9,12 +9,14 @@
 
 	<item name="file_picker_activity_modal" type="id" />
 	<item name="file_picker_activity_modal_edit_palm" type="id" />
+	<item name="file_picker_activity_modal_edit_pan_update" type="id" />
 	<item name="file_picker_activity_modal_button_cancel" type="id" />
 	<item name="file_picker_activity_modal_button_set" type="id" />
 
 	<item name="scribble_activity" type="id" />
 	<item name="scribble_activity_scribble_view" type="id" />
 	<item name="scribble_activity_controls" type="id" />
+	<item name="scribble_activity_exit" type="id" />
 	<item name="scribble_activity_draw_pan_toggle" type="id" />
 	<item name="scribble_activity_text_path" type="id" />
 	<item name="scribble_activity_art_toggle" type="id" />

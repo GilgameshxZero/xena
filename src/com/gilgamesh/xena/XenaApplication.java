@@ -13,10 +13,14 @@ public class XenaApplication extends Application {
 		= Resources.getSystem().getDisplayMetrics().densityDpi;
 
 	// Global settings are stored on XenaApplication.
-	static private final String SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD_CACHE
-		= "SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD_CACHE";
-	static private final float PALM_TOUCH_THRESHOLD_DEFAULT = 9999;
-	static public float PALM_TOUCH_THRESHOLD;
+	static private final String SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD
+		= "SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD";
+	static private final int PALM_TOUCH_THRESHOLD_DEFAULT = 9999;
+	static private int PALM_TOUCH_THRESHOLD;
+	static private final String SHARED_PREFERENCES_PAN_UPDATE_ENABLED
+		= "SHARED_PREFERENCES_PAN_UPDATE_ENABLED";
+	static private final boolean PAN_UPDATE_ENABLED_DEFAULT = true;
+	static private boolean PAN_UPDATE_ENABLED;
 
 	static public boolean IS_DEBUG = false;
 	static public SharedPreferences preferences;
@@ -30,9 +34,13 @@ public class XenaApplication extends Application {
 			= PreferenceManager.getDefaultSharedPreferences(this);
 
 		XenaApplication.PALM_TOUCH_THRESHOLD
-			= Float.parseFloat(XenaApplication.preferences.getString(
-				XenaApplication.SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD_CACHE,
-				String.valueOf(XenaApplication.PALM_TOUCH_THRESHOLD_DEFAULT)));
+			= XenaApplication.preferences.getInt(
+				XenaApplication.SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD,
+				XenaApplication.PALM_TOUCH_THRESHOLD_DEFAULT);
+		XenaApplication.PAN_UPDATE_ENABLED
+			= XenaApplication.preferences.getBoolean(
+				XenaApplication.SHARED_PREFERENCES_PAN_UPDATE_ENABLED,
+				XenaApplication.PAN_UPDATE_ENABLED_DEFAULT);
 	}
 
 	static public void log(Object... objects) {
@@ -59,17 +67,29 @@ public class XenaApplication extends Application {
 		return concatenated;
 	}
 
-	static public void setPalmTouchThreshold(float newThreshold) {
-		XenaApplication.PALM_TOUCH_THRESHOLD = newThreshold;
+	static public void setPalmTouchThreshold(int value) {
+		XenaApplication.PALM_TOUCH_THRESHOLD = value;
 
 		SharedPreferences.Editor editor = XenaApplication.preferences.edit();
-		editor.putString(
-			XenaApplication.SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD_CACHE,
-			String.valueOf(newThreshold));
+		editor.putInt(XenaApplication.SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD,
+			value);
 		editor.commit();
 	}
 
-	static public float getPalmTouchThreshold() {
+	static public int getPalmTouchThreshold() {
 		return XenaApplication.PALM_TOUCH_THRESHOLD;
+	}
+
+	static public void setPanUpdateEnabled(boolean value) {
+		XenaApplication.PAN_UPDATE_ENABLED = value;
+
+		SharedPreferences.Editor editor = XenaApplication.preferences.edit();
+		editor.putBoolean(XenaApplication.SHARED_PREFERENCES_PAN_UPDATE_ENABLED,
+			value);
+		editor.commit();
+	}
+
+	static public boolean getPanUpdateEnabled() {
+		return XenaApplication.PAN_UPDATE_ENABLED;
 	}
 }
