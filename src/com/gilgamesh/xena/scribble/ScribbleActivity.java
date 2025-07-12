@@ -70,11 +70,11 @@ public class ScribbleActivity extends BaseActivity
 	// pdfUri is null if no PDF is loaded.
 	private Uri pdfUri;
 	private LinearLayout controls;
-	private View drawPanToggle;
+	private ImageView drawPanToggle;
 	private TextView textViewStatus;
 	private ImageView artToggle;
 	private TextView textViewPath;
-	View drawEraseToggle;
+	ImageView drawEraseToggle;
 	private LinearLayout modal;
 	private EditText modalEditX;
 	private EditText modalEditY;

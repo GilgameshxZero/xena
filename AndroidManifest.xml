@@ -11,7 +11,7 @@
 	<uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
 	<application android:label="Xena"
-		android:icon="@drawable/icon"
+		android:icon="@drawable/xena"
 		android:name=".XenaApplication"
 		android:hardwareAccelerated="true">
 		<activity android:name=".filesystem.FilePickerActivity"
