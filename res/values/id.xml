@@ -10,6 +10,7 @@
 	<item name="file_picker_activity_modal" type="id" />
 	<item name="file_picker_activity_modal_edit_palm" type="id" />
 	<item name="file_picker_activity_modal_edit_pan_update" type="id" />
+	<item name="file_picker_activity_modal_edit_draw_refresh" type="id" />
 	<item name="file_picker_activity_modal_button_cancel" type="id" />
 	<item name="file_picker_activity_modal_button_set" type="id" />
 

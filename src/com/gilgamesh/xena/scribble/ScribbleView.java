@@ -45,7 +45,7 @@ public class ScribbleView extends ImageView {
 	private float zoomScale;
 
 	// Drawn atop all other bitmaps.
-	Path tentativePath = null;
+	Path tentativePath = new Path();
 
 	ScribbleActivity scribbleActivity = null;
 
@@ -126,8 +126,6 @@ public class ScribbleView extends ImageView {
 				ScribbleView.PAINT_BITMAP);
 		}
 
-		if (this.tentativePath != null) {
-			canvas.drawPath(this.tentativePath, ScribbleView.PAINT_TENTATIVE);
-		}
+		canvas.drawPath(this.tentativePath, ScribbleView.PAINT_TENTATIVE);
 	}
 }

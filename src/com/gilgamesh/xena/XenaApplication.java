@@ -21,6 +21,10 @@ public class XenaApplication extends Application {
 		= "SHARED_PREFERENCES_PAN_UPDATE_ENABLED";
 	static private final boolean PAN_UPDATE_ENABLED_DEFAULT = true;
 	static private boolean PAN_UPDATE_ENABLED;
+	static private final String SHARED_PREFERENCES_DRAW_END_REFRESH
+		= "SHARED_PREFERENCES_DRAW_END_REFRESH";
+	static private final int DRAW_END_REFRESH_DEFAULT = 64000;
+	static private int DRAW_END_REFRESH;
 
 	static public boolean IS_DEBUG = false;
 	static public SharedPreferences preferences;
@@ -41,6 +45,10 @@ public class XenaApplication extends Application {
 			= XenaApplication.preferences.getBoolean(
 				XenaApplication.SHARED_PREFERENCES_PAN_UPDATE_ENABLED,
 				XenaApplication.PAN_UPDATE_ENABLED_DEFAULT);
+		XenaApplication.DRAW_END_REFRESH
+			= XenaApplication.preferences.getInt(
+				XenaApplication.SHARED_PREFERENCES_DRAW_END_REFRESH,
+				XenaApplication.DRAW_END_REFRESH_DEFAULT);
 	}
 
 	static public void log(Object... objects) {
@@ -91,5 +99,17 @@ public class XenaApplication extends Application {
 
 	static public boolean getPanUpdateEnabled() {
 		return XenaApplication.PAN_UPDATE_ENABLED;
+	}
+
+	static public void setDrawEndRefresh(int value) {
+		XenaApplication.DRAW_END_REFRESH = value;
+
+		SharedPreferences.Editor editor = XenaApplication.preferences.edit();
+		editor.putInt(XenaApplication.SHARED_PREFERENCES_DRAW_END_REFRESH, value);
+		editor.commit();
+	}
+
+	static public int getDrawEndRefresh() {
+		return XenaApplication.DRAW_END_REFRESH;
 	}
 }
