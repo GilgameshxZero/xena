@@ -35,6 +35,9 @@ public class FilePickerActivity extends BaseActivity
 	static private final int REQUEST_CODE_READ_WRITE_EXTERNAL_STORAGE = 0;
 	static private final String SHARED_PREFERENCES_EDIT_TEXT
 		= "SHARED_PREFERENCES_EDIT_TEXT";
+	static private final String EDIT_TEXT_DEFAULT
+		= Environment.getExternalStorageDirectory().toString();
+
 	static private final Point MIN_PANE_SIZE_DP = new Point(384, 72);
 	static private final Point MIN_PANE_SIZE_PX
 		= new Point(
@@ -96,7 +99,7 @@ public class FilePickerActivity extends BaseActivity
 		// Default to external storage directory.
 		this.setEditText(XenaApplication.preferences.getString(
 			FilePickerActivity.SHARED_PREFERENCES_EDIT_TEXT,
-			Environment.getExternalStorageDirectory().toString() + "/"));
+			FilePickerActivity.EDIT_TEXT_DEFAULT + "/"));
 		this.editText
 			.addTextChangedListener(new FilePickerEditTextChangedListener(this));
 	}
@@ -275,7 +278,10 @@ public class FilePickerActivity extends BaseActivity
 			files = new File[0];
 		}
 		ArrayList<File> filesList = new ArrayList<File>(Arrays.asList(files));
-		filesList.add(new File(".."));
+		// Add ../ iff not at base emulated directory.
+		if (!path.equals(FilePickerActivity.EDIT_TEXT_DEFAULT)) {
+			filesList.add(new File(".."));
+		}
 		Collections.sort(filesList, new Comparator<File>() {
 			@Override
 			public int compare(File a, File b) {

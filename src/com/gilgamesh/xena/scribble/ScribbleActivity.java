@@ -32,7 +32,6 @@ public class ScribbleActivity extends BaseActivity
 	static public final String EXTRA_SVG_PATH = "EXTRA_SVG_PATH";
 	static public final String EXTRA_PDF_PATH = "EXTRA_PDF_PATH";
 
-	static private final int TEXT_VIEW_PATH_SUFFIX_LENGTH = 24;
 	static private final PointF PIXELS_PER_PAGE
 		= new PointF((int) XenaApplication.DPI * 8.5f, XenaApplication.DPI * 11f);
 
@@ -69,7 +68,7 @@ public class ScribbleActivity extends BaseActivity
 	Uri svgUri;
 	// pdfUri is null if no PDF is loaded.
 	private Uri pdfUri;
-	private LinearLayout controls;
+	private ImageView exit;
 	private ImageView drawPanToggle;
 	private TextView textViewStatus;
 	private ImageView artToggle;
@@ -102,7 +101,7 @@ public class ScribbleActivity extends BaseActivity
 		super.onCreate(savedInstanceState);
 		this.setContentView(R.layout.scribble_activity);
 
-		this.controls = findViewById(R.id.scribble_activity_controls);
+		this.exit = findViewById(R.id.scribble_activity_exit);
 		this.drawPanToggle = findViewById(R.id.scribble_activity_draw_pan_toggle);
 		this.textViewStatus = findViewById(R.id.scribble_activity_text_status);
 		this.artToggle = findViewById(R.id.scribble_activity_art_toggle);
@@ -339,23 +338,31 @@ public class ScribbleActivity extends BaseActivity
 	private void refreshTextViewPath(boolean isSaved) {
 		String uriString
 			= this.pdfUri != null ? this.pdfUri.toString() : this.svgUri.toString();
-		this.textViewPath.setText("..." + uriString.substring(
-			uriString.length() - ScribbleActivity.TEXT_VIEW_PATH_SUFFIX_LENGTH));
+		this.textViewPath.setText(uriString);
 		this.textViewPath.setBackgroundResource(
 			isSaved ? R.drawable.solid_empty : R.drawable.dotted_empty);
 	}
 
-	ArrayList<Rect> getRawDrawingExclusions() {
+	private ArrayList<Rect> getRawDrawingExclusions() {
 		// Empty list is required to void any previous exclusions.
 		// Failing to exclude controls may result in non-responsive touch after
 		// clicking with the stylus.
 		ArrayList<Rect> exclusions = new ArrayList<Rect>();
-		exclusions.add(new Rect(this.controls.getLeft(), this.controls.getTop(),
-			this.controls.getRight(), this.controls.getBottom()));
+		exclusions.add(this.getViewRect(this.exit));
+		exclusions.add(this.getViewRect(this.drawPanToggle));
+		exclusions.add(this.getViewRect(this.textViewStatus));
+		exclusions.add(this.getViewRect(this.artToggle));
+		exclusions.add(this.getViewRect(this.textViewPath));
+		exclusions.add(this.getViewRect(this.drawEraseToggle));
 		return exclusions;
 	}
 
-	void toggleDrawErase() {
+	private Rect getViewRect(View view) {
+		return new Rect(view.getLeft(), view.getTop(), view.getRight(),
+			view.getBottom());
+	}
+
+	public void toggleDrawErase() {
 		this.isPenEraseMode = !this.isPenEraseMode;
 		this.drawEraseToggle.setBackgroundResource(
 			this.isPenEraseMode ? R.drawable.solid_empty : R.drawable.dotted_empty);
@@ -364,7 +371,7 @@ public class ScribbleActivity extends BaseActivity
 		this.touchHelper.setBrushRawDrawingEnabled(!this.isPenEraseMode);
 	}
 
-	void openTouchHelperRawDrawing() {
+	public void openTouchHelperRawDrawing() {
 		float zoomScale = 1f;
 		if (this.pathManager != null) {
 			zoomScale = this.pathManager.getZoomScale();
@@ -378,7 +385,8 @@ public class ScribbleActivity extends BaseActivity
 	}
 
 	public void refreshRawDrawing() {
-		this.touchHelper.setRawDrawingEnabled(false).setRawDrawingEnabled(true).enableFingerTouch(true);
+		this.touchHelper.setRawDrawingEnabled(false).setRawDrawingEnabled(true)
+			.enableFingerTouch(true);
 
 		// Maybe reset to eraser mode.
 		this.touchHelper.setEraserRawDrawingEnabled(this.isPenEraseMode);
@@ -399,7 +407,7 @@ public class ScribbleActivity extends BaseActivity
 		}
 	}
 
-	void setStrokeWidthScale(float scale) {
+	private void setStrokeWidthScale(float scale) {
 		float scaledWidth = ScribbleActivity.STROKE_WIDTH_PX * scale;
 		switch (this.brushMode) {
 			case DEFAULT:
