@@ -43,6 +43,7 @@
 			android:textColor="@android:color/black"
 			android:textSize="28dp"
 			android:background="@drawable/solid_empty"
+			android:gravity="center"
 			android:onClick="onClick" />
 		<ImageView android:id="@+id/scribble_activity_art_toggle"
 			android:layout_width="49dp"
@@ -62,6 +63,7 @@
 			android:background="@drawable/solid_empty"
 			android:ellipsize="start"
 			android:singleLine="true"
+			android:gravity="center"
 			android:onClick="onClick" />
 		<ImageView android:id="@+id/scribble_activity_draw_erase_toggle"
 			android:layout_width="49dp"
