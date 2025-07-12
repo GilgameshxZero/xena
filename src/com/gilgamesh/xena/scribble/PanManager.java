@@ -4,6 +4,7 @@ import com.gilgamesh.xena.XenaApplication;
 import com.gilgamesh.xena.algorithm.Geometry;
 import com.gilgamesh.xena.filesystem.SvgFileScribe;
 
+import android.graphics.Point;
 import android.graphics.PointF;
 
 // Used by PanManager and alt-mode PenManager.
@@ -29,8 +30,13 @@ public class PanManager {
 
 	static private final int IGNORE_CHAIN_BOUND_MS = 210;
 
+	static private final float ACTION_BORDER_IGNORE_DP = 8;
+	static private final float ACTION_BORDER_IGNORE_PX
+		= PanManager.ACTION_BORDER_IGNORE_DP * XenaApplication.DPI / 160;
+
 	PointF panBeginOffset;
 	private PointF previousPoint;
+	private PointF actionDownPoint;
 	private long actionDownTimeMs;
 	private float actionSizeMax;
 	private long zoomDownTimeMs;
@@ -40,26 +46,13 @@ public class PanManager {
 	private long previousIgnoreChainTimeMs = 0;
 
 	private ScribbleActivity scribbleActivity;
+	private Point scribbleActivitySize;
 
 	public PanManager(ScribbleActivity scribbleActivity) {
 		this.scribbleActivity = scribbleActivity;
-	}
-
-	// Chain ignores if force is false, otherwise always ignore.
-	public boolean maybeIgnore(boolean force, long currentTimeMs) {
-		if (!force) {
-			if (currentTimeMs
-				- this.previousIgnoreChainTimeMs <= PanManager.IGNORE_CHAIN_BOUND_MS) {
-				XenaApplication.log("PanManager::maybeIgnore: IGNORE_CHAIN.");
-				this.previousIgnoreChainTimeMs = currentTimeMs;
-				return true;
-			}
-			return false;
-		} else {
-			XenaApplication.log("PanManager::maybeIgnore: IGNORE.");
-			this.previousIgnoreChainTimeMs = currentTimeMs;
-			return true;
-		}
+		this.scribbleActivitySize
+			= new Point(this.scribbleActivity.getWindow().getDecorView().getWidth(),
+				this.scribbleActivity.getWindow().getDecorView().getHeight());
 	}
 
 	public void onActionDown(int idx, PointF position, float sizeMax) {
@@ -70,6 +63,8 @@ public class PanManager {
 		if (this.maybeIgnore(false, currentTimeMs)) {
 			return;
 		}
+
+		this.actionDownPoint = position;
 
 		if (idx == 0) {
 			// Sometimes, this fires slightly before a draw/erase event. The
@@ -108,7 +103,8 @@ public class PanManager {
 		if (this.maybeIgnore(false, currentTimeMs)) {
 			return;
 		}
-		if (this.actionSizeMax >= XenaApplication.getPalmTouchThreshold()) {
+		if (this.actionSizeMax >= XenaApplication.getPalmTouchThreshold()
+			|| this.isActionDownPointOnBorder()) {
 			this.maybeIgnore(true, currentTimeMs);
 			return;
 		}
@@ -232,7 +228,8 @@ public class PanManager {
 			return;
 		}
 
-		if (this.actionSizeMax >= XenaApplication.getPalmTouchThreshold()) {
+		if (this.actionSizeMax >= XenaApplication.getPalmTouchThreshold()
+			|| this.isActionDownPointOnBorder()) {
 			this.maybeIgnore(true, currentTimeMs);
 			return;
 		}
@@ -247,5 +244,31 @@ public class PanManager {
 
 		// If screen is dirty, clear it.
 		this.scribbleActivity.redraw(this.scribbleActivity.redrawTask.isAwaiting());
+	}
+
+	// Chain ignores if force is false, otherwise always ignore.
+	public boolean maybeIgnore(boolean force, long currentTimeMs) {
+		if (!force) {
+			if (currentTimeMs
+				- this.previousIgnoreChainTimeMs <= PanManager.IGNORE_CHAIN_BOUND_MS) {
+				XenaApplication.log("PanManager::maybeIgnore: IGNORE_CHAIN.");
+				this.previousIgnoreChainTimeMs = currentTimeMs;
+				return true;
+			}
+			return false;
+		} else {
+			XenaApplication.log("PanManager::maybeIgnore: IGNORE.");
+			this.previousIgnoreChainTimeMs = currentTimeMs;
+			return true;
+		}
+	}
+
+	private boolean isActionDownPointOnBorder() {
+		return this.actionDownPoint.x < PanManager.ACTION_BORDER_IGNORE_PX
+			|| this.actionDownPoint.y < PanManager.ACTION_BORDER_IGNORE_PX
+			|| this.actionDownPoint.x > this.scribbleActivitySize.x
+				- PanManager.ACTION_BORDER_IGNORE_PX
+			|| this.actionDownPoint.y > this.scribbleActivitySize.y
+				- PanManager.ACTION_BORDER_IGNORE_PX;
 	}
 }
