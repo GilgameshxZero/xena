@@ -58,7 +58,7 @@
 			android:textSize="30dp"
 			android:background="@drawable/solid_empty"
 			android:onClick="onClick"
-			android:text="SVG" />
+			android:text="START" />
 	</LinearLayout>
 	<LinearLayout
 		android:id="@+id/file_picker_activity_layout_listing"
