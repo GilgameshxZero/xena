@@ -17,6 +17,7 @@ import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
@@ -32,8 +33,8 @@ import java.util.Date;
 public class FilePickerActivity extends BaseActivity
 	implements View.OnClickListener {
 	static private final int REQUEST_CODE_READ_WRITE_EXTERNAL_STORAGE = 0;
-	static private final String SHARED_PREFERENCES_EDIT_TEXT_CACHE
-		= "SHARED_PREFERENCES_EDIT_TEXT_CACHE";
+	static private final String SHARED_PREFERENCES_EDIT_TEXT
+		= "SHARED_PREFERENCES_EDIT_TEXT";
 	static private final Point MIN_PANE_SIZE_DP = new Point(384, 72);
 	static private final Point MIN_PANE_SIZE_PX
 		= new Point(
@@ -55,9 +56,11 @@ public class FilePickerActivity extends BaseActivity
 	private LinearLayout listingLayout;
 	private LinearLayout modal;
 	private EditText modalEditPalm;
+	private ImageView modalEditPanUpdate;
 
 	private FilePickerTouchManager touchManager;
 
+	private boolean tentativeModalEditPanUpdateState;
 	private boolean ready = false;
 
 	int listingPage = 0;
@@ -71,6 +74,8 @@ public class FilePickerActivity extends BaseActivity
 		this.modal = findViewById(R.id.file_picker_activity_modal);
 		this.modalEditPalm
 			= findViewById(R.id.file_picker_activity_modal_edit_palm);
+		this.modalEditPanUpdate
+			= findViewById(R.id.file_picker_activity_modal_edit_pan_update);
 
 		this.touchManager = new FilePickerTouchManager(this);
 
@@ -87,7 +92,7 @@ public class FilePickerActivity extends BaseActivity
 
 		// Default to external storage directory.
 		this.setEditText(XenaApplication.preferences.getString(
-			FilePickerActivity.SHARED_PREFERENCES_EDIT_TEXT_CACHE,
+			FilePickerActivity.SHARED_PREFERENCES_EDIT_TEXT,
 			Environment.getExternalStorageDirectory().toString() + "/"));
 		this.editText
 			.addTextChangedListener(new FilePickerEditTextChangedListener(this));
@@ -132,8 +137,17 @@ public class FilePickerActivity extends BaseActivity
 
 		switch (view.getId()) {
 			case R.id.file_picker_activity_button_settings:
-				this.modalEditPalm.setText(String
-					.valueOf((int) Math.round(XenaApplication.getPalmTouchThreshold())));
+				this.modalEditPalm
+					.setText(String.valueOf(XenaApplication.getPalmTouchThreshold()));
+				this.setEditText(XenaApplication.preferences.getString(
+					FilePickerActivity.SHARED_PREFERENCES_EDIT_TEXT,
+					Environment.getExternalStorageDirectory().toString() + "/"));
+				this.tentativeModalEditPanUpdateState
+					= XenaApplication.getPanUpdateEnabled();
+				this.modalEditPanUpdate
+					.setBackgroundResource(this.tentativeModalEditPanUpdateState
+						? R.drawable.solid_filled
+						: R.drawable.solid_empty);
 				this.modal.setVisibility(View.VISIBLE);
 				break;
 			case R.id.file_picker_activity_button_date:
@@ -144,12 +158,22 @@ public class FilePickerActivity extends BaseActivity
 			case R.id.file_picker_activity_button_svg:
 				this.maybeStartScribbleActivity(true);
 				break;
+			case R.id.file_picker_activity_modal_edit_pan_update:
+				this.tentativeModalEditPanUpdateState
+					= !this.tentativeModalEditPanUpdateState;
+				this.modalEditPanUpdate
+					.setBackgroundResource(this.tentativeModalEditPanUpdateState
+						? R.drawable.solid_filled
+						: R.drawable.solid_empty);
+				break;
 			case R.id.file_picker_activity_modal_button_cancel:
 				this.modal.setVisibility(View.GONE);
 				break;
 			case R.id.file_picker_activity_modal_button_set:
 				XenaApplication.setPalmTouchThreshold(
-					Float.parseFloat(this.modalEditPalm.getText().toString()));
+					Integer.parseInt(this.modalEditPalm.getText().toString()));
+				XenaApplication
+					.setPanUpdateEnabled(this.tentativeModalEditPanUpdateState);
 				this.modal.setVisibility(View.GONE);
 				break;
 			default:
@@ -193,8 +217,7 @@ public class FilePickerActivity extends BaseActivity
 
 		// Update shared preferences to current path.
 		SharedPreferences.Editor editor = XenaApplication.preferences.edit();
-		editor.putString(FilePickerActivity.SHARED_PREFERENCES_EDIT_TEXT_CACHE,
-			path);
+		editor.putString(FilePickerActivity.SHARED_PREFERENCES_EDIT_TEXT, path);
 		editor.commit();
 
 		// Case based on extension.

@@ -50,6 +50,12 @@ public class PdfReader {
 				public void run() {
 					float nextTop = 0;
 					for (int i = 0; i < pages.length; i++) {
+						if (executor.isShutdown()) {
+							XenaApplication
+								.log("PdfReader::PdfReader: PDF sizing task shutdown.");
+							break;
+						}
+
 						pageLock.lock();
 						Page page = renderer.openPage(i);
 						Point pageSize = new Point(page.getWidth(), page.getHeight());
@@ -159,5 +165,9 @@ public class PdfReader {
 		}
 
 		return validPages;
+	}
+
+	public void shutdown() {
+		this.executor.shutdown();
 	}
 }

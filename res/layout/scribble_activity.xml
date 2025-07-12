@@ -19,6 +19,14 @@
 		android:layout_alignParentTop="true"
 		android:gravity="center"
 		android:background="@android:color/transparent">
+		<ImageView android:id="@+id/scribble_activity_exit"
+			android:layout_width="49dp"
+			android:layout_height="49dp"
+			android:layout_margin="6dp"
+			android:padding="3dp"
+			android:src="@drawable/exit"
+			android:background="@drawable/solid_empty"
+			android:onClick="onClick" />
 		<ImageView android:id="@+id/scribble_activity_draw_pan_toggle"
 			android:layout_width="49dp"
 			android:layout_height="49dp"
