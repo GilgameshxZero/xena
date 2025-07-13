@@ -1,17 +1,25 @@
+#pragma once
+
 #include <interactSequence.hpp>
+#include <windowManager.hpp>
 
 #include <rain.hpp>
 
 namespace Xena {
 	class TouchManager {
+		private:
+		WindowManager &windowManager;
+
 		public:
-		static void onTouchDown(
+		TouchManager(WindowManager &);
+
+		void onTouchDown(
 			InteractSequence &,
 			std::chrono::steady_clock::time_point,
 			POINT);
-		static void
+		void
 		onTouchUp(InteractSequence &, std::chrono::steady_clock::time_point, POINT);
-		static void onTouchMove(
+		void onTouchMove(
 			InteractSequence &,
 			std::chrono::steady_clock::time_point,
 			POINT);

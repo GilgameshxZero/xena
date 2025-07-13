@@ -1,14 +1,14 @@
-#include <main.hpp>
 #include <touchManager.hpp>
 
 namespace Xena {
+	TouchManager::TouchManager(WindowManager &windowManager)
+			: windowManager(windowManager) {}
 	void TouchManager::onTouchDown(
 		InteractSequence &sequence,
 		std::chrono::steady_clock::time_point now,
 		POINT position) {
-		// Rain::Log::verbose(
-		// 	"TouchManager::onTouchMove: DOWN (", position.x, ", ", position.y,
-		// ").");
+		Rain::Log::verbose(
+			"TouchManager::onTouchMove: DOWN (", position.x, ", ", position.y, ").");
 	}
 	void TouchManager::onTouchUp(
 		InteractSequence &sequence,
@@ -40,6 +40,7 @@ namespace Xena {
 		}
 		Rain::Log::verbose(
 			"TouchManager::onTouchMove: MOVE (", position.x, ", ", position.y, ").");
-		Main::brush = CreateSolidBrush(RGB(0, 255, 0));
+		this->windowManager.brush = CreateSolidBrush(RGB(0, 255, 0));
+		this->windowManager.redraw();
 	}
 }

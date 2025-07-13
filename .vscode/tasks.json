@@ -64,6 +64,48 @@
 
 			"command": "nmake",
 			"args": ["run-apk", "BUILD=1"]
+		},
+		{
+			/* Build the open file in release mode. */
+			"type": "shell",
+			"label": "build-exe-debug",
+			"options": { "cwd": "${workspaceFolder}/build" },
+			"presentation": { "clear": true },
+			"group": "build",
+
+			"command": "nmake",
+			"args": ["build-exe"]
+		},
+		{
+			/* Build the open file in release mode. */
+			"type": "shell",
+			"label": "build-exe-release",
+			"options": { "cwd": "${workspaceFolder}/build" },
+			"presentation": { "clear": true },
+			"group": "build",
+
+			"command": "nmake",
+			"args": ["build-exe", "BUILD=1"]
+		},
+		{
+			/* Build the open file in release mode. */
+			"type": "shell",
+			"label": "run-exe-debug",
+			"options": { "cwd": "${workspaceFolder}/build" },
+			"presentation": { "clear": true },
+
+			"command": "nmake",
+			"args": ["run-exe"]
+		},
+		{
+			/* Build the open file in release mode. */
+			"type": "shell",
+			"label": "run-exe-release",
+			"options": { "cwd": "${workspaceFolder}/build" },
+			"presentation": { "clear": true },
+
+			"command": "nmake",
+			"args": ["run-exe", "BUILD=1"]
 		}
 	]
 }
