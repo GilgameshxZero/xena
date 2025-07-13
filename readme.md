@@ -1,8 +1,10 @@
 # xena
 
-Android SVG editor optimized for e-ink note-taking tablets, such as the Onyx Boox series.
+Freeform & PDF-backed notes for Android and Windows, compatible with e-ink tablets (e.g. Onyx Boox), with a focus on the SVG ecosystem.
 
-## General dependencies
+## Android
+
+### General dependencies
 
 1. JDK 17.
 2. Android build, command-line, and platform tools.
@@ -13,7 +15,7 @@ The JDK is used by VSCode Java extensions. Without the JDK, formatting will fail
 
 `JAVA_HOME` should be set to either the JDK path in this project, or a system-wide JDK installation. It may be overridden with `java.jdt.ls.java.home` for just this project. Unfortunately, this setting is relative to not this project path, and may not be set in VC.
 
-## Connecting with `adb`
+### Connecting with `adb`
 
 `adb` is required to run apps on any attached devices. To attach to a LAN device over TCP/IP:
 
@@ -25,10 +27,8 @@ The JDK is used by VSCode Java extensions. Without the JDK, formatting will fail
 
 The downloaded dependency `adb` can be run with `make adb ARGS=""`.
 
-## Resources
+### Resources
 
 1. <https://www.hanshq.net/command-line-android.html>
 
-## Todo
-
-1. Make app robust against multithreading.
+## Windows

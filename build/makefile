@@ -26,27 +26,7 @@ ifdef MAKEDIR: # gmake: false; nmake: unused target
 !ifdef MAKEDIR # gmake: not seen; nmake: true
 # ------------------------------------------------------------------------------
 
-# nmake specific commands.
-PROJECT_NAME = xena
-
-ROOT_DIR = $(MAKEDIR)\..^\
-OBJ_DIR = $(ROOT_DIR)obj^\
-BIN_DIR = $(ROOT_DIR)bin^\
-!IFNDEF PROJECT_DIR_NAME
-PROJECT_DIR_NAME = src
-!ENDIF
-PROJECT_OBJ_DIR = $(OBJ_DIR)$(PROJECT_DIR_NAME)^\
-PROJECT_SRC_DIR = $(ROOT_DIR)$(PROJECT_DIR_NAME)^\
-!IFNDEF SOURCES_CPP
-SOURCES_CPP = *.cpp
-!ENDIF
-!IFNDEF BIN
-# For the repository, executable filename is not the project name.
-BIN = $(PROJECT_NAME)
-!ENDIF
-PROJECT_BIN = $(BIN_DIR)$(BIN).exe
-PROJECT_BIN_DIR = $(BIN_DIR)$(BIN)\..^\
-
+# nmake-specific commands.
 !IFNDEF JAVA_SOURCE_VERSION
 JAVA_SOURCE_VERSION = 17
 !ENDIF
@@ -64,18 +44,34 @@ BUILD = 0
 !ENDIF
 !IF $(BUILD) == 1
 BUILD_NAME = release
-AAPT_BUILD_FLAGS =
 !ELSE
 BUILD_NAME = debug
-AAPT_BUILD_FLAGS = --debug-mode
 !ENDIF
-NAMESPACE_PATH = com\gilgamesh
-PACKAGE_PATH = $(NAMESPACE_PATH)\$(PROJECT_NAME)
-PACKAGE_NAME = com.gilgamesh.$(PROJECT_NAME)
-MAIN_CLASS = filesystem.FilePickerActivity
+
+VERSION_BUILD_TXT = version.build.txt
+PROJECT_NAME = xena
+ROOT_DIR = $(MAKEDIR)\..^\
+OBJ_DIR = $(ROOT_DIR)obj^\
+BIN_DIR = $(ROOT_DIR)bin^\
+!IFNDEF PROJECT_DIR_NAME
+PROJECT_DIR_NAME = src
+!ENDIF
+PROJECT_OBJ_DIR = $(OBJ_DIR)$(PROJECT_DIR_NAME)^\
+PROJECT_SRC_DIR = $(ROOT_DIR)$(PROJECT_DIR_NAME)^\
+PROJECT_BIN = $(BIN_DIR)$(PROJECT_NAME).exe
+PROJECT_BIN_DIR = $(BIN_DIR)$(PROJECT_NAME)\..^\
+PROJECT_INCLUDE_DIR = $(ROOT_DIR)include^\
+
+# Some sources must be manually specified here.
+SOURCES_JAVA = $(ROOT_DIR)src\$(PACKAGE_PATH)\BaseActivity.java $(ROOT_DIR)src\$(PACKAGE_PATH)\XenaApplication.java $(ROOT_DIR)src\$(NAMESPACE_PATH)\algorithm\*.java $(ROOT_DIR)src\$(NAMESPACE_PATH)\multithreading\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\filesystem\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\pdf\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\scribble\*.java
+SOURCES_RES = $(ROOT_DIR)res\drawable\* $(ROOT_DIR)res\layout\* $(ROOT_DIR)res\values\id.xml $(ROOT_DIR)res\values\style.xml
+SOURCES_RC = $(ROOT_DIR)rc\*
+!IFNDEF SOURCES_CPP
+SOURCES_CPP = *.cpp
+!ENDIF
 
 # All library files to be declared here.
-LIB_NAMES = \
+DEV_LIB_NAMES = \
 repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-pen/1.4.11:onyxsdk-pen-1.4.11:aar \
 repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-base/1.7.6:onyxsdk-base-1.7.6:aar \
 repo.boox.com/repository/maven-public/com/onyx/android/sdk/onyxsdk-device/1.2.30:onyxsdk-device-1.2.30:aar \
@@ -99,9 +95,12 @@ PLATFORM_TOOLS_DIR = $(ADK_DIR)platform-tools^\
 PLATFORM_DIR = $(ADK_DIR)platforms\android-$(ANDROID_TARGET_VERSION)^\
 DEV_LIB_DIR = $(DEV_DIR)lib^\
 
+NAMESPACE_PATH = com\gilgamesh
+PACKAGE_PATH = $(NAMESPACE_PATH)\$(PROJECT_NAME)
+PACKAGE_NAME = com.gilgamesh.$(PROJECT_NAME)
+MAIN_CLASS = filesystem.FilePickerActivity
+
 # CPP settings.
-PROJECT_INCLUDE_DIR = $(ROOT_DIR)include^\
-PROJECT_VERSION_INCLUDE = $(PROJECT_INCLUDE_DIR)build.hpp
 # TODO: This macro should include all header files under PROJECT_INCLUDE_DIR.
 PROJECT_INCLUDES =
 # TODO: This macro should include all header files in Rain.
@@ -141,32 +140,11 @@ LINKER_FLAGS = $(LINKER_FLAGS_COMMON) $(LINKER_FLAGS_DEBUG)
 
 # Real targets.
 # Default/build target only compiles and links, but does not run.
-_default: build-apk
+_default: build
 
 # Increment version number.
-$(PROJECT_VERSION_INCLUDE): $(PROJECT_INCLUDES) $(PROJECT_SRC_DIR)$(SOURCES_CPP) $(RAIN_INCLUDES)
-	@<<increment.tmp.bat
-@ECHO OFF
-@REM Increments build version number at compile-time.
-
-@REM LF newline variable.
-(SET \n=^
-
-)
-
-SETLOCAL ENABLEDELAYEDEXPANSION
-SET FILE_PATH=%~dp0..\include\build.hpp
-FOR /F "tokens=1-3 delims= " %%A IN (%FILE_PATH%) DO (
-	SET /A BUILD=%%C+1
-
-	REM ECHO with custom LF-only newline.
-	<NUL SET /P=%%A %%B !BUILD!!\n!> %FILE_PATH%
-)
-ECHO VERSION_BUILD: !BUILD!.
-
-@REM TODO: copy to Android resources.
-ENDLOCAL
-<<NOKEEP
+$(VERSION_BUILD_TXT): $(SOURCES_JAVA) $(PROJECT_INCLUDES) $(PROJECT_SRC_DIR)$(SOURCES_CPP) $(RAIN_INCLUDES) $(SOURCES_RC)
+	@version.bat
 
 # Download and extract JDK.
 $(JDK_DIR).make:
@@ -195,20 +173,9 @@ $(ADK_DIR).make: $(JDK_DIR).make
 	@TAR -xf $(ADK_DIR)adk.zip -C $(ADK_DIR)
 	@DEL $(ADK_DIR)adk.zip
 # Attempt to automatically accept all licenses.
-	@<<adk.tmp.bat
-@ECHO OFF
-SETLOCAL ENABLEDELAYEDEXPANSION
-@REM LF newline variable.
-(SET \n=^
-
-)
-ECHO y!\n!y!\n!y!\n!y!\n!y!\n!y!\n!y!\n! > yes.tmp.txt
-ECHO no!\n! > no.tmp.txt
-ENDLOCAL
-<<NOKEEP
 	@CALL SET "JAVA_HOME=$(JDK_DIR)" && \
 	"$(ADK_DIR)cmdline-tools\bin\sdkmanager.bat" \
-		--sdk_root=$(ADK_DIR) --licenses < yes.tmp.txt
+		--sdk_root=$(ADK_DIR) --licenses < y.txt
 	@CALL SET "JAVA_HOME=$(JDK_DIR)" && \
 	"$(ADK_DIR)cmdline-tools\bin\sdkmanager.bat" \
 		--sdk_root=$(ADK_DIR) --install \
@@ -220,8 +187,7 @@ ENDLOCAL
 	"$(ADK_DIR)cmdline-tools\bin\avdmanager.bat" create avd \
 		--name $(ANDROID_MINIMUM_VERSION)-x86_64 \
 		--force --package \
-		"system-images;android-$(ANDROID_MINIMUM_VERSION);google_apis;x86_64" < no.tmp.txt
-	@DEL yes.tmp.txt no.tmp.txt
+		"system-images;android-$(ANDROID_MINIMUM_VERSION);google_apis;x86_64" < no.txt
 	@COPY NUL $(ADK_DIR).make
 
 # Shortcuts for Android tools.
@@ -240,7 +206,7 @@ emulator: $(ADK_DIR).make
 $(DEV_LIB_DIR).make: $(JDK_DIR).make
 	@IF EXIST $(DEV_LIB_DIR) RD /Q /S $(DEV_LIB_DIR)
 	@MD $(DEV_LIB_DIR)
-	@FOR %%I IN ($(LIB_NAMES)) DO @( \
+	@FOR %%I IN ($(DEV_LIB_NAMES)) DO @( \
 		@FOR /F "tokens=1-3 delims=:" %%J IN ("%%I") DO @( \
 			@ECHO Downloading https://%%J/%%K.%%L... && \
 			BITSADMIN /RAWRETURN /TRANSFER LIB_DOWNLOAD \
@@ -258,7 +224,7 @@ $(DEV_LIB_DIR).make: $(JDK_DIR).make
 	@COPY NUL $(DEV_LIB_DIR).make
 
 # Create R.java.
-$(ROOT_DIR)src\$(PACKAGE_PATH)\R.java: $(ADK_DIR).make $(ROOT_DIR)res\layout\* $(ROOT_DIR)res\values\* $(ROOT_DIR)res\drawable\*
+$(ROOT_DIR)src\$(PACKAGE_PATH)\R.java: $(ADK_DIR).make $(ROOT_DIR)res\values\version.xml $(SOURCES_RES)
 	@ECHO Creating $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java...
 	@IF NOT EXIST $(ROOT_DIR)obj MD $(ROOT_DIR)obj
 	@CALL $(BUILD_TOOLS_DIR)aapt.exe package -f -m \
@@ -282,7 +248,7 @@ $(ROOT_DIR)priv\.make: $(JDK_DIR).make
 	@COPY NUL $(ROOT_DIR)priv\.make
 
 # Compile target: .java to .class.
-$(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class: $(JDK_DIR).make $(DEV_LIB_DIR).make $(ROOT_DIR)src\$(NAMESPACE_PATH)\algorithm\*.java $(ROOT_DIR)src\$(NAMESPACE_PATH)\multithreading\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java $(ROOT_DIR)src\$(PACKAGE_PATH)\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\filesystem\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\pdf\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\scribble\*.java
+$(ROOT_DIR)obj\$(PACKAGE_PATH)\R.class: $(JDK_DIR).make $(DEV_LIB_DIR).make $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java $(SOURCES_JAVA)
 	@ECHO Compiling to .class...
 	@DIR /A-D /S /B $(ROOT_DIR)src\*.java > src.tmp
 	@CALL "$(JDK_DIR)bin\javac" \
@@ -348,7 +314,7 @@ $(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk: $(ADK_DIR).make $(ROOT_DIR)obj
 		"$(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).unsigned.apk"
 	@DEL "$(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).unsigned.apk"
 
-build-apk: "$(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk"
+build-apk: $(VERSION_BUILD_TXT) "$(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk"
 
 # Build and install. App may not run if timings are off.
 run-apk: "$(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk"
@@ -376,7 +342,7 @@ logcat:
 	@CALL "$(PLATFORM_TOOLS_DIR)adb.exe" shell logcat \
 		AndroidRuntime:I ActivityManager:I Xena:V *:S
 
-build-exe: $(PROJECT_VERSION_INCLUDE) $(PROJECT_BIN)
+build-exe: $(VERSION_BUILD_TXT) $(PROJECT_BIN)
 # Build and run.
 run-exe: build-exe
 	@CD $(BIN_DIR) && $(PROJECT_BIN) $(ARGUMENTS)
@@ -393,6 +359,9 @@ $(PROJECT_BIN): $(PROJECT_SRC_DIR)$(SOURCES_CPP) $(PROJECT_INCLUDES) $(RAIN_INCL
 	@ECHO $(PROJECT_BIN)
 	@$(LINKER) $(LINKER_FLAGS) $(DBLSUB_DEP_SRC_DIR_TO_OBJ_DIR:.cpp=.obj)
 
+build: build-apk build-exe
+run: run-apk run-exe
+
 clean: shallow-clean
 	@IF EXIST "$(DEV_DIR)" RD /Q /S "$(DEV_DIR)"
 
@@ -401,7 +370,7 @@ clean: shallow-clean
 else
 # ------------------------------------------------------------------------------
 
-# GNU make (gmake) specific commands.
+# GNU make (gmake)-specific commands.
 
 # Ensure files with the same name as fake targets do not trigger.
 .PHONY: __default _default
