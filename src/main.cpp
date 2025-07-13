@@ -41,6 +41,14 @@ namespace Xena {
 		switch (uMsg) {
 			case WM_DESTROY:
 				return Main::onDestroy(hWnd, wParam, lParam);
+			case WM_PAINT: {
+				PAINTSTRUCT ps;
+				HDC hdc = BeginPaint(hWnd, &ps);
+				FillRect(hdc, &ps.rcPaint, Main::brush);
+				EndPaint(hWnd, &ps);
+				std::cout << "PAINT\n";
+			}
+				return 0;
 			case WM_POINTERDOWN:
 			case WM_POINTERUP:
 			case WM_POINTERUPDATE:
@@ -150,6 +158,7 @@ namespace Xena {
 				break;
 		}
 		sequence.position = pointerInfo->ptHimetricLocation;
+		InvalidateRect(hWnd, NULL, FALSE);
 		return 0;
 	}
 }
