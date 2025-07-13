@@ -32,7 +32,7 @@ int main() {
 		return 0;
 	}
 
-	Xena::Main();
+	Xena::Main::create();
 
 	BOOL bRet;
 	MSG msg;
