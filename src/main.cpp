@@ -1,7 +1,9 @@
 #include <main.hpp>
+#include <penManager.hpp>
+#include <touchManager.hpp>
 
 namespace Xena {
-	Main::Main() {
+	void Main::create() {
 		HINSTANCE hInstance{GetModuleHandle(NULL)};
 		WNDCLASSEX wndClassEx{
 			sizeof(WNDCLASSEX),
@@ -21,8 +23,8 @@ namespace Xena {
 			NULL,
 			wndClassEx.lpszClassName,
 			"",
-			WS_POPUP | WS_VISIBLE,	// | WS_MAXIMIZE,
-			0,
+			WS_POPUP | WS_VISIBLE | WS_MAXIMIZE,
+			500,
 			0,
 			500,
 			500,
@@ -37,10 +39,12 @@ namespace Xena {
 	LRESULT CALLBACK
 	Main::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		switch (uMsg) {
-			case WM_TOUCH:
-				return Main::onTouch(hWnd, wParam, lParam);
 			case WM_DESTROY:
 				return Main::onDestroy(hWnd, wParam, lParam);
+			case WM_POINTERDOWN:
+			case WM_POINTERUP:
+			case WM_POINTERUPDATE:
+				return Main::onPointer(hWnd, wParam, lParam);
 			default:
 				return DefWindowProc(hWnd, uMsg, wParam, lParam);
 		}
@@ -51,63 +55,101 @@ namespace Xena {
 		return 0;
 	}
 
-	LRESULT Main::onTouch(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-		WORD cTouchPoints{LOWORD(wParam)};
-		std::vector<TOUCHINPUT> touchInputs(cTouchPoints);
-		Rain::Windows::validateSystemCall(GetTouchInputInfo(
-			reinterpret_cast<HTOUCHINPUT>(lParam),
-			cTouchPoints,
-			touchInputs.data(),
-			sizeof(TOUCHINPUT)));
+	LRESULT Main::onPointer(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		POINTER_INPUT_TYPE pointerInputType;
+		Rain::Windows::validateSystemCall(
+			GetPointerType(GET_POINTERID_WPARAM(wParam), &pointerInputType));
+		bool isPen{pointerInputType == PT_PEN},
+			isTouch{pointerInputType == PT_TOUCH};
+		if (!isPen && !isTouch) {
+			return 0;
+		}
 
-		for (auto &i : touchInputs) {
-			DWORD contactSizeMax{0};
-			if ((i.dwMask & TOUCHINPUTMASKF_CONTACTAREA) > 0) {
-				contactSizeMax = max(i.cxContact, i.cyContact);
-			}
-			bool isPen{(i.dwFlags & TOUCHEVENTF_PEN) > 0},
-				isPalm{
-					(i.dwFlags & TOUCHEVENTF_PEN) > 0 ||
-					contactSizeMax > Main::PALM_SIZE_THRESHOLD},
-				isDown{(i.dwFlags & TOUCHEVENTF_DOWN) > 0},
-				isUp{(i.dwFlags & TOUCHEVENTF_UP) > 0},
-				isMove{(i.dwFlags & TOUCHEVENTF_MOVE) > 0};
-
-			if (isPalm && !isPen) {
-				continue;
-			}
-			if (isDown) {
-				if (isPen) {
-					Rain::Log::verbose("Main::onTouch: ", i.dwID, " DOWN, PEN.");
-				} else {
-					Rain::Log::verbose(
-						"Main::onTouch: ",
-						i.dwID,
-						" DOWN, TOUCH, contactSizeMax = ",
-						contactSizeMax);
-				}
-			} else if (isUp) {
-				if (isPen) {
-					Rain::Log::verbose("Main::onTouch: ", i.dwID, " UP, PEN.");
-				} else {
-					Rain::Log::verbose(
-						"Main::onTouch: ",
-						i.dwID,
-						" UP, TOUCH, contactSizeMax = ",
-						contactSizeMax);
-				}
-			} else if (isMove) {
-				if (isPen) {
-					Rain::Log::verbose("Main::onTouch: ", i.dwID, " MOVE, PEN.");
-				} else {
-					Rain::Log::verbose(
-						"Main::onTouch: ",
-						i.dwID,
-						" MOVE, TOUCH, contactSizeMax = ",
-						contactSizeMax);
-				}
+		bool isEraser{false};
+		POINTER_INFO *pointerInfo;
+		POINTER_PEN_INFO pointerPenInfo;
+		POINTER_TOUCH_INFO pointerTouchInfo;
+		LONG contactSize{0};
+		if (isPen) {
+			Rain::Windows::validateSystemCall(
+				GetPointerPenInfo(GET_POINTERID_WPARAM(wParam), &pointerPenInfo));
+			pointerInfo = &pointerPenInfo.pointerInfo;
+			isEraser = (pointerPenInfo.penFlags & PEN_FLAG_ERASER) > 0;
+		} else {
+			Rain::Windows::validateSystemCall(
+				GetPointerTouchInfo(GET_POINTERID_WPARAM(wParam), &pointerTouchInfo));
+			pointerInfo = &pointerTouchInfo.pointerInfo;
+			if ((pointerTouchInfo.touchMask & TOUCH_MASK_CONTACTAREA) > 0) {
+				contactSize =
+					(pointerTouchInfo.rcContact.right - pointerTouchInfo.rcContact.left) *
+					(pointerTouchInfo.rcContact.bottom - pointerTouchInfo.rcContact.top);
 			}
 		}
+		bool isContact{(pointerInfo->pointerFlags & POINTER_FLAG_INCONTACT) > 0},
+			isDown{(pointerInfo->pointerFlags & POINTER_FLAG_DOWN) > 0},
+			isUp{(pointerInfo->pointerFlags & POINTER_FLAG_UP) > 0},
+			isMove{(pointerInfo->pointerFlags & POINTER_FLAG_UPDATE) > 0};
+		if (!isContact && !isUp) {
+			return 0;
+		}
+
+		InteractSequence::State state{
+			isDown
+				? InteractSequence::State::DOWN
+				: (isUp ? InteractSequence::State::UP : InteractSequence::State::MOVE)};
+		auto j{Main::interactSequences.find(pointerInfo->pointerId)};
+		if (j == Main::interactSequences.end()) {
+			j =
+				Main::interactSequences
+					.insert(
+						{pointerInfo->pointerId,
+						 InteractSequence{
+							 pointerInfo->pointerId, isPen, Main::interactSequences.size()}})
+					.first;
+			state = InteractSequence::State::DOWN;
+		}
+		InteractSequence &sequence{j->second};
+
+		std::chrono::steady_clock::time_point now{std::chrono::steady_clock::now()};
+		sequence.contactSizeMax = max(sequence.contactSizeMax, contactSize);
+		switch (state) {
+			case InteractSequence::State::DOWN:
+				sequence.timeDown = now;
+				if (isPen && !isEraser) {
+					PenManager::onPenDown(sequence, now, pointerInfo->ptHimetricLocation);
+				} else if (isPen) {
+					PenManager::onEraserDown(
+						sequence, now, pointerInfo->ptHimetricLocation);
+				} else {
+					TouchManager::onTouchDown(
+						sequence, now, pointerInfo->ptHimetricLocation);
+				}
+				break;
+			case InteractSequence::State::UP:
+				if (isPen && !isEraser) {
+					PenManager::onPenUp(sequence, now, pointerInfo->ptHimetricLocation);
+				} else if (isPen) {
+					PenManager::onEraserUp(
+						sequence, now, pointerInfo->ptHimetricLocation);
+				} else {
+					TouchManager::onTouchUp(
+						sequence, now, pointerInfo->ptHimetricLocation);
+				}
+				Main::interactSequences.erase(j);
+				break;
+			case InteractSequence::State::MOVE:
+				if (isPen && !isEraser) {
+					PenManager::onPenMove(sequence, now, pointerInfo->ptHimetricLocation);
+				} else if (isPen) {
+					PenManager::onEraserMove(
+						sequence, now, pointerInfo->ptHimetricLocation);
+				} else {
+					TouchManager::onTouchMove(
+						sequence, now, pointerInfo->ptHimetricLocation);
+				}
+				break;
+		}
+		sequence.position = pointerInfo->ptHimetricLocation;
 		return 0;
 	}
 }
