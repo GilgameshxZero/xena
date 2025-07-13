@@ -1,41 +1,33 @@
 #include <xena.hpp>
+#include <xenaProc.hpp>
 
 #include <rain.hpp>
 
-#include <iostream>
-
 int main() {
+	std::string const WINDOW_NAME{"xena"};
+
 	HINSTANCE hInstance = GetModuleHandle(NULL);
 
-	std::cout << "Hello world!";
-
-	// Parse command line.
 	Rain::String::CommandLineParser parser;
-
 	bool showHelp = false;
 	parser.addParser("help", showHelp);
 	parser.addParser("h", showHelp);
-
 	try {
 		parser.parse(__argc - 1, __argv + 1);
 	} catch (...) {
 		MessageBox(
 			NULL,
-			"Failed to parse command-line options. Consider "
-			"running with --help.",
-			"xena",
+			"Failed to parse command-line options. Consider running with --help.",
+			WINDOW_NAME.c_str(),
 			MB_OK);
 		return -1;
 	}
-
 	if (showHelp) {
 		MessageBox(
 			NULL,
-			"Command-line options (default specified in "
-			"parenthesis):\n"
-			"--help, -h (off): Display this help message and "
-			"exit.\n",
-			"xena",
+			"Command-line options (default specified in parenthesis):\n"
+			"--help, -h (off): Display this help message and exit.",
+			WINDOW_NAME.c_str(),
 			MB_OK);
 		return 0;
 	}
@@ -43,42 +35,40 @@ int main() {
 	// Register HWND for the tray icon.
 	WNDCLASSEX mainWndClass{
 		sizeof(WNDCLASSEX),
-		NULL,
-		NULL,
+		CS_HREDRAW | CS_VREDRAW,
+		Xena::xenaProc,
 		0,
 		0,
 		hInstance,
 		NULL,
+		LoadCursor(NULL, IDC_ARROW),
+		(HBRUSH)(COLOR_WINDOW + 1),
 		NULL,
-		NULL,
-		NULL,
-		"kb-as-mouse-main-wnd",
+		WINDOW_NAME.c_str(),
 		NULL};
-	Rain::Windows::validateSystemCall(
-		RegisterClassEx(&mainWndClass));
-	HWND mainWnd =
-		Rain::Windows::validateSystemCall(CreateWindowEx(
-			WS_EX_NOACTIVATE | WS_EX_TOPMOST | WS_EX_LAYERED |
-				WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW,
-			mainWndClass.lpszClassName,
-			"",
-			WS_POPUP,
-			0,
-			0,
-			0,
-			0,
-			NULL,
-			NULL,
-			hInstance,
-			NULL));
+	Rain::Windows::validateSystemCall(RegisterClassEx(&mainWndClass));
+	HWND mainWnd{Rain::Windows::validateSystemCall(CreateWindowEx(
+		NULL,
+		mainWndClass.lpszClassName,
+		WINDOW_NAME.c_str(),
+		WS_OVERLAPPEDWINDOW,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		NULL,
+		NULL,
+		hInstance,
+		NULL))};
+	ShowWindow(mainWnd, SW_NORMAL);
+	UpdateWindow(mainWnd);
 
 	// Pump message loop for the tray icon.
 	BOOL bRet;
 	MSG msg;
 	while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0) {
 		if (bRet == -1) {
-			MessageBox(
-				NULL, "GetMessage returned -1.", "xena", MB_OK);
+			MessageBox(NULL, "GetMessage returned -1.", WINDOW_NAME.c_str(), MB_OK);
 			break;
 		} else {
 			TranslateMessage(&msg);
