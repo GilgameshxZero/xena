@@ -27,12 +27,12 @@
 			android:src="@drawable/exit"
 			android:background="@drawable/solid_empty"
 			android:onClick="onClick" />
-		<ImageView android:id="@+id/scribble_activity_draw_pan_toggle"
+		<ImageView android:id="@+id/scribble_activity_draw_erase_toggle"
 			android:layout_width="49dp"
 			android:layout_height="49dp"
 			android:layout_margin="6dp"
 			android:padding="3dp"
-			android:src="@drawable/hand"
+			android:src="@drawable/eraser"
 			android:background="@drawable/dotted_empty"
 			android:onClick="onClick" />
 		<TextView android:id="@+id/scribble_activity_text_status"
@@ -65,12 +65,12 @@
 			android:singleLine="true"
 			android:gravity="center"
 			android:onClick="onClick" />
-		<ImageView android:id="@+id/scribble_activity_draw_erase_toggle"
+		<ImageView android:id="@+id/scribble_activity_draw_pan_toggle"
 			android:layout_width="49dp"
 			android:layout_height="49dp"
 			android:layout_margin="6dp"
 			android:padding="3dp"
-			android:src="@drawable/eraser"
+			android:src="@drawable/hand"
 			android:background="@drawable/dotted_empty"
 			android:onClick="onClick" />
 	</LinearLayout>
