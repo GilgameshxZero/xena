@@ -2,19 +2,49 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "debug",
+			"name": "debug-apk",
 			"type": "node-terminal",
 			"request": "launch",
 			"cwd": "${workspaceFolder}/build",
-			"command": "nmake run"
+			"command": "nmake run-apk"
 		},
 		{
-			"name": "release",
+			"name": "release-apk",
 			"type": "node-terminal",
 			"request": "launch",
 			"cwd": "${workspaceFolder}/build",
-			"command": "nmake run BUILD=1",
+			"command": "nmake run-apk BUILD=1",
 			"timeout": 1
+		},
+		{
+			"name": "debug-exe",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/bin/xena",
+			"args": [],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/bin",
+			"console": "integratedTerminal",
+			"preLaunchTask": "build-exe-debug",
+			"MIMode": "gdb",
+
+			"windows": { "type": "cppvsdbg" },
+			"osx": { "MIMode": "lldb" }
+		},
+		{
+			"name": "release-exe",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/bin/xena",
+			"args": [],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/bin",
+			"console": "integratedTerminal",
+			"preLaunchTask": "build-exe-release",
+			"MIMode": "gdb",
+
+			"windows": { "type": "cppvsdbg" },
+			"osx": { "MIMode": "lldb" }
 		}
 	]
 }

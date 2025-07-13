@@ -1,7 +1,9 @@
-#include <main.hpp>
 #include <penManager.hpp>
 
 namespace Xena {
+	PenManager::PenManager(WindowManager &windowManager)
+			: windowManager(windowManager) {}
+
 	void PenManager::onPenDown(
 		InteractSequence &sequence,
 		std::chrono::steady_clock::time_point now,
@@ -22,7 +24,8 @@ namespace Xena {
 		POINT position) {
 		Rain::Log::verbose(
 			"PenManager::onPenMove: MOVE (", position.x, ", ", position.y, ").");
-			Main::brush = CreateSolidBrush(RGB(0, 0, 255));
+		this->windowManager.brush = CreateSolidBrush(RGB(0, 0, 255));
+		this->windowManager.redraw();
 	}
 	void PenManager::onEraserDown(
 		InteractSequence &sequence,
@@ -44,6 +47,7 @@ namespace Xena {
 		POINT position) {
 		Rain::Log::verbose(
 			"PenManager::onEraserMove: MOVE (", position.x, ", ", position.y, ").");
-		Main::brush = CreateSolidBrush(RGB(255, 0, 0));
+		this->windowManager.brush = CreateSolidBrush(RGB(255, 0, 0));
+		this->windowManager.redraw();
 	}
 }

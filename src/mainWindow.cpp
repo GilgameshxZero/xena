@@ -1,14 +1,17 @@
-#include <main.hpp>
+#include <mainWindow.hpp>
 #include <penManager.hpp>
 #include <touchManager.hpp>
 
 namespace Xena {
-	void Main::create() {
+	MainWindow::MainWindow(std::string const &fileToLoad)
+			: windowManager(fileToLoad),
+				penManager(this->windowManager),
+				touchManager(this->windowManager) {
 		HINSTANCE hInstance{GetModuleHandle(NULL)};
 		WNDCLASSEX wndClassEx{
 			sizeof(WNDCLASSEX),
 			CS_HREDRAW | CS_VREDRAW,
-			Xena::Main::wndProc,
+			MainWindow::wndProc,
 			0,
 			0,
 			hInstance,
@@ -16,10 +19,10 @@ namespace Xena {
 			LoadCursor(NULL, IDC_ARROW),
 			(HBRUSH)(COLOR_WINDOW + 1),
 			NULL,
-			"main",
+			typeid(*this).name(),
 			NULL};
 		Rain::Windows::validateSystemCall(RegisterClassEx(&wndClassEx));
-		HWND hWnd{Rain::Windows::validateSystemCall(CreateWindowEx(
+		this->windowManager.hWnd = Rain::Windows::validateSystemCall(CreateWindowEx(
 			NULL,
 			wndClassEx.lpszClassName,
 			"",
@@ -31,39 +34,52 @@ namespace Xena {
 			NULL,
 			NULL,
 			hInstance,
-			NULL))};
-		Rain::Windows::validateSystemCall(RegisterTouchWindow(hWnd, NULL));
-		Rain::Log::verbose("Main::Main: Created window.");
+			NULL));
+		SetWindowLongPtr(
+			this->windowManager.hWnd,
+			GWLP_USERDATA,
+			reinterpret_cast<LONG_PTR>(this));
+		Rain::Windows::validateSystemCall(
+			RegisterTouchWindow(this->windowManager.hWnd, NULL));
+		Rain::Log::verbose("MainWindow::MainWindow: Created window.");
 	}
 
 	LRESULT CALLBACK
-	Main::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	MainWindow::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+		MainWindow *that{
+			reinterpret_cast<MainWindow *>(GetWindowLongPtr(hWnd, GWLP_USERDATA))};
+		if (that == NULL) {
+			return DefWindowProc(hWnd, uMsg, wParam, lParam);
+		}
 		switch (uMsg) {
 			case WM_DESTROY:
-				return Main::onDestroy(hWnd, wParam, lParam);
-			case WM_PAINT: {
-				PAINTSTRUCT ps;
-				HDC hdc = BeginPaint(hWnd, &ps);
-				FillRect(hdc, &ps.rcPaint, Main::brush);
-				EndPaint(hWnd, &ps);
-				std::cout << "PAINT\n";
-			}
-				return 0;
+				return that->onDestroy(hWnd, wParam, lParam);
+			case WM_PAINT:
+				return that->onPaint(hWnd, wParam, lParam);
 			case WM_POINTERDOWN:
 			case WM_POINTERUP:
 			case WM_POINTERUPDATE:
-				return Main::onPointer(hWnd, wParam, lParam);
+				return that->onPointer(hWnd, wParam, lParam);
 			default:
 				return DefWindowProc(hWnd, uMsg, wParam, lParam);
 		}
 	}
 
-	LRESULT Main::onDestroy(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+	LRESULT MainWindow::onDestroy(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		PostQuitMessage(0);
 		return 0;
 	}
 
-	LRESULT Main::onPointer(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+	LRESULT MainWindow::onPaint(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+		PAINTSTRUCT ps;
+		HDC hdc = BeginPaint(hWnd, &ps);
+		FillRect(hdc, &ps.rcPaint, this->windowManager.brush);
+		EndPaint(hWnd, &ps);
+		Rain::Log::verbose("MainWindow::onPaint.");
+		return 0;
+	}
+
+	LRESULT MainWindow::onPointer(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		POINTER_INPUT_TYPE pointerInputType;
 		Rain::Windows::validateSystemCall(
 			GetPointerType(GET_POINTERID_WPARAM(wParam), &pointerInputType));
@@ -105,14 +121,16 @@ namespace Xena {
 			isDown
 				? InteractSequence::State::DOWN
 				: (isUp ? InteractSequence::State::UP : InteractSequence::State::MOVE)};
-		auto j{Main::interactSequences.find(pointerInfo->pointerId)};
-		if (j == Main::interactSequences.end()) {
+		this->interactSequences.insert(
+			{pointerInfo->pointerId, InteractSequence()});
+		auto j{this->interactSequences.find(pointerInfo->pointerId)};
+		if (j == this->interactSequences.end()) {
 			j =
-				Main::interactSequences
+				this->interactSequences
 					.insert(
 						{pointerInfo->pointerId,
 						 InteractSequence{
-							 pointerInfo->pointerId, isPen, Main::interactSequences.size()}})
+							 pointerInfo->pointerId, isPen, this->interactSequences.size()}})
 					.first;
 			state = InteractSequence::State::DOWN;
 		}
@@ -124,41 +142,43 @@ namespace Xena {
 			case InteractSequence::State::DOWN:
 				sequence.timeDown = now;
 				if (isPen && !isEraser) {
-					PenManager::onPenDown(sequence, now, pointerInfo->ptHimetricLocation);
+					this->penManager.onPenDown(
+						sequence, now, pointerInfo->ptHimetricLocation);
 				} else if (isPen) {
-					PenManager::onEraserDown(
+					this->penManager.onEraserDown(
 						sequence, now, pointerInfo->ptHimetricLocation);
 				} else {
-					TouchManager::onTouchDown(
+					this->touchManager.onTouchDown(
 						sequence, now, pointerInfo->ptHimetricLocation);
 				}
 				break;
 			case InteractSequence::State::UP:
 				if (isPen && !isEraser) {
-					PenManager::onPenUp(sequence, now, pointerInfo->ptHimetricLocation);
+					this->penManager.onPenUp(
+						sequence, now, pointerInfo->ptHimetricLocation);
 				} else if (isPen) {
-					PenManager::onEraserUp(
+					this->penManager.onEraserUp(
 						sequence, now, pointerInfo->ptHimetricLocation);
 				} else {
-					TouchManager::onTouchUp(
+					this->touchManager.onTouchUp(
 						sequence, now, pointerInfo->ptHimetricLocation);
 				}
-				Main::interactSequences.erase(j);
+				this->interactSequences.erase(j);
 				break;
 			case InteractSequence::State::MOVE:
 				if (isPen && !isEraser) {
-					PenManager::onPenMove(sequence, now, pointerInfo->ptHimetricLocation);
+					this->penManager.onPenMove(
+						sequence, now, pointerInfo->ptHimetricLocation);
 				} else if (isPen) {
-					PenManager::onEraserMove(
+					this->penManager.onEraserMove(
 						sequence, now, pointerInfo->ptHimetricLocation);
 				} else {
-					TouchManager::onTouchMove(
+					this->touchManager.onTouchMove(
 						sequence, now, pointerInfo->ptHimetricLocation);
 				}
 				break;
 		}
 		sequence.position = pointerInfo->ptHimetricLocation;
-		InvalidateRect(hWnd, NULL, FALSE);
 		return 0;
 	}
 }

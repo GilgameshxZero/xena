@@ -1,4 +1,4 @@
-#include <main.hpp>
+#include <mainWindow.hpp>
 #include <xena.hpp>
 
 #include <rain.hpp>
@@ -9,8 +9,10 @@ int main() {
 
 	Rain::String::CommandLineParser parser;
 	bool showHelp = false;
+	std::string fileToLoad;
 	parser.addParser("help", showHelp);
 	parser.addParser("h", showHelp);
+	parser.addParser("", fileToLoad);
 	try {
 		parser.parse(__argc - 1, __argv + 1);
 		Rain::Log::verbose("main: ", "Parsed command line options.");
@@ -32,7 +34,7 @@ int main() {
 		return 0;
 	}
 
-	Xena::Main::create();
+	Xena::MainWindow mainWindow(fileToLoad);
 
 	BOOL bRet;
 	MSG msg;
