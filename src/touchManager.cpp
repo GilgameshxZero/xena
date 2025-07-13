@@ -40,7 +40,5 @@ namespace Xena {
 		}
 		Rain::Log::verbose(
 			"TouchManager::onTouchMove: MOVE (", position.x, ", ", position.y, ").");
-		this->windowManager.brush = CreateSolidBrush(RGB(0, 255, 0));
-		this->windowManager.redraw();
 	}
 }

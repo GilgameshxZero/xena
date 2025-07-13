@@ -5,6 +5,8 @@
 namespace Xena {
 	class FileManager {
 		public:
+		std::vector<std::vector<POINT>> lines;
+
 		FileManager(std::string const &);
 
 		private:
