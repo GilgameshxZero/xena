@@ -26,44 +26,44 @@
 		{
 			/* Build the open file in release mode. */
 			"type": "shell",
-			"label": "build-debug",
+			"label": "build-apk-debug",
 			"options": { "cwd": "${workspaceFolder}/build" },
 			"presentation": { "clear": true },
 			"group": "build",
 
 			"command": "nmake",
-			"args": ["build"]
+			"args": ["build-apk"]
 		},
 		{
 			/* Build the open file in release mode. */
 			"type": "shell",
-			"label": "build-release",
+			"label": "build-apk-release",
 			"options": { "cwd": "${workspaceFolder}/build" },
 			"presentation": { "clear": true },
 			"group": "build",
 
 			"command": "nmake",
-			"args": ["build", "BUILD=1"]
+			"args": ["build-apk", "BUILD=1"]
 		},
 		{
 			/* Build the open file in release mode. */
 			"type": "shell",
-			"label": "run-debug",
+			"label": "run-apk-debug",
 			"options": { "cwd": "${workspaceFolder}/build" },
 			"presentation": { "clear": true },
 
 			"command": "nmake",
-			"args": ["run"]
+			"args": ["run-apk"]
 		},
 		{
 			/* Build the open file in release mode. */
 			"type": "shell",
-			"label": "run-release",
+			"label": "run-apk-release",
 			"options": { "cwd": "${workspaceFolder}/build" },
 			"presentation": { "clear": true },
 
 			"command": "nmake",
-			"args": ["run", "BUILD=1"]
+			"args": ["run-apk", "BUILD=1"]
 		}
 	]
 }
