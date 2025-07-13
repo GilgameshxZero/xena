@@ -2,7 +2,7 @@
 
 namespace Xena {
 	WindowManager::WindowManager(std::string const &fileToLoad)
-			: fileToLoad(fileToLoad) {}
+			: fileManager(fileToLoad) {}
 
 	void WindowManager::redraw() {
 		InvalidateRect(hWnd, NULL, FALSE);
