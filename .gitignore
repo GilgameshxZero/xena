@@ -1,11 +1,8 @@
-android/
 bin/
-java/
-lib/
+dev/
 obj/
 priv/
 
 # Makefile artifacts.
 **.tmp
-
-.knownPackages
+**.tmp.*

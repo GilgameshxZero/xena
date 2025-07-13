@@ -1,8 +1,8 @@
 package com.gilgamesh.xena.scribble;
 
 import com.gilgamesh.xena.filesystem.SvgFileScribe;
-import com.gilgamesh.xena.multithreading.DebouncedTask;
 import com.gilgamesh.xena.pdf.PdfReader;
+import com.gilgamesh.multithreading.DebouncedTask;
 import com.gilgamesh.xena.BaseActivity;
 import com.gilgamesh.xena.R;
 import com.gilgamesh.xena.XenaApplication;

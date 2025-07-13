@@ -1,9 +1,9 @@
 package com.gilgamesh.xena.scribble;
 
+import com.gilgamesh.algorithm.Geometry;
+import com.gilgamesh.multithreading.DebouncedTask;
 import com.gilgamesh.xena.XenaApplication;
-import com.gilgamesh.xena.algorithm.Geometry;
 import com.gilgamesh.xena.filesystem.SvgFileScribe;
-import com.gilgamesh.xena.multithreading.DebouncedTask;
 
 import android.graphics.Point;
 import android.graphics.PointF;
