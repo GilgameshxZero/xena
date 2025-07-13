@@ -24,8 +24,6 @@ namespace Xena {
 		POINT position) {
 		Rain::Log::verbose(
 			"PenManager::onPenMove: MOVE (", position.x, ", ", position.y, ").");
-		this->windowManager.brush = CreateSolidBrush(RGB(0, 0, 255));
-		this->windowManager.redraw();
 	}
 	void PenManager::onEraserDown(
 		InteractSequence &sequence,
@@ -47,7 +45,5 @@ namespace Xena {
 		POINT position) {
 		Rain::Log::verbose(
 			"PenManager::onEraserMove: MOVE (", position.x, ", ", position.y, ").");
-		this->windowManager.brush = CreateSolidBrush(RGB(255, 0, 0));
-		this->windowManager.redraw();
 	}
 }

@@ -72,8 +72,8 @@ namespace Xena {
 
 	LRESULT MainWindow::onPaint(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		PAINTSTRUCT ps;
-		HDC hdc = BeginPaint(hWnd, &ps);
-		FillRect(hdc, &ps.rcPaint, this->windowManager.brush);
+		HDC hDc{BeginPaint(hWnd, &ps)};
+		this->windowManager.onPaint(hDc);
 		EndPaint(hWnd, &ps);
 		Rain::Log::verbose("MainWindow::onPaint.");
 		return 0;

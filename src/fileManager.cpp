@@ -10,7 +10,7 @@ namespace Xena {
 		std::stack<std::string> tags;
 		std::string buffer;
 		in >> buffer;
-		while (!in.eof()) {
+		while (in) {
 			if (buffer[0] != '<') {
 				throw std::ios_base::failure("Invalid starting tag.");
 			}
