@@ -7,6 +7,8 @@
 namespace Xena {
 	class Main {
 		public:
+		static inline HBRUSH brush{(HBRUSH)COLOR_WINDOW};
+
 		static void create();
 
 		private:

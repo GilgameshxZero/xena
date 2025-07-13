@@ -1,3 +1,4 @@
+#include <main.hpp>
 #include <penManager.hpp>
 
 namespace Xena {
@@ -21,6 +22,7 @@ namespace Xena {
 		POINT position) {
 		Rain::Log::verbose(
 			"PenManager::onPenMove: MOVE (", position.x, ", ", position.y, ").");
+			Main::brush = CreateSolidBrush(RGB(0, 0, 255));
 	}
 	void PenManager::onEraserDown(
 		InteractSequence &sequence,
@@ -42,5 +44,6 @@ namespace Xena {
 		POINT position) {
 		Rain::Log::verbose(
 			"PenManager::onEraserMove: MOVE (", position.x, ", ", position.y, ").");
+		Main::brush = CreateSolidBrush(RGB(255, 0, 0));
 	}
 }
