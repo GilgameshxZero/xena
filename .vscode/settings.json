@@ -1,8 +1,24 @@
 {
+	"debug.console.closeOnEnd": false,
 	"debug.internalConsoleOptions": "neverOpen",
+	"editor.rulers": [80, 120],
+	"editor.insertSpaces": false,
+	"editor.tabSize": 2,
+	"files.insertFinalNewline": true,
+	"files.eol": "\n",
+
+	"C_Cpp.default.includePath": ["include/", "rain/include/"],
+	"C_Cpp.default.cppStandard": "c++17",
+	"C_Cpp.autoAddFileAssociations": false,
+
 	"java.settings.url": ".vscode/settings.prefs",
 	"java.project.referencedLibraries": {
 		"include": ["dev/adk-13114758/platforms/android-34/*.jar", "dev/lib/*.jar"]
 	},
-	"java.inlayHints.parameterNames.enabled": "none"
+	"java.inlayHints.parameterNames.enabled": "none",
+
+	"[cpp]": {
+		"editor.defaultFormatter": "ms-vscode.cpptools",
+		"editor.wordWrap": "on"
+	}
 }
