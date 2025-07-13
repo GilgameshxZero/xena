@@ -323,7 +323,7 @@ run-apk: "$(ROOT_DIR)bin\$(PROJECT_NAME).$(BUILD_NAME).apk"
 	@ECHO Cooling down after install...
 	@TIMEOUT /T 2 >NUL
 	@CALL "$(PLATFORM_TOOLS_DIR)adb.exe" shell am start -n \
-		"$(PACKAGE_NAME)/$(PACKAGE_NAME).$(MAIN_CLASS)""
+		"$(PACKAGE_NAME)/$(PACKAGE_NAME).$(MAIN_CLASS)"
 
 # Clean target removes all intermediates.
 shallow-clean:
