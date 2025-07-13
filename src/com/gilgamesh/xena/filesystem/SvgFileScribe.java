@@ -1,7 +1,7 @@
 package com.gilgamesh.xena.filesystem;
 
+import com.gilgamesh.multithreading.DebouncedTask;
 import com.gilgamesh.xena.XenaApplication;
-import com.gilgamesh.xena.multithreading.DebouncedTask;
 import com.gilgamesh.xena.scribble.CompoundPath;
 import com.gilgamesh.xena.scribble.PathManager;
 import com.gilgamesh.xena.scribble.ScribbleActivity;

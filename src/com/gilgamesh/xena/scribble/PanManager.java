@@ -1,7 +1,7 @@
 package com.gilgamesh.xena.scribble;
 
+import com.gilgamesh.algorithm.Geometry;
 import com.gilgamesh.xena.XenaApplication;
-import com.gilgamesh.xena.algorithm.Geometry;
 import com.gilgamesh.xena.filesystem.SvgFileScribe;
 
 import android.graphics.Point;

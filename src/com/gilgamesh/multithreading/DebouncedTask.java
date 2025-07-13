@@ -1,4 +1,4 @@
-package com.gilgamesh.xena.multithreading;
+package com.gilgamesh.multithreading;
 
 import java.util.Timer;
 import java.util.TimerTask;
