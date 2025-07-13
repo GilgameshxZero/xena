@@ -1,12 +1,11 @@
+#include <main.hpp>
 #include <xena.hpp>
-#include <xenaProc.hpp>
 
 #include <rain.hpp>
 
 int main() {
 	std::string const WINDOW_NAME{"xena"};
-
-	HINSTANCE hInstance = GetModuleHandle(NULL);
+	ShowWindow(GetConsoleWindow(), SW_HIDE);
 
 	Rain::String::CommandLineParser parser;
 	bool showHelp = false;
@@ -14,6 +13,7 @@ int main() {
 	parser.addParser("h", showHelp);
 	try {
 		parser.parse(__argc - 1, __argv + 1);
+		Rain::Log::verbose("main: ", "Parsed command line options.");
 	} catch (...) {
 		MessageBox(
 			NULL,
@@ -32,38 +32,8 @@ int main() {
 		return 0;
 	}
 
-	// Register HWND for the tray icon.
-	WNDCLASSEX mainWndClass{
-		sizeof(WNDCLASSEX),
-		CS_HREDRAW | CS_VREDRAW,
-		Xena::xenaProc,
-		0,
-		0,
-		hInstance,
-		NULL,
-		LoadCursor(NULL, IDC_ARROW),
-		(HBRUSH)(COLOR_WINDOW + 1),
-		NULL,
-		WINDOW_NAME.c_str(),
-		NULL};
-	Rain::Windows::validateSystemCall(RegisterClassEx(&mainWndClass));
-	HWND mainWnd{Rain::Windows::validateSystemCall(CreateWindowEx(
-		NULL,
-		mainWndClass.lpszClassName,
-		WINDOW_NAME.c_str(),
-		WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		NULL,
-		NULL,
-		hInstance,
-		NULL))};
-	ShowWindow(mainWnd, SW_NORMAL);
-	UpdateWindow(mainWnd);
+	Xena::Main();
 
-	// Pump message loop for the tray icon.
 	BOOL bRet;
 	MSG msg;
 	while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0) {
@@ -75,7 +45,5 @@ int main() {
 			DispatchMessage(&msg);
 		}
 	}
-
-	Rain::Windows::validateSystemCall(DestroyWindow(mainWnd));
 	return 0;
 }
