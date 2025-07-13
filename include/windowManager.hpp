@@ -1,5 +1,7 @@
 #pragma once
 
+#include <fileManager.hpp>
+
 #include <rain.hpp>
 
 namespace Xena {
@@ -7,7 +9,8 @@ namespace Xena {
 		public:
 		HWND hWnd;
 		HBRUSH brush{(HBRUSH)COLOR_WINDOW};
-		std::string fileToLoad;
+
+		FileManager fileManager;
 
 		WindowManager(std::string const &);
 
