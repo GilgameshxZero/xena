@@ -224,7 +224,7 @@ $(DEV_LIB_DIR).make: $(JDK_DIR).make
 	@COPY NUL $(DEV_LIB_DIR).make
 
 # Create R.java.
-$(ROOT_DIR)src\$(PACKAGE_PATH)\R.java: $(ADK_DIR).make $(ROOT_DIR)res\values\version.xml $(SOURCES_RES)
+$(ROOT_DIR)src\$(PACKAGE_PATH)\R.java: $(ADK_DIR).make $(SOURCES_RES)
 	@ECHO Creating $(ROOT_DIR)src\$(PACKAGE_PATH)\R.java...
 	@IF NOT EXIST $(ROOT_DIR)obj MD $(ROOT_DIR)obj
 	@CALL $(BUILD_TOOLS_DIR)aapt.exe package -f -m \
