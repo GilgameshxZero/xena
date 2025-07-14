@@ -126,6 +126,13 @@ public class ScribbleView extends ImageView {
 				ScribbleView.PAINT_BITMAP);
 		}
 
-		canvas.drawPath(this.tentativePath, ScribbleView.PAINT_TENTATIVE);
+		switch (this.scribbleActivity.brushMode) {
+			case DEFAULT:
+				canvas.drawPath(this.tentativePath, ScribbleView.PAINT_TENTATIVE);
+				break;
+			case CHARCOAL:
+				canvas.drawPath(this.tentativePath, ScribbleView.PAINT_TENTATIVE);
+				break;
+		}
 	}
 }

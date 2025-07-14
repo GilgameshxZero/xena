@@ -8,13 +8,12 @@ int main() {
 	ShowWindow(GetConsoleWindow(), SW_HIDE);
 
 	Rain::String::CommandLineParser parser;
+	std::vector<std::string> nonKeyedArguments;
 	bool showHelp = false;
-	std::string fileToLoad;
 	parser.addParser("help", showHelp);
 	parser.addParser("h", showHelp);
-	parser.addParser("", fileToLoad);
 	try {
-		parser.parse(__argc - 1, __argv + 1);
+		parser.parse(__argc - 1, __argv + 1, nonKeyedArguments);
 		Rain::Log::verbose("main: ", "Parsed command line options.");
 	} catch (...) {
 		MessageBox(
@@ -34,7 +33,8 @@ int main() {
 		return 0;
 	}
 
-	Xena::MainWindow mainWindow(fileToLoad);
+	Xena::MainWindow mainWindow(
+		nonKeyedArguments.empty() ? "" : nonKeyedArguments.front());
 
 	BOOL bRet;
 	MSG msg;
