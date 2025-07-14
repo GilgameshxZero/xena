@@ -22,6 +22,7 @@ namespace Xena {
 			}
 		}
 		in.close();
-		Rain::Log::verbose("FileManager::FileManager: Loaded ", fileToLoad, ".");
+		Rain::Log::verbose(
+			"FileManager::FileManager: Loaded \"", fileToLoad, "\".");
 	}
 }

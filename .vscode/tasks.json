@@ -13,6 +13,17 @@
 			"windows": { "command": "nmake" }
 		},
 		{
+			/* Remove the intermediates directory obj/ and the output directory bin/. */
+			"type": "shell",
+			"label": "shallow-clean",
+			"options": { "cwd": "${workspaceFolder}/build" },
+			"presentation": { "clear": true, "reveal": "silent" },
+
+			"command": "make",
+			"args": ["shallow-clean"],
+			"windows": { "command": "nmake" }
+		},
+		{
 			/* Build the open file in release mode. */
 			"type": "shell",
 			"label": "logcat",

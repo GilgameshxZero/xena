@@ -14,7 +14,6 @@ int main() {
 	parser.addParser("h", showHelp);
 	try {
 		parser.parse(__argc - 1, __argv + 1, nonKeyedArguments);
-		Rain::Log::verbose("main: ", "Parsed command line options.");
 	} catch (...) {
 		MessageBox(
 			NULL,
@@ -23,6 +22,7 @@ int main() {
 			MB_OK);
 		return -1;
 	}
+	Rain::Log::verbose("main: ", "Parsed command line options.");
 	if (showHelp) {
 		MessageBox(
 			NULL,
