@@ -1,6 +1,0 @@
-#pragma once
-
-#define XENA_VERSION_MAJOR 1
-#define XENA_VERSION_MINOR 5
-#define XENA_VERSION_REVISION 0
-#define XENA_VERSION_BUILD 234
