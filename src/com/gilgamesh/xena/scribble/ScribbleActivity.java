@@ -9,8 +9,11 @@ import com.gilgamesh.xena.XenaApplication;
 
 import com.onyx.android.sdk.pen.TouchHelper;
 
+import android.graphics.BitmapFactory;
+import android.graphics.BitmapShader;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.Shader;
 import android.graphics.PointF;
 import android.net.Uri;
 import android.os.Bundle;
@@ -389,6 +392,8 @@ public class ScribbleActivity extends BaseActivity
 			.enableFingerTouch(true);
 
 		// Maybe reset to eraser mode.
+		this.touchHelper.setRawDrawingRenderEnabled(
+			this.brushMode == ScribbleActivity.BrushMode.DEFAULT);
 		this.touchHelper.setEraserRawDrawingEnabled(this.isPenEraseMode);
 		this.touchHelper.setBrushRawDrawingEnabled(!this.isPenEraseMode);
 	}
@@ -398,11 +403,23 @@ public class ScribbleActivity extends BaseActivity
 			case DEFAULT:
 				this.touchHelper.setStrokeStyle(TouchHelper.STROKE_STYLE_PENCIL)
 					.setStrokeColor(0xff000000);
+				ScribbleView.PAINT_TENTATIVE.setColor(0xff000000);
+				Chunk.PAINT.setColor(0xff000000);
+				ScribbleView.PAINT_TENTATIVE.setShader(null);
+				Chunk.PAINT.setShader(null);
 				break;
 			case CHARCOAL:
 				// CHARCOAL_V2 also works as a variant of CHARCOAL.
 				this.touchHelper.setStrokeStyle(TouchHelper.STROKE_STYLE_CHARCOAL)
-					.setStrokeColor(0xff000000);
+					.setStrokeColor(0x40000000);
+				ScribbleView.PAINT_TENTATIVE.setColor(0x40000000);
+				Chunk.PAINT.setColor(0x40000000);
+				ScribbleView.PAINT_TENTATIVE.setShader(new BitmapShader(
+					BitmapFactory.decodeResource(this.getResources(), R.drawable.xena),
+					Shader.TileMode.REPEAT, Shader.TileMode.REPEAT));
+				Chunk.PAINT.setShader(new BitmapShader(
+					BitmapFactory.decodeResource(this.getResources(), R.drawable.xena),
+					Shader.TileMode.REPEAT, Shader.TileMode.REPEAT));
 				break;
 		}
 	}
@@ -412,9 +429,11 @@ public class ScribbleActivity extends BaseActivity
 		switch (this.brushMode) {
 			case DEFAULT:
 				scaledWidth *= 1.15f;
+				Chunk.PAINT.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX);
 				break;
 			case CHARCOAL:
 				scaledWidth *= 3f;
+				Chunk.PAINT.setStrokeWidth(ScribbleActivity.STROKE_WIDTH_PX * 3f);
 				break;
 		}
 		this.touchHelper.setStrokeWidth(scaledWidth);
