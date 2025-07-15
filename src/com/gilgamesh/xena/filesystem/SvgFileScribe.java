@@ -77,7 +77,7 @@ public class SvgFileScribe {
 					InputStream in
 						= scribbleActivity.getContentResolver().openInputStream(uri);
 					try {
-						PointF viewportOffset;
+						PointF viewportOffset = new PointF(0f, 0f);
 						RectF viewport = new RectF();
 						float zoomScale = 1f;
 
@@ -85,8 +85,7 @@ public class SvgFileScribe {
 						parser.setInput(in, null);
 						while (parser.getEventType() != XmlPullParser.END_DOCUMENT) {
 							if (executor.isShutdown()) {
-								XenaApplication
-									.log("SvgFileScribe::load: task shutdown.");
+								XenaApplication.log("SvgFileScribe::load: task shutdown.");
 								break;
 							}
 
@@ -98,18 +97,21 @@ public class SvgFileScribe {
 
 							if (parser.getName().equals("svg")) {
 								// Viewport is not scaled.
-								String[] data
-									= parser.getAttributeValue(null, "data-xena").split(" ");
+								String dataXena = parser.getAttributeValue(null, "data-xena");
+								if (dataXena != null) {
+									String[] data = dataXena.split(" ");
 
-								if (data.length > 2) {
-									pathManager.setZoomStepId(Integer.parseInt(data[2]));
-									zoomScale = pathManager.getZoomScale();
+									if (data.length > 2) {
+										pathManager.setZoomStepId(Integer.parseInt(data[2]));
+										zoomScale = pathManager.getZoomScale();
+									}
+
+									viewportOffset
+										= new PointF(
+											Integer.parseInt(data[0]) * XenaApplication.DPI,
+											Integer.parseInt(data[1]) * XenaApplication.DPI);
+									pathManager.setViewportOffset(viewportOffset);
 								}
-
-								viewportOffset
-									= new PointF(Integer.parseInt(data[0]) * XenaApplication.DPI,
-										Integer.parseInt(data[1]) * XenaApplication.DPI);
-								pathManager.setViewportOffset(viewportOffset);
 								viewport
 									= new RectF(-viewportOffset.x, -viewportOffset.y,
 										-viewportOffset.x + pathManager.CHUNK_SIZE.x
@@ -130,49 +132,82 @@ public class SvgFileScribe {
 							PointF lastPoint = new PointF();
 
 							int i = 1;
-							for (; i < d.length() && d.charAt(i) != ' '; i++) {
+							for (; i < d.length()
+								&& (d.charAt(i) != ' ' || buffer.length() == 0); i++) {
 								buffer.append(d.charAt(i));
 							}
 							lastPoint.x
-								= Integer.parseInt(buffer.toString())
+								= Float.parseFloat(buffer.toString())
 									/ SvgFileScribe.COORDINATE_SCALE_FACTOR;
 							buffer.setLength(0);
-							for (i++; i < d.length() && d.charAt(i) != 'l'; i++) {
+							for (i++; i < d.length() && (d.charAt(i) != ' '
+								&& d.charAt(i) != 'l' && d.charAt(i) != 'L'
+								&& d.charAt(i) != 'H' && d.charAt(i) != 'V'); i++) {
 								buffer.append(d.charAt(i));
 							}
 							lastPoint.y
-								= Integer.parseInt(buffer.toString())
+								= Float.parseFloat(buffer.toString())
 									/ SvgFileScribe.COORDINATE_SCALE_FACTOR;
 							buffer.setLength(0);
 							CompoundPath path = pathManager.addPath(lastPoint).getValue();
 
-							for (i++; i < d.length();) {
-								if (d.charAt(i) == ' ') {
+							char mode = 'L';
+							for (; i < d.length();) {
+								while (i < d.length() && d.charAt(i) == ' ') {
 									i++;
+								}
+								if (i >= d.length()) {
+									break;
+								}
+								if (Character.isAlphabetic(d.charAt(i))) {
+									mode = d.charAt(i++);
+								}
+								while (i < d.length() && d.charAt(i) == ' ') {
+									i++;
+								}
+								if (i >= d.length()
+									|| Character.toLowerCase(d.charAt(i)) == 'z') {
+									break;
 								}
 								buffer.append(d.charAt(i));
 								for (i++; i < d.length() && d.charAt(i) != ' '
-									&& d.charAt(i) != '-'; i++) {
+									&& d.charAt(i) != '-' && d.charAt(i) != 'H'
+									&& d.charAt(i) != 'V' && d.charAt(i) != 'L'
+									&& d.charAt(i) != 'l'; i++) {
 									buffer.append(d.charAt(i));
 								}
 								pointDelta.x
-									= Integer.parseInt(buffer.toString())
+									= Float.parseFloat(buffer.toString())
 										/ SvgFileScribe.COORDINATE_SCALE_FACTOR;
 								buffer.setLength(0);
-								if (d.charAt(i) == ' ') {
+								if (i < d.length() && d.charAt(i) == ' ') {
 									i++;
 								}
-								buffer.append(d.charAt(i));
-								for (i++; i < d.length() && d.charAt(i) != ' '
-									&& d.charAt(i) != '-'; i++) {
+								if (i < d.length() && (mode == 'L' || mode == 'l')) {
 									buffer.append(d.charAt(i));
+									for (i++; i < d.length() && d.charAt(i) != ' '
+										&& d.charAt(i) != '-' && d.charAt(i) != 'H'
+										&& d.charAt(i) != 'V' && d.charAt(i) != 'L'; i++) {
+										buffer.append(d.charAt(i));
+									}
+									pointDelta.y
+										= Float.parseFloat(buffer.toString())
+											/ SvgFileScribe.COORDINATE_SCALE_FACTOR;
+									buffer.setLength(0);
 								}
-								pointDelta.y
-									= Integer.parseInt(buffer.toString())
-										/ SvgFileScribe.COORDINATE_SCALE_FACTOR;
-								buffer.setLength(0);
-								lastPoint.x += pointDelta.x;
-								lastPoint.y += pointDelta.y;
+								if (mode == 'l') {
+									lastPoint.x += pointDelta.x;
+									lastPoint.y += pointDelta.y;
+								} else if (mode == 'L') {
+									lastPoint.x = pointDelta.x;
+									lastPoint.y = pointDelta.y;
+								} else if (mode == 'H') {
+									lastPoint.x = pointDelta.x;
+								} else if (mode == 'V') {
+									lastPoint.y = pointDelta.x;
+								} else {
+									lastPoint.x = lastPoint.y = 0;
+								}
 								path.addPoint(lastPoint);
 							}
 
