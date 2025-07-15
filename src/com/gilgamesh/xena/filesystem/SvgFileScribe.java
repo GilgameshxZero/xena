@@ -18,8 +18,9 @@ import android.util.Xml;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.Arrays;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap.KeySetView;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.nio.file.Paths;
@@ -255,12 +256,20 @@ public class SvgFileScribe {
 					= new RectF(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
 						Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY);
 				StringBuilder stringBuilder = new StringBuilder();
-				Iterator<Map.Entry<Integer, CompoundPath>> iterator
-					= pathManager.getPathsIterator();
-				while (iterator.hasNext()) {
+				// Guarantee order for version control.
+				KeySetView<Integer, CompoundPath> keySetView
+					= pathManager.getPathsKeySetView();
+				Integer[] ids = keySetView.toArray(new Integer[keySetView.size()]);
+				Arrays.sort(ids);
+				for (int i = 0; i < ids.length; i++) {
+					CompoundPath path = pathManager.getPath(ids[i]);
+					// May be null by concurrency.
+					if (path == null) {
+						continue;
+					}
+
+					Iterator<PointF> pointsIterator = path.points.iterator();
 					stringBuilder.append("<path d=\"");
-					Iterator<PointF> pointsIterator
-						= iterator.next().getValue().points.iterator();
 					PointF point = pointsIterator.next();
 					stringBuilder.append("M"
 						+ Math.round(point.x * SvgFileScribe.COORDINATE_SCALE_FACTOR) + " "
