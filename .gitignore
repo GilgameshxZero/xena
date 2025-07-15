@@ -6,3 +6,10 @@ priv/
 # Makefile artifacts.
 **.tmp
 **.tmp.*
+
+# Android.
+res/values/version.xml
+src/com/gilgamesh/xena/R.java
+
+# Windows.
+include/version.hpp
