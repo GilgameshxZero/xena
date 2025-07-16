@@ -4,16 +4,18 @@
 
 namespace Xena {
 	// Tracks the state of a single touch ID through its various events.
-	class InteractSequence {
+	class Interaction {
 		public:
 		static inline std::chrono::steady_clock::duration const
 			IGNORE_SHORT_THRESHOLD{std::chrono::milliseconds(100)};
 		static inline LONG const CONTACT_SIZE_THRESHOLD{2};
 
+		enum Type { MOUSE, TOUCH, PEN, ERASER };
 		enum State { DOWN, UP, MOVE };
 
 		DWORD id;
-		bool isPen;
+		Type type;
+		State state;
 		std::size_t cSequence;
 
 		POINT position;
