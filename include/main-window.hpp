@@ -32,7 +32,6 @@ namespace Xena {
 		LRESULT onPointerDown(HWND, WPARAM, LPARAM);
 		LRESULT onPointerUp(HWND, WPARAM, LPARAM);
 		LRESULT onPointerUpdate(HWND, WPARAM, LPARAM);
-		LRESULT onSettingsChange(HWND, WPARAM, LPARAM);
 
 		LRESULT onPointerEvent(HWND, WPARAM, LPARAM);
 	};
