@@ -11,9 +11,9 @@ namespace Xena {
 			Gdiplus::Point,
 			std::pair<std::shared_ptr<Chunk>, std::unordered_set<std::size_t>>>;
 
-		private:
-		Gdiplus::REAL const DPI_SCALE;
+		Gdiplus::REAL const DP_TO_PX;
 
+		private:
 		static inline Gdiplus::REAL const STROKE_WIDTH_DP{2.5f};
 		Gdiplus::REAL const STROKE_WIDTH_PX;
 
@@ -50,6 +50,9 @@ namespace Xena {
 
 		void addPath(std::shared_ptr<Path const> const &);
 		void removePath(std::size_t);
+
+		void updateViewportPosition(Gdiplus::Point const &);
+		Gdiplus::Point const &getViewportPosition();
 
 		private:
 		Gdiplus::Point getChunkCoordinateForPoint(Gdiplus::PointF const &);

@@ -8,20 +8,20 @@
 namespace Xena {
 	class Touch {
 		private:
+		Gdiplus::REAL const HIMETRIC_TO_PX;
+
 		Painter &painter;
+
+		Gdiplus::Point origViewportPosition;
+		POINT origPanPosition;
 
 		public:
 		Touch(Painter &);
 
-		void onTouchDown(
-			Interaction &,
-			std::chrono::steady_clock::time_point,
-			POINT);
 		void
-		onTouchUp(Interaction &, std::chrono::steady_clock::time_point, POINT);
-		void onTouchMove(
-			Interaction &,
-			std::chrono::steady_clock::time_point,
-			POINT);
+		onTouchDown(Interaction &, std::chrono::steady_clock::time_point, POINT);
+		void onTouchUp(Interaction &, std::chrono::steady_clock::time_point, POINT);
+		void
+		onTouchMove(Interaction &, std::chrono::steady_clock::time_point, POINT);
 	};
 }

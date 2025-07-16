@@ -8,7 +8,7 @@ namespace Xena {
 		public:
 		static inline std::chrono::steady_clock::duration const
 			IGNORE_SHORT_THRESHOLD{std::chrono::milliseconds(100)};
-		static inline LONG const CONTACT_SIZE_THRESHOLD{2};
+		static inline LONG const CONTACT_SIZE_THRESHOLD{7};
 
 		enum Type { MOUSE, TOUCH, PEN, ERASER };
 		enum State { DOWN, UP, MOVE };
