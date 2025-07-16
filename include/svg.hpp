@@ -2,7 +2,6 @@
 
 #include <chunk.hpp>
 #include <path.hpp>
-#include <point-ll.hpp>
 
 #include <rain.hpp>
 
@@ -11,18 +10,18 @@ namespace Xena {
 		private:
 		std::string filePath;
 
-		PointLl &viewportOffset;
+		std::pair<int, int> &viewportOffset;
 		std::unordered_map<
 			std::size_t,
-			std::pair<std::shared_ptr<Path>, std::unordered_set<PointLl>>> &paths;
+			std::pair<std::shared_ptr<Path>, std::unordered_set<std::pair<int, int>>>> &paths;
 
 		public:
 		Svg(
 			std::string const &,
-			PointLl &,
+			std::pair<int, int> &,
 			std::unordered_map<
 				std::size_t,
-				std::pair<std::shared_ptr<Path>, std::unordered_set<PointLl>>> &);
+				std::pair<std::shared_ptr<Path>, std::unordered_set<std::pair<int, int>>>> &);
 
 		void load();
 		void save();
