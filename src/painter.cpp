@@ -4,11 +4,11 @@
 
 namespace Xena {
 	Painter::Painter(std::string const &fileToLoad, HWND hWnd)
-			: DPI_SCALE{static_cast<Gdiplus::REAL>(Rain::Windows::validateSystemCall(GetDpiForWindow(hWnd))) / USER_DEFAULT_SCREEN_DPI},
-				STROKE_WIDTH_PX{Painter::STROKE_WIDTH_DP * this->DPI_SCALE},
+			: DP_TO_PX{static_cast<Gdiplus::REAL>(Rain::Windows::validateSystemCall(GetDpiForWindow(hWnd))) / USER_DEFAULT_SCREEN_DPI},
+				STROKE_WIDTH_PX{Painter::STROKE_WIDTH_DP * this->DP_TO_PX},
 				CHUNK_SIZE_PX{
-					static_cast<int>(Painter::CHUNK_SIZE_DP.X * this->DPI_SCALE),
-					static_cast<int>(Painter::CHUNK_SIZE_DP.Y * this->DPI_SCALE)},
+					static_cast<int>(Painter::CHUNK_SIZE_DP.X * this->DP_TO_PX),
+					static_cast<int>(Painter::CHUNK_SIZE_DP.Y * this->DP_TO_PX)},
 				hWnd{hWnd},
 				blackPen{Gdiplus::Color(0xff000000), this->STROKE_WIDTH_PX},
 				whitePen{Gdiplus::Color(0xffffffff), this->STROKE_WIDTH_PX},
@@ -117,6 +117,15 @@ namespace Xena {
 		}
 		this->paths.erase(it);
 		this->rePaint();
+	}
+
+	void Painter::updateViewportPosition(
+		Gdiplus::Point const &newViewportPosition) {
+		this->viewportPosition.X = newViewportPosition.X;
+		this->viewportPosition.Y = newViewportPosition.Y;
+	}
+	Gdiplus::Point const &Painter::getViewportPosition() {
+		return this->viewportPosition;
 	}
 
 	Gdiplus::Point Painter::getChunkCoordinateForPoint(
