@@ -352,7 +352,7 @@ logcat:
 build-exe: $(VERSION_BUILD_TXT) $(PROJECT_BIN)
 # Build and run.
 run-exe: build-exe
-	@CD $(BIN_DIR) && $(PROJECT_BIN) $(ARGUMENTS)
+	@CD $(BIN_DIR) && $(PROJECT_BIN) $(ARGS)
 # Clean target removes all intermediates.
 
 # Define special macro to enable double-substitution.

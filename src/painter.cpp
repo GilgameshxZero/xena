@@ -4,15 +4,7 @@ namespace Xena {
 	Painter::Painter(std::string const &fileToLoad, HWND hWnd)
 			: hWnd{hWnd},
 				hDc{Rain::Windows::validateSystemCall(GetDC(hWnd))},
-				svg(
-					fileToLoad,
-					Rain::Windows::validateSystemCall(GetDpiForWindow(this->hWnd))) {}
-	Painter::~Painter() {
-		DeleteObject(this->blackBrush);
-		DeleteObject(this->whiteBrush);
-		DeleteObject(this->blackPen);
-		DeleteObject(this->whitePen);
-	}
+				svg(fileToLoad, this->viewportOffset, this->paths) {}
 
 	void Painter::rePaint() {
 		Rain::Windows::validateSystemCall(InvalidateRect(this->hWnd, NULL, FALSE));
@@ -22,19 +14,31 @@ namespace Xena {
 		using Rain::Windows::validateSystemCall;
 
 		static PAINTSTRUCT ps;
-		static RECT rect;
 
 		validateSystemCall(BeginPaint(hWnd, &ps));
+		Gdiplus::Graphics graphics(ps.hdc);
 
 		if (isLightTheme) {
-			validateSystemCall(FillRect(ps.hdc, &ps.rcPaint, this->whiteBrush));
-			validateSystemCall(SelectObject(ps.hdc, this->blackPen));
+			graphics.FillRectangle(
+				&this->whiteBrush,
+				Gdiplus::Rect(
+					ps.rcPaint.left,
+					ps.rcPaint.top,
+					ps.rcPaint.right - ps.rcPaint.left,
+					ps.rcPaint.bottom - ps.rcPaint.top));
+			graphics.DrawLine(
+				&this->blackPen, Gdiplus::Point(100, 100), Gdiplus::Point(200, 200));
 		} else {
-			validateSystemCall(FillRect(ps.hdc, &ps.rcPaint, this->blackBrush));
-			validateSystemCall(SelectObject(ps.hdc, this->whitePen));
+			graphics.FillRectangle(
+				&this->blackBrush,
+				Gdiplus::Rect(
+					ps.rcPaint.left,
+					ps.rcPaint.top,
+					ps.rcPaint.right - ps.rcPaint.left,
+					ps.rcPaint.bottom - ps.rcPaint.top));
+			graphics.DrawLine(
+				&this->whitePen, Gdiplus::Point(100, 100), Gdiplus::Point(200, 200));
 		}
-		validateSystemCall(MoveToEx(ps.hdc, 100, 100, NULL));
-		validateSystemCall(LineTo(ps.hdc, 200, 200));
 
 		EndPaint(hWnd, &ps);
 		Rain::Log::verbose("Painter::onPaint.");
@@ -45,18 +49,15 @@ namespace Xena {
 		this->isLightTheme = isLightTheme;
 	}
 	void Painter::refreshDpi() {
-		this->STROKE_WIDTH_PX = std::lroundl(
-			Painter::STROKE_WIDTH_DP *
+		this->STROKE_WIDTH_PX = Painter::STROKE_WIDTH_DP *
 			Rain::Windows::validateSystemCall(GetDpiForWindow(this->hWnd)) /
-			USER_DEFAULT_SCREEN_DPI);
-
-		Rain::Windows::validateSystemCall(DeleteObject(this->blackPen));
-		Rain::Windows::validateSystemCall(DeleteObject(this->whitePen));
-		this->blackPen = Rain::Windows::validateSystemCall(
-			CreatePen(PS_SOLID, this->STROKE_WIDTH_PX, 0x00000000));
-		this->whitePen = Rain::Windows::validateSystemCall(
-			CreatePen(PS_SOLID, this->STROKE_WIDTH_PX, 0x00FFFFFF));
-
+			USER_DEFAULT_SCREEN_DPI;
+		this->blackPen.SetWidth(this->STROKE_WIDTH_PX);
+		this->whitePen.SetWidth(this->STROKE_WIDTH_PX);
+		this->transparentPen.SetWidth(this->STROKE_WIDTH_PX * 1.5f);
 		Rain::Log::verbose("Painter::refreshDpi.");
 	}
+
+	void Painter::addPath(std::shared_ptr<Path> const &path) {}
+	void Painter::removePath(std::size_t pathId) {}
 }

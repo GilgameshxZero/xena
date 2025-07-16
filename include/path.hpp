@@ -9,13 +9,18 @@ namespace Xena {
 
 	class Path {
 		private:
+		static inline std::size_t ID_NEXT{0};
+		std::size_t const ID;
+
 		std::vector<POINT> points;
-		std::vector<std::shared_ptr<Chunk>> containingChunks;
 
 		std::pair<PointLl, PointLl> bounds;
 
 		public:
-		std::vector<POINT> const getPoints() const;
-		std::vector<std::shared_ptr<Chunk> const> const getContainingChunks() const;
+		Path();
+
+		std::vector<POINT> const &getPoints() const;
+
+		void addPoint(POINT const &);
 	};
 }
