@@ -10,18 +10,20 @@ namespace Xena {
 		private:
 		std::string filePath;
 
-		std::pair<int, int> &viewportOffset;
+		Gdiplus::Point &viewportOffset;
 		std::unordered_map<
 			std::size_t,
-			std::pair<std::shared_ptr<Path>, std::unordered_set<std::pair<int, int>>>> &paths;
+			std::pair<std::shared_ptr<Path>, std::unordered_set<Gdiplus::Point>>>
+			&paths;
 
 		public:
 		Svg(
 			std::string const &,
-			std::pair<int, int> &,
+			Gdiplus::Point &,
 			std::unordered_map<
 				std::size_t,
-				std::pair<std::shared_ptr<Path>, std::unordered_set<std::pair<int, int>>>> &);
+				std::pair<std::shared_ptr<Path>, std::unordered_set<Gdiplus::Point>>>
+				&);
 
 		void load();
 		void save();

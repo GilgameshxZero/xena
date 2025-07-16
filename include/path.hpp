@@ -10,16 +10,15 @@ namespace Xena {
 		static inline std::size_t ID_NEXT{0};
 		std::size_t const ID;
 
-		std::vector<Gdiplus::Point> points;
+		std::vector<Gdiplus::PointF> points;
 		Gdiplus::GraphicsPath path;
-
-		std::pair<Gdiplus::Point, Gdiplus::Point> bounds;
+		Gdiplus::RectF bounds;
 
 		public:
 		Path();
 
-		std::vector<Gdiplus::Point> const &getPoints() const;
-
-		void addPoint(Gdiplus::Point const &);
+		std::vector<Gdiplus::PointF> const &getPoints() const;
+		Gdiplus::GraphicsPath const &getPath() const;
+		void addPoint(Gdiplus::PointF const &);
 	};
 }

@@ -11,13 +11,21 @@ namespace Xena {
 
 		public:
 		HDC hDc;
-		HBITMAP hBitmap;
 
-		Chunk(HDC, Gdiplus::Point const &, Gdiplus::Point const &, HBRUSH);
+		private:
+		HBITMAP hBitmap, hOrigBitmap;
+		Gdiplus::Graphics graphics;
+
+		public:
+		Chunk(
+			HDC,
+			Gdiplus::Point const &,
+			Gdiplus::Point const &,
+			Gdiplus::Brush const &);
 		~Chunk();
 
 		// Draw path with specified brush. To erase, use a blank or transparent
 		// brush.
-		void drawPath(std::shared_ptr<Path> const &, HPEN);
+		void drawPath(std::shared_ptr<Path> const &, Gdiplus::Pen const &);
 	};
 }

@@ -35,9 +35,6 @@ int main() {
 				return 0;
 			}
 
-			Gdiplus::GdiplusStartupInput gdiplusStartupInput;
-			ULONG_PTR gdiplusToken;
-			GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, 0);
 			Rain::Windows::validateSystemCall(EnableMouseInPointer(TRUE));
 			// DPI awareness can also be set in the manifest, but we set it here.
 			Rain::Windows::validateSystemCall(SetThreadDpiAwarenessContext(
@@ -57,8 +54,6 @@ int main() {
 					DispatchMessage(&msg);
 				}
 			}
-
-			Gdiplus::GdiplusShutdown(gdiplusToken);
 			return 0;
 		},
 		"main")();

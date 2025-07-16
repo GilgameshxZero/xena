@@ -19,25 +19,25 @@ namespace Xena {
 		Gdiplus::Graphics graphics(ps.hdc);
 
 		if (isLightTheme) {
-			graphics.FillRectangle(
+			Rain::Windows::Gdiplus::validateGdiplusCall(graphics.FillRectangle(
 				&this->whiteBrush,
 				Gdiplus::Rect(
 					ps.rcPaint.left,
 					ps.rcPaint.top,
 					ps.rcPaint.right - ps.rcPaint.left,
-					ps.rcPaint.bottom - ps.rcPaint.top));
-			graphics.DrawLine(
-				&this->blackPen, Gdiplus::Point(100, 100), Gdiplus::Point(200, 200));
+					ps.rcPaint.bottom - ps.rcPaint.top)));
+			Rain::Windows::Gdiplus::validateGdiplusCall(graphics.DrawLine(
+				&this->blackPen, Gdiplus::Point(100, 100), Gdiplus::Point(200, 200)));
 		} else {
-			graphics.FillRectangle(
+			Rain::Windows::Gdiplus::validateGdiplusCall(graphics.FillRectangle(
 				&this->blackBrush,
 				Gdiplus::Rect(
 					ps.rcPaint.left,
 					ps.rcPaint.top,
 					ps.rcPaint.right - ps.rcPaint.left,
-					ps.rcPaint.bottom - ps.rcPaint.top));
-			graphics.DrawLine(
-				&this->whitePen, Gdiplus::Point(100, 100), Gdiplus::Point(200, 200));
+					ps.rcPaint.bottom - ps.rcPaint.top)));
+			Rain::Windows::Gdiplus::validateGdiplusCall(graphics.DrawLine(
+				&this->whitePen, Gdiplus::Point(100, 100), Gdiplus::Point(200, 200)));
 		}
 
 		EndPaint(hWnd, &ps);
