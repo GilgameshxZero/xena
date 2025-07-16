@@ -8,47 +8,38 @@ namespace Xena {
 				mouse(this->painter),
 				touch(this->painter),
 				pen(this->painter),
-				eraser(this->painter) {
-		this->painter.setTheme(Rain::Windows::isLightTheme());
-		this->painter.refreshDpi();
-	}
+				eraser(this->painter) {}
 
 	LRESULT CALLBACK
 	MainWindow::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-		return Rain::Error::consumeThrowable(
-			[&]() {
-				if (uMsg == WM_CREATE) {
-					Rain::Log::verbose("MainWindow::MainWindow: Created window.");
-					CREATESTRUCT *createStruct{reinterpret_cast<CREATESTRUCT *>(lParam)};
-					SetWindowLongPtr(
-						hWnd,
-						GWLP_USERDATA,
-						reinterpret_cast<LONG_PTR>(createStruct->lpCreateParams));
-					return static_cast<LRESULT>(0);
-				}
-				MainWindow *that{reinterpret_cast<MainWindow *>(
-					GetWindowLongPtr(hWnd, GWLP_USERDATA))};
-				if (that == NULL) {
-					return DefWindowProc(hWnd, uMsg, wParam, lParam);
-				}
-				switch (uMsg) {
-					case WM_DESTROY:
-						return that->onDestroy(hWnd, wParam, lParam);
-					case WM_PAINT:
-						return that->onPaint(hWnd, wParam, lParam);
-					case WM_POINTERDOWN:
-						return that->onPointerDown(hWnd, wParam, lParam);
-					case WM_POINTERUP:
-						return that->onPointerUp(hWnd, wParam, lParam);
-					case WM_POINTERUPDATE:
-						return that->onPointerUpdate(hWnd, wParam, lParam);
-					case WM_SETTINGCHANGE:
-						return that->onSettingsChange(hWnd, wParam, lParam);
-					default:
-						return DefWindowProc(hWnd, uMsg, wParam, lParam);
-				}
-			},
-			"MainWindow::wndProc")();
+		if (uMsg == WM_CREATE) {
+			Rain::Log::verbose("MainWindow::MainWindow: Created window.");
+			CREATESTRUCT *createStruct{reinterpret_cast<CREATESTRUCT *>(lParam)};
+			SetWindowLongPtr(
+				hWnd,
+				GWLP_USERDATA,
+				reinterpret_cast<LONG_PTR>(createStruct->lpCreateParams));
+			return static_cast<LRESULT>(0);
+		}
+		MainWindow *that{
+			reinterpret_cast<MainWindow *>(GetWindowLongPtr(hWnd, GWLP_USERDATA))};
+		if (that == NULL) {
+			return DefWindowProc(hWnd, uMsg, wParam, lParam);
+		}
+		switch (uMsg) {
+			case WM_DESTROY:
+				return that->onDestroy(hWnd, wParam, lParam);
+			case WM_PAINT:
+				return that->onPaint(hWnd, wParam, lParam);
+			case WM_POINTERDOWN:
+				return that->onPointerDown(hWnd, wParam, lParam);
+			case WM_POINTERUP:
+				return that->onPointerUp(hWnd, wParam, lParam);
+			case WM_POINTERUPDATE:
+				return that->onPointerUpdate(hWnd, wParam, lParam);
+			default:
+				return DefWindowProc(hWnd, uMsg, wParam, lParam);
+		}
 	}
 
 	HWND MainWindow::createWindow() {
@@ -100,13 +91,6 @@ namespace Xena {
 	}
 	LRESULT MainWindow::onPointerUpdate(HWND hWnd, WPARAM wParam, LPARAM lParam) {
 		return this->onPointerEvent(hWnd, wParam, lParam);
-	}
-	LRESULT
-	MainWindow::onSettingsChange(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-		this->painter.setTheme(Rain::Windows::isLightTheme());
-		this->painter.refreshDpi();
-		this->painter.rePaint();
-		return 0;
 	}
 
 	LRESULT MainWindow::onPointerEvent(HWND hWnd, WPARAM wParam, LPARAM lParam) {

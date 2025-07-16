@@ -3,12 +3,9 @@
 namespace Xena {
 	Svg::Svg(
 		std::string const &fileToLoad,
-		Gdiplus::Point &viewportOffset,
-		std::unordered_map<
-			std::size_t,
-			std::pair<std::shared_ptr<Path>, std::unordered_set<Gdiplus::Point>>>
-			&paths)
-			: filePath{fileToLoad}, viewportOffset{viewportOffset}, paths{paths} {
+		Gdiplus::Point &viewportPosition,
+		Paths &paths)
+			: filePath{fileToLoad}, viewportPosition{viewportPosition}, paths{paths} {
 		this->load();
 	}
 

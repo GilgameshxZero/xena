@@ -2,31 +2,33 @@
 
 namespace Xena {
 	Chunk::Chunk(
-		HDC hDc,
 		Gdiplus::Point const &size,
-		Gdiplus::Point const &offset,
+		Gdiplus::Point const &position,
 		Gdiplus::Brush const &backgroundBrush)
 			: SIZE{size},
-				OFFSET{offset},
-				hDc{Rain::Windows::validateSystemCall(CreateCompatibleDC(hDc))},
-				hBitmap{Rain::Windows::validateSystemCall(
-					CreateCompatibleBitmap(this->hDc, size.X, size.Y))},
-				hOrigBitmap{static_cast<HBITMAP>(Rain::Windows::validateSystemCall(
-					SelectObject(this->hDc, this->hBitmap)))},
-				graphics(this->hDc) {
+				POSITION{position},
+				bitmap(size.X, size.Y),
+				graphics(&this->bitmap) {
+		Rain::Windows::Gdiplus::validateGdiplusCall(
+			this->graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias));
 		Rain::Windows::Gdiplus::validateGdiplusCall(this->graphics.FillRectangle(
 			&backgroundBrush, Gdiplus::Rect(0, 0, size.X, size.Y)));
 	}
-	Chunk::~Chunk() {
-		SelectObject(this->hDc, this->hOrigBitmap);
-		DeleteObject(this->hBitmap);
-		DeleteDC(this->hDc);
-	}
 
 	void Chunk::drawPath(
-		std::shared_ptr<Path> const &path,
+		std::shared_ptr<Path const> const &path,
 		Gdiplus::Pen const &pen) {
+		std::vector<Gdiplus::PointF> const &pointFs{path->getPointFs()};
+		Gdiplus::GraphicsPath graphicsPath;
+
+		for (std::size_t i{1}; i < pointFs.size(); i++) {
+			Rain::Windows::Gdiplus::validateGdiplusCall(graphicsPath.AddLine(
+				pointFs[i - 1].X - this->POSITION.X,
+				pointFs[i - 1].Y - this->POSITION.Y,
+				pointFs[i].X - this->POSITION.X,
+				pointFs[i].Y - this->POSITION.Y));
+		}
 		Rain::Windows::Gdiplus::validateGdiplusCall(
-			this->graphics.DrawPath(&pen, &path->getPath()));
+			this->graphics.DrawPath(&pen, &graphicsPath));
 	}
 }
