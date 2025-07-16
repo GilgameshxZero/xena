@@ -17,6 +17,15 @@ namespace Xena {
 	MainWindow::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		return Rain::Error::consumeThrowable(
 			[&]() {
+				if (uMsg == WM_CREATE) {
+					Rain::Log::verbose("MainWindow::MainWindow: Created window.");
+					CREATESTRUCT *createStruct{reinterpret_cast<CREATESTRUCT *>(lParam)};
+					SetWindowLongPtr(
+						hWnd,
+						GWLP_USERDATA,
+						reinterpret_cast<LONG_PTR>(createStruct->lpCreateParams));
+					return static_cast<LRESULT>(0);
+				}
 				MainWindow *that{reinterpret_cast<MainWindow *>(
 					GetWindowLongPtr(hWnd, GWLP_USERDATA))};
 				if (that == NULL) {
@@ -70,10 +79,8 @@ namespace Xena {
 			NULL,
 			NULL,
 			hInstance,
-			NULL))};
-		SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+			reinterpret_cast<LPVOID>(this)))};
 		Rain::Windows::validateSystemCall(RegisterTouchWindow(hWnd, NULL));
-		Rain::Log::verbose("MainWindow::MainWindow: Created window.");
 		return hWnd;
 	}
 

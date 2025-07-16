@@ -5,35 +5,28 @@ namespace Xena {
 		HDC hDc,
 		Gdiplus::Point const &size,
 		Gdiplus::Point const &offset,
-		HBRUSH backgroundBrush)
+		Gdiplus::Brush const &backgroundBrush)
 			: SIZE{size},
 				OFFSET{offset},
 				hDc{Rain::Windows::validateSystemCall(CreateCompatibleDC(hDc))},
-				hBitmap{Rain::Windows::validateSystemCall(CreateCompatibleBitmap(
-					this->hDc,
-					static_cast<int>(size.x),
-					static_cast<int>(size.y)))} {
-		using Rain::Windows::validateSystemCall;
-
-		RECT rect{0, 0, static_cast<LONG>(size.x), static_cast<LONG>(size.y)};
-
-		validateSystemCall(SelectObject(this->hDc, this->hBitmap));
-		validateSystemCall(FillRect(this->hDc, &rect, backgroundBrush));
+				hBitmap{Rain::Windows::validateSystemCall(
+					CreateCompatibleBitmap(this->hDc, size.X, size.Y))},
+				hOrigBitmap{static_cast<HBITMAP>(Rain::Windows::validateSystemCall(
+					SelectObject(this->hDc, this->hBitmap)))},
+				graphics(this->hDc) {
+		Rain::Windows::Gdiplus::validateGdiplusCall(this->graphics.FillRectangle(
+			&backgroundBrush, Gdiplus::Rect(0, 0, size.X, size.Y)));
 	}
 	Chunk::~Chunk() {
+		SelectObject(this->hDc, this->hOrigBitmap);
 		DeleteObject(this->hBitmap);
 		DeleteDC(this->hDc);
 	}
 
-	void Chunk::drawPath(std::shared_ptr<Path> const &path, HPEN pen) {
-		using Rain::Windows::validateSystemCall;
-
-		std::vector<POINT> const &points{path->getPoints()};
-		validateSystemCall(
-			MoveToEx(this->hDc, points.front().x, points.front().y, NULL));
-		validateSystemCall(SelectObject(this->hDc, pen));
-		for (std::size_t i{1}; i < points.size(); i++) {
-			validateSystemCall(LineTo(this->hDc, points.front().x, points.front().y));
-		}
+	void Chunk::drawPath(
+		std::shared_ptr<Path> const &path,
+		Gdiplus::Pen const &pen) {
+		Rain::Windows::Gdiplus::validateGdiplusCall(
+			this->graphics.DrawPath(&pen, &path->getPath()));
 	}
 }
