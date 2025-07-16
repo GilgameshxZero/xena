@@ -10,13 +10,15 @@ namespace Xena {
 		private:
 		PointLl const SIZE, OFFSET;
 
-		std::unordered_set<std::shared_ptr<Path>> paths;
-
+		public:
 		HDC hDc;
 		HBITMAP hBitmap;
 
-		public:
-		Chunk(HDC, PointLl const &, PointLl const &);
+		Chunk(HDC, PointLl const &, PointLl const &, HBRUSH);
 		~Chunk();
+
+		// Draw path with specified brush. To erase, use a blank or transparent
+		// brush.
+		void drawPath(std::shared_ptr<Path> const &, HPEN);
 	};
 }

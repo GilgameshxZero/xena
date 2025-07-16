@@ -1,35 +1,26 @@
 #include <svg.hpp>
 
 namespace Xena {
-	Svg::Svg(std::string const &fileToLoad, UINT dpi)
-			: filePath(fileToLoad),
-				CHUNK_SIZE_PX{
-					std::llroundl(
-						static_cast<long double>(CHUNK_SIZE_DP.x) * dpi /
-						USER_DEFAULT_SCREEN_DPI),
-					std::llroundl(
-						static_cast<long double>(CHUNK_SIZE_DP.y) * dpi /
-						USER_DEFAULT_SCREEN_DPI)} {
+	Svg::Svg(
+		std::string const &fileToLoad,
+		PointLl &viewportOffset,
+		std::unordered_map<
+			std::size_t,
+			std::pair<std::shared_ptr<Path>, std::unordered_set<PointLl>>> &paths)
+			: filePath{fileToLoad}, viewportOffset{viewportOffset}, paths{paths} {
 		this->load();
 	}
 
 	void Svg::load() {
 		std::ifstream in(this->filePath, std::ios::binary);
-		std::stack<std::string> tags;
-		std::string buffer;
-		in >> buffer;
+		std::string buffer, tag;
+		std::getline(in, buffer, '<');
 		while (in) {
-			if (buffer[0] != '<') {
-				throw std::ios_base::failure("Invalid starting tag.");
-			}
-			if (buffer[1] == '/') {
-				if (tags.top() != buffer.substr(2)) {
-					throw std::ios_base::failure("Invalid closing tag.");
-				}
-				tags.pop();
-			}
+			std::getline(in, buffer, ' ');
+			tag = buffer;
+			Rain::Log::verbose("Svg::load: Found tag ", tag, ".");
+			std::getline(in, buffer, '<');
 		}
-		in.close();
 		Rain::Log::verbose(
 			"Svg::load: Loaded ",
 			this->paths.size(),
@@ -39,7 +30,7 @@ namespace Xena {
 	}
 	void Svg::save() {
 		Rain::Log::verbose(
-			"Svg::load: Saved ",
+			"Svg::save: Saved ",
 			this->paths.size(),
 			" paths to \"",
 			this->filePath,

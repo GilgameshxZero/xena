@@ -9,19 +9,20 @@
 namespace Xena {
 	class Svg {
 		private:
-		// Svgs are created with a fixed DPI which does not change throughout its
-		// lifetime.
-		static inline PointLl const CHUNK_SIZE_DP{512, 512};
-		PointLl const CHUNK_SIZE_PX;
-
 		std::string filePath;
 
-		PointLl viewportOffset, currentChunk;
-		std::unordered_map<std::size_t, Path> paths;
-		std::unordered_map<PointLl, Chunk> chunks;
+		PointLl &viewportOffset;
+		std::unordered_map<
+			std::size_t,
+			std::pair<std::shared_ptr<Path>, std::unordered_set<PointLl>>> &paths;
 
 		public:
-		Svg(std::string const &, UINT);
+		Svg(
+			std::string const &,
+			PointLl &,
+			std::unordered_map<
+				std::size_t,
+				std::pair<std::shared_ptr<Path>, std::unordered_set<PointLl>>> &);
 
 		void load();
 		void save();

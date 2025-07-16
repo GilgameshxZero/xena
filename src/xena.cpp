@@ -35,12 +35,15 @@ int main() {
 				return 0;
 			}
 
+			Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+			ULONG_PTR gdiplusToken;
+			GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, 0);
 			Rain::Windows::validateSystemCall(EnableMouseInPointer(TRUE));
 			// DPI awareness can also be set in the manifest, but we set it here.
 			Rain::Windows::validateSystemCall(SetThreadDpiAwarenessContext(
 				DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2));
 			Xena::MainWindow mainWindow(
-				nonKeyedArguments.empty() ? ".svg" : nonKeyedArguments.front());
+				nonKeyedArguments.empty() ? "xena.svg" : nonKeyedArguments.front());
 
 			BOOL bRet;
 			MSG msg;
@@ -54,6 +57,8 @@ int main() {
 					DispatchMessage(&msg);
 				}
 			}
+
+			Gdiplus::GdiplusShutdown(gdiplusToken);
 			return 0;
 		},
 		"main")();
