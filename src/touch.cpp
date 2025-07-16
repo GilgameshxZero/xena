@@ -26,14 +26,21 @@ namespace Xena {
 		}
 		Rain::Log::verbose(
 			"Touch::onTouchUp: (", position.x, ", ", position.y, ").");
+
+		this->painter.updateViewportPosition(
+			{this->origViewportPosition.X +
+				 static_cast<int>(
+					 (this->origPanPosition.x - position.x) * this->HIMETRIC_TO_PX),
+			 this->origViewportPosition.Y +
+				 static_cast<int>(
+					 (this->origPanPosition.y - position.y) * this->HIMETRIC_TO_PX)});
+		this->painter.rePaint();
 	}
 	void Touch::onTouchMove(
 		Interaction &interaction,
 		std::chrono::steady_clock::time_point now,
 		POINT position) {
 		// Suspect palm touch if contact size is too large or event is too short.
-		Rain::Log::verbose(
-			"Touch::onTouchMove: (", interaction.contactSizeMax, ").");
 		if (
 			interaction.contactSizeMax >= Interaction::CONTACT_SIZE_THRESHOLD ||
 			now - interaction.timeDown <= Interaction::IGNORE_SHORT_THRESHOLD) {
