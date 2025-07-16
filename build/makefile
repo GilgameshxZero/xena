@@ -107,7 +107,8 @@ PACKAGE_NAME = com.gilgamesh.$(PROJECT_NAME)
 MAIN_CLASS = filesystem.FilePickerActivity
 
 # CPP settings.
-# TODO: This macro should include all header files under PROJECT_INCLUDE_DIR.
+# TODO: This macro should include all header files under PROJECT_INCLUDE_DIR,
+# but doesn't work for now due to various dependency issues.
 PROJECT_INCLUDES =
 # TODO: This macro should include all header files in Rain.
 RAIN_INCLUDES =

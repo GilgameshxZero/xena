@@ -1,18 +1,22 @@
 #pragma once
 
-#include <compoundPath.hpp>
-#include <point.hpp>
+#include <path.hpp>
+#include <point-ll.hpp>
 
 #include <rain.hpp>
 
 namespace Xena {
 	class Chunk {
 		private:
-		Point const OFFSET;
+		PointLl const SIZE, OFFSET;
 
-		BITMAP bitmap;
+		std::unordered_set<std::shared_ptr<Path>> paths;
+
+		HDC hDc;
+		HBITMAP hBitmap;
 
 		public:
-		Chunk(Point const &);
+		Chunk(HDC, PointLl const &, PointLl const &);
+		~Chunk();
 	};
 }
