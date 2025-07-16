@@ -1,7 +1,5 @@
 #pragma once
 
-#include <point-ll.hpp>
-
 #include <rain.hpp>
 
 namespace Xena {
@@ -12,15 +10,16 @@ namespace Xena {
 		static inline std::size_t ID_NEXT{0};
 		std::size_t const ID;
 
-		std::vector<POINT> points;
+		std::vector<Gdiplus::Point> points;
+		Gdiplus::GraphicsPath path;
 
-		std::pair<PointLl, PointLl> bounds;
+		std::pair<Gdiplus::Point, Gdiplus::Point> bounds;
 
 		public:
 		Path();
 
-		std::vector<POINT> const &getPoints() const;
+		std::vector<Gdiplus::Point> const &getPoints() const;
 
-		void addPoint(POINT const &);
+		void addPoint(Gdiplus::Point const &);
 	};
 }

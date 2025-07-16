@@ -3,8 +3,8 @@
 namespace Xena {
 	Chunk::Chunk(
 		HDC hDc,
-		PointLl const &size,
-		PointLl const &offset,
+		Gdiplus::Point const &size,
+		Gdiplus::Point const &offset,
 		HBRUSH backgroundBrush)
 			: SIZE{size},
 				OFFSET{offset},
