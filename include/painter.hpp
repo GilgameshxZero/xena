@@ -23,14 +23,13 @@ namespace Xena {
 		Gdiplus::Point const CHUNK_SIZE_PX;
 
 		Gdiplus::SolidBrush const GDIPLUS_BLACK_BRUSH{Gdiplus::Color(0xff000000)},
-			GDIPLUS_WHITE_BRUSH{Gdiplus::Color(0xffffffff)},
-			GDIPLUS_TRANSPARENT_BRUSH{Gdiplus::Color(0x00000000)};
+			GDIPLUS_WHITE_BRUSH{Gdiplus::Color(0xffffffff)};
 		bool const IS_LIGHT_THEME{Rain::Windows::isLightTheme()};
 
 		HWND hWnd;
 
 		// Const except that start/end cap need to be set.
-		Gdiplus::Pen blackPen, whitePen, transparentPen;
+		Gdiplus::Pen blackPen, whitePen, blackPenThick, whitePenThick;
 
 		Gdiplus::Point viewportPosition, currentChunk;
 

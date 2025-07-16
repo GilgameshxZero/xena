@@ -12,16 +12,17 @@ namespace Xena {
 				hWnd{hWnd},
 				blackPen{Gdiplus::Color(0xff000000), this->STROKE_WIDTH_PX},
 				whitePen{Gdiplus::Color(0xffffffff), this->STROKE_WIDTH_PX},
-				transparentPen{
-					Gdiplus::Color(0x00000000),
-					this->STROKE_WIDTH_PX * 1.5f},
+				blackPenThick{Gdiplus::Color(0xff000000), this->STROKE_WIDTH_PX * 1.5f},
+				whitePenThick{Gdiplus::Color(0xffffffff), this->STROKE_WIDTH_PX * 1.5f},
 				svg(fileToLoad, this->viewportPosition, this->paths) {
 		this->blackPen.SetStartCap(Gdiplus::LineCap::LineCapRound);
 		this->whitePen.SetStartCap(Gdiplus::LineCap::LineCapRound);
-		this->transparentPen.SetStartCap(Gdiplus::LineCap::LineCapRound);
+		this->blackPenThick.SetStartCap(Gdiplus::LineCap::LineCapRound);
+		this->whitePenThick.SetStartCap(Gdiplus::LineCap::LineCapRound);
 		this->blackPen.SetEndCap(Gdiplus::LineCap::LineCapRound);
 		this->whitePen.SetEndCap(Gdiplus::LineCap::LineCapRound);
-		this->transparentPen.SetEndCap(Gdiplus::LineCap::LineCapRound);
+		this->blackPenThick.SetEndCap(Gdiplus::LineCap::LineCapRound);
+		this->whitePenThick.SetEndCap(Gdiplus::LineCap::LineCapRound);
 
 		std::shared_ptr<Path> path(new Path);
 		path->addPoint({100.0f, 100.0f});
@@ -41,11 +42,6 @@ namespace Xena {
 			ps.rcPaint.top,
 			ps.rcPaint.right - ps.rcPaint.left,
 			ps.rcPaint.bottom - ps.rcPaint.top);
-
-		Rain::Windows::Gdiplus::validateGdiplusCall(graphics.FillRectangle(
-			this->IS_LIGHT_THEME ? &this->GDIPLUS_WHITE_BRUSH
-													 : &this->GDIPLUS_BLACK_BRUSH,
-			rcPaint));
 		auto chunkBegin{this->getChunkCoordinateForPoint(
 			{static_cast<Gdiplus::REAL>(this->viewportPosition.X),
 			 static_cast<Gdiplus::REAL>(this->viewportPosition.Y)})},
@@ -112,7 +108,8 @@ namespace Xena {
 		std::unordered_set<Gdiplus::Point> &containingChunks{it->second.second};
 		for (Gdiplus::Point const &coordinate : containingChunks) {
 			auto &chunkPair{this->getChunkPair(coordinate)};
-			chunkPair.first->drawPath(path, this->transparentPen);
+			chunkPair.first->drawPath(
+				path, this->IS_LIGHT_THEME ? this->whitePenThick : this->blackPenThick);
 			chunkPair.second.erase(pathId);
 		}
 		this->paths.erase(it);
@@ -148,7 +145,8 @@ namespace Xena {
 						Painter::CHUNK_SIZE_PX,
 						{Painter::CHUNK_SIZE_PX.X * coordinate.X,
 						 Painter::CHUNK_SIZE_PX.Y * coordinate.Y},
-						this->GDIPLUS_TRANSPARENT_BRUSH),
+						this->IS_LIGHT_THEME ? this->GDIPLUS_WHITE_BRUSH
+																 : this->GDIPLUS_BLACK_BRUSH),
 					std::unordered_set<std::size_t>{}))
 			.first->second;
 	}
