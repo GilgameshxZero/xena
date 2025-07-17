@@ -175,7 +175,7 @@ namespace Xena {
 							interaction, now, pointerInfo->ptPixelLocation);
 						break;
 					case Interaction::Type::PEN:
-						this->pen.onPenDown(interaction, now, pointerInfo->ptPixelLocation);
+						this->pen.onPenDown(interaction, now, pointerInfo->ptHimetricLocation);
 						break;
 					case Interaction::Type::ERASER:
 						this->eraser.onEraserDown(
@@ -194,7 +194,8 @@ namespace Xena {
 							interaction, now, pointerInfo->ptPixelLocation);
 						break;
 					case Interaction::Type::PEN:
-						this->pen.onPenUp(interaction, now, pointerInfo->ptPixelLocation);
+						this->pen.onPenUp(
+							interaction, now, pointerInfo->ptHimetricLocation);
 						break;
 					case Interaction::Type::ERASER:
 						this->eraser.onEraserUp(
@@ -214,7 +215,8 @@ namespace Xena {
 							interaction, now, pointerInfo->ptPixelLocation);
 						break;
 					case Interaction::Type::PEN:
-						this->pen.onPenMove(interaction, now, pointerInfo->ptPixelLocation);
+						this->pen.onPenMove(
+							interaction, now, pointerInfo->ptHimetricLocation);
 						break;
 					case Interaction::Type::ERASER:
 						this->eraser.onEraserMove(

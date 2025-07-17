@@ -8,6 +8,8 @@
 namespace Xena {
 	class Pen {
 		private:
+		long double const HIMETRIC_TO_PX;
+
 		Painter &painter;
 
 		std::shared_ptr<Path> path;
