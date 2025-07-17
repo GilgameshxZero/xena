@@ -14,13 +14,10 @@ namespace Xena {
 				hDc{Rain::Windows::validateSystemCall(GetDC(this->hWnd))},
 				hTentativeDc{
 					Rain::Windows::validateSystemCall(CreateCompatibleDC(this->hDc))},
-				hTentativeBitmap{
-					Rain::Windows::validateSystemCall(CreateCompatibleBitmap(
-						this->hTentativeDc,
-						this->size.x,
-						this->size.y))},
+				hTentativeBitmap{Rain::Windows::validateSystemCall(
+					CreateCompatibleBitmap(this->hDc, this->size.x, this->size.y))},
 				hOrigBitmap{static_cast<HBITMAP>(Rain::Windows::validateSystemCall(
-					SelectObject(this->hDc, this->hTentativeBitmap)))},
+					SelectObject(this->hTentativeDc, this->hTentativeBitmap)))},
 				hDrawPen{Rain::Windows::validateSystemCall(CreatePen(
 					PS_SOLID,
 					this->STROKE_WIDTH_PX * Chunk::AA_SCALE,
