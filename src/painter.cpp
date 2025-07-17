@@ -20,7 +20,7 @@ namespace Xena {
 						this->size.x,
 						this->size.y))},
 				hOrigBitmap{static_cast<HBITMAP>(Rain::Windows::validateSystemCall(
-					SelectObject(this->hTentativeDc, this->hTentativeBitmap)))},
+					SelectObject(this->hDc, this->hTentativeBitmap)))},
 				hDrawPen{Rain::Windows::validateSystemCall(CreatePen(
 					PS_SOLID,
 					this->STROKE_WIDTH_PX * Chunk::AA_SCALE,
