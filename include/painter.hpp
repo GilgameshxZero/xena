@@ -11,11 +11,11 @@ namespace Xena {
 			Gdiplus::Point,
 			std::pair<std::shared_ptr<Chunk>, std::unordered_set<std::size_t>>>;
 
-		Gdiplus::REAL const DP_TO_PX;
+		long double const DP_TO_PX;
 
 		private:
-		static inline Gdiplus::REAL const STROKE_WIDTH_DP{2.5f};
-		Gdiplus::REAL const STROKE_WIDTH_PX;
+		static inline long double const STROKE_WIDTH_DP{2.5f};
+		long double const STROKE_WIDTH_PX;
 
 		// Chunks are created with a fixed DPI which does not change throughout its
 		// lifetime.
@@ -61,7 +61,7 @@ namespace Xena {
 		void tentativeLineTo(POINT const &);
 
 		private:
-		Gdiplus::Point getChunkCoordinateForPoint(Gdiplus::PointF const &);
+		Gdiplus::Point getChunkCoordinateForPoint(Path::Point const &);
 
 		// Get a chunk if it exists, or create and return it if it doesn't.
 		std::pair<std::shared_ptr<Chunk>, std::unordered_set<std::size_t>> &

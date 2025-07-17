@@ -4,7 +4,7 @@
 
 namespace Xena {
 	Painter::Painter(std::string const &fileToLoad, HWND hWnd)
-			: DP_TO_PX{static_cast<Gdiplus::REAL>(Rain::Windows::validateSystemCall(GetDpiForWindow(hWnd))) / USER_DEFAULT_SCREEN_DPI},
+			: DP_TO_PX{static_cast<long double>(Rain::Windows::validateSystemCall(GetDpiForWindow(hWnd))) / USER_DEFAULT_SCREEN_DPI},
 				STROKE_WIDTH_PX{Painter::STROKE_WIDTH_DP * this->DP_TO_PX},
 				CHUNK_SIZE_PX{
 					static_cast<int>(Painter::CHUNK_SIZE_DP.X * this->DP_TO_PX),
@@ -111,10 +111,10 @@ namespace Xena {
 				.first->second.second};
 
 		// Compute all chunks which contain path.
-		std::vector<Gdiplus::PointF> const &pointFs{path->getPointFs()};
-		for (std::size_t i{1}; i < pointFs.size(); i++) {
-			auto chunkBegin{Painter::getChunkCoordinateForPoint(pointFs[i - 1])},
-				chunkEnd{Painter::getChunkCoordinateForPoint(pointFs[i])};
+		std::vector<Path::Point> const &points{path->getPoints()};
+		for (std::size_t i{1}; i < points.size(); i++) {
+			auto chunkBegin{Painter::getChunkCoordinateForPoint(points[i - 1])},
+				chunkEnd{Painter::getChunkCoordinateForPoint(points[i])};
 			for (int j{chunkBegin.X}; j <= chunkEnd.X; j++) {
 				for (int k{chunkBegin.Y}; k <= chunkEnd.Y; k++) {
 					containingChunks.emplace(j, k);
@@ -176,11 +176,10 @@ namespace Xena {
 		this->isTentativeDirty = true;
 	}
 
-	Gdiplus::Point Painter::getChunkCoordinateForPoint(
-		Gdiplus::PointF const &pointF) {
+	Gdiplus::Point Painter::getChunkCoordinateForPoint(Path::Point const &point) {
 		return {
-			static_cast<int>(std::floorf(pointF.X / this->CHUNK_SIZE_PX.X)),
-			static_cast<int>(std::floorf(pointF.Y / this->CHUNK_SIZE_PX.Y))};
+			static_cast<int>(std::floorf(point.first / this->CHUNK_SIZE_PX.X)),
+			static_cast<int>(std::floorf(point.second / this->CHUNK_SIZE_PX.Y))};
 	}
 	std::pair<std::shared_ptr<Chunk>, std::unordered_set<std::size_t>> &
 	Painter::getChunkPair(Gdiplus::Point const &coordinate) {

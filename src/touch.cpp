@@ -1,9 +1,7 @@
 #include <touch.hpp>
 
 namespace Xena {
-	Touch::Touch(Painter &painter)
-			: HIMETRIC_TO_PX{painter.DP_TO_PX * USER_DEFAULT_SCREEN_DPI * 0.0003937008f},
-				painter(painter) {}
+	Touch::Touch(Painter &painter) : painter(painter) {}
 	void Touch::onTouchDown(
 		Interaction &interaction,
 		std::chrono::steady_clock::time_point now,
@@ -29,11 +27,9 @@ namespace Xena {
 
 		this->painter.updateViewportPosition(
 			{this->origViewportPosition.X +
-				 static_cast<int>(
-					 (this->origPanPosition.x - position.x) * this->HIMETRIC_TO_PX),
+				 static_cast<int>((this->origPanPosition.x - position.x)),
 			 this->origViewportPosition.Y +
-				 static_cast<int>(
-					 (this->origPanPosition.y - position.y) * this->HIMETRIC_TO_PX)});
+				 static_cast<int>((this->origPanPosition.y - position.y))});
 		this->painter.rePaint();
 	}
 	void Touch::onTouchMove(
@@ -49,11 +45,9 @@ namespace Xena {
 
 		this->painter.updateViewportPosition(
 			{this->origViewportPosition.X +
-				 static_cast<int>(
-					 (this->origPanPosition.x - position.x) * this->HIMETRIC_TO_PX),
+				 static_cast<int>((this->origPanPosition.x - position.x)),
 			 this->origViewportPosition.Y +
-				 static_cast<int>(
-					 (this->origPanPosition.y - position.y) * this->HIMETRIC_TO_PX)});
+				 static_cast<int>((this->origPanPosition.y - position.y))});
 		this->painter.rePaint();
 	}
 }

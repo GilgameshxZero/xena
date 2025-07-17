@@ -8,8 +8,6 @@
 namespace Xena {
 	class Touch {
 		private:
-		Gdiplus::REAL const HIMETRIC_TO_PX;
-
 		Painter &painter;
 
 		Gdiplus::Point origViewportPosition;

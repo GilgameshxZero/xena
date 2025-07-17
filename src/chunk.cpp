@@ -24,19 +24,19 @@ namespace Xena {
 
 	void Chunk::drawPath(std::shared_ptr<Path const> const &path, HPEN hPen) {
 		using Rain::Windows::validateSystemCall;
-		std::vector<Gdiplus::PointF> const &pointFs{path->getPointFs()};
+		std::vector<Path::Point> const &points{path->getPoints()};
 		HPEN hOrigPen{
 			static_cast<HPEN>(validateSystemCall(SelectObject(this->hDc, hPen)))};
 		validateSystemCall(MoveToEx(
 			this->hDc,
-			pointFs[0].X - this->POSITION.X,
-			pointFs[0].Y - this->POSITION.Y,
+			points[0].first - this->POSITION.X,
+			points[0].second - this->POSITION.Y,
 			NULL));
-		for (std::size_t i{1}; i < pointFs.size(); i++) {
+		for (std::size_t i{1}; i < points.size(); i++) {
 			validateSystemCall(LineTo(
 				this->hDc,
-				pointFs[i].X - this->POSITION.X,
-				pointFs[i].Y - this->POSITION.Y));
+				points[i].first - this->POSITION.X,
+				points[i].second - this->POSITION.Y));
 		}
 		validateSystemCall(SelectObject(this->hDc, hOrigPen));
 	}
