@@ -5,10 +5,10 @@ namespace Xena {
 		Rain::Log::verbose("Path::Path: Created path ", this->ID, ".");
 	}
 
-	std::vector<Gdiplus::PointF> const &Path::getPointFs() const {
-		return this->pointFs;
+	std::vector<Path::Point> const &Path::getPoints() const {
+		return this->points;
 	}
-	void Path::addPoint(Gdiplus::PointF const &pointF) {
-		this->pointFs.emplace_back(pointF);
+	void Path::addPoint(Point const &point) {
+		this->points.emplace_back(point);
 	}
 }

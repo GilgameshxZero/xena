@@ -168,19 +168,18 @@ namespace Xena {
 				switch (interaction.type) {
 					case Interaction::Type::MOUSE:
 						this->mouse.onMouseDown(
-							interaction, now, pointerInfo->ptHimetricLocation);
+							interaction, now, pointerInfo->ptPixelLocation);
 						break;
 					case Interaction::Type::TOUCH:
 						this->touch.onTouchDown(
-							interaction, now, pointerInfo->ptHimetricLocation);
+							interaction, now, pointerInfo->ptPixelLocation);
 						break;
 					case Interaction::Type::PEN:
-						this->pen.onPenDown(
-							interaction, now, pointerInfo->ptHimetricLocation);
+						this->pen.onPenDown(interaction, now, pointerInfo->ptPixelLocation);
 						break;
 					case Interaction::Type::ERASER:
 						this->eraser.onEraserDown(
-							interaction, now, pointerInfo->ptHimetricLocation);
+							interaction, now, pointerInfo->ptPixelLocation);
 						break;
 				}
 				break;
@@ -188,19 +187,18 @@ namespace Xena {
 				switch (interaction.type) {
 					case Interaction::Type::MOUSE:
 						this->mouse.onMouseUp(
-							interaction, now, pointerInfo->ptHimetricLocation);
+							interaction, now, pointerInfo->ptPixelLocation);
 						break;
 					case Interaction::Type::TOUCH:
 						this->touch.onTouchUp(
-							interaction, now, pointerInfo->ptHimetricLocation);
+							interaction, now, pointerInfo->ptPixelLocation);
 						break;
 					case Interaction::Type::PEN:
-						this->pen.onPenUp(
-							interaction, now, pointerInfo->ptHimetricLocation);
+						this->pen.onPenUp(interaction, now, pointerInfo->ptPixelLocation);
 						break;
 					case Interaction::Type::ERASER:
 						this->eraser.onEraserUp(
-							interaction, now, pointerInfo->ptHimetricLocation);
+							interaction, now, pointerInfo->ptPixelLocation);
 						break;
 				}
 				this->interactions.erase(j);
@@ -209,25 +207,24 @@ namespace Xena {
 				switch (interaction.type) {
 					case Interaction::Type::MOUSE:
 						this->mouse.onMouseMove(
-							interaction, now, pointerInfo->ptHimetricLocation);
+							interaction, now, pointerInfo->ptPixelLocation);
 						break;
 					case Interaction::Type::TOUCH:
 						this->touch.onTouchMove(
-							interaction, now, pointerInfo->ptHimetricLocation);
+							interaction, now, pointerInfo->ptPixelLocation);
 						break;
 					case Interaction::Type::PEN:
-						this->pen.onPenMove(
-							interaction, now, pointerInfo->ptHimetricLocation);
+						this->pen.onPenMove(interaction, now, pointerInfo->ptPixelLocation);
 						break;
 					case Interaction::Type::ERASER:
 						this->eraser.onEraserMove(
-							interaction, now, pointerInfo->ptHimetricLocation);
+							interaction, now, pointerInfo->ptPixelLocation);
 						break;
 				}
 				break;
 		}
 		interaction.state = state;
-		interaction.position = pointerInfo->ptHimetricLocation;
+		interaction.position = pointerInfo->ptPixelLocation;
 		return 0;
 	}
 }

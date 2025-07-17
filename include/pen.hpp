@@ -8,8 +8,6 @@
 namespace Xena {
 	class Pen {
 		private:
-		Gdiplus::REAL const HIMETRIC_TO_PX;
-
 		Painter &painter;
 
 		std::shared_ptr<Path> path;
