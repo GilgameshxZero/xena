@@ -31,7 +31,7 @@ namespace Xena {
 		HBITMAP const hTentativeBitmap, hOrigBitmap;
 		HBRUSH const hBackgroundBrush{Rain::Windows::validateSystemCall(
 			CreateSolidBrush(IS_LIGHT_THEME ? 0x00ffffff : 0x00000000))};
-		HPEN const hDrawPen, hErasePen, hOrigPen;
+		HPEN const hDrawPen, hErasePen, hTentativeDrawPen, hOrigPen;
 
 		Gdiplus::Point viewportPosition, currentChunk;
 
