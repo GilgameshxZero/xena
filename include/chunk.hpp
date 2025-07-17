@@ -6,6 +6,9 @@
 
 namespace Xena {
 	class Chunk {
+		public:
+		static inline long long const AA_SCALE{4};
+
 		private:
 		Gdiplus::Point const SIZE, POSITION;
 
@@ -13,7 +16,8 @@ namespace Xena {
 		HDC const hDc;
 
 		private:
-		HBITMAP const hBitmap, hOrigBitmap;
+		HDC const hDcAA;
+		HBITMAP const hBitmap, hOrigBitmap, hBitmapAA, hOrigBitmapAA;
 
 		public:
 		Chunk(HDC, Gdiplus::Point const &, Gdiplus::Point const &, HBRUSH);

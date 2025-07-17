@@ -23,14 +23,18 @@ namespace Xena {
 					SelectObject(this->hTentativeDc, this->hTentativeBitmap)))},
 				hDrawPen{Rain::Windows::validateSystemCall(CreatePen(
 					PS_SOLID,
-					this->STROKE_WIDTH_PX,
+					this->STROKE_WIDTH_PX * Chunk::AA_SCALE,
 					this->IS_LIGHT_THEME ? 0x00000000 : 0x00ffffff))},
 				hErasePen{Rain::Windows::validateSystemCall(CreatePen(
 					PS_SOLID,
-					this->STROKE_WIDTH_PX * 1.5f,
+					this->STROKE_WIDTH_PX * Chunk::AA_SCALE * 1.5f,
 					this->IS_LIGHT_THEME ? 0x00ffffff : 0x00000000))},
+				hTentativeDrawPen{Rain::Windows::validateSystemCall(CreatePen(
+					PS_SOLID,
+					this->STROKE_WIDTH_PX,
+					this->IS_LIGHT_THEME ? 0x00000000 : 0x00ffffff))},
 				hOrigPen{static_cast<HPEN>(Rain::Windows::validateSystemCall(
-					SelectObject(this->hTentativeDc, this->hDrawPen)))},
+					SelectObject(this->hTentativeDc, this->hTentativeDrawPen)))},
 				svg(fileToLoad, this->viewportPosition, this->paths) {
 		this->tentativeClear();
 
@@ -43,6 +47,7 @@ namespace Xena {
 		SelectObject(this->hTentativeDc, this->hOrigPen);
 		SelectObject(this->hTentativeDc, this->hOrigBitmap);
 		DeleteObject(this->hTentativeBitmap);
+		DeleteObject(this->hTentativeDrawPen);
 		DeleteDC(this->hTentativeDc);
 		DeleteObject(this->hErasePen);
 		DeleteObject(this->hDrawPen);
