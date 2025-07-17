@@ -12,33 +12,38 @@ namespace Xena {
 
 	LRESULT CALLBACK
 	MainWindow::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-		if (uMsg == WM_CREATE) {
-			Rain::Log::verbose("MainWindow::MainWindow: Created window.");
-			CREATESTRUCT *createStruct{reinterpret_cast<CREATESTRUCT *>(lParam)};
-			SetWindowLongPtr(
-				hWnd,
-				GWLP_USERDATA,
-				reinterpret_cast<LONG_PTR>(createStruct->lpCreateParams));
-			return static_cast<LRESULT>(0);
-		}
-		MainWindow *that{
-			reinterpret_cast<MainWindow *>(GetWindowLongPtr(hWnd, GWLP_USERDATA))};
-		if (that == NULL) {
-			return DefWindowProc(hWnd, uMsg, wParam, lParam);
-		}
-		switch (uMsg) {
-			case WM_DESTROY:
-				return that->onDestroy(hWnd, wParam, lParam);
-			case WM_PAINT:
-				return that->onPaint(hWnd, wParam, lParam);
-			case WM_POINTERDOWN:
-				return that->onPointerDown(hWnd, wParam, lParam);
-			case WM_POINTERUP:
-				return that->onPointerUp(hWnd, wParam, lParam);
-			case WM_POINTERUPDATE:
-				return that->onPointerUpdate(hWnd, wParam, lParam);
-			default:
+		try {
+			if (uMsg == WM_CREATE) {
+				Rain::Log::verbose("MainWindow::MainWindow: Created window.");
+				CREATESTRUCT *createStruct{reinterpret_cast<CREATESTRUCT *>(lParam)};
+				SetWindowLongPtr(
+					hWnd,
+					GWLP_USERDATA,
+					reinterpret_cast<LONG_PTR>(createStruct->lpCreateParams));
+				return 0;
+			}
+			MainWindow *that{
+				reinterpret_cast<MainWindow *>(GetWindowLongPtr(hWnd, GWLP_USERDATA))};
+			if (that == NULL) {
 				return DefWindowProc(hWnd, uMsg, wParam, lParam);
+			}
+			switch (uMsg) {
+				case WM_DESTROY:
+					return that->onDestroy(hWnd, wParam, lParam);
+				case WM_PAINT:
+					return that->onPaint(hWnd, wParam, lParam);
+				case WM_POINTERDOWN:
+					return that->onPointerDown(hWnd, wParam, lParam);
+				case WM_POINTERUP:
+					return that->onPointerUp(hWnd, wParam, lParam);
+				case WM_POINTERUPDATE:
+					return that->onPointerUpdate(hWnd, wParam, lParam);
+				default:
+					return DefWindowProc(hWnd, uMsg, wParam, lParam);
+			}
+		} catch (std::exception const &exception) {
+			std::cerr << exception.what();
+			return 0;
 		}
 	}
 

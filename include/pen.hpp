@@ -15,6 +15,8 @@ namespace Xena {
 		std::shared_ptr<Path> path;
 
 		public:
+		bool isDrawing{false};
+
 		Pen(Painter &);
 
 		void onPenDown(Interaction &, std::chrono::steady_clock::time_point, POINT);

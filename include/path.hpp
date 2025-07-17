@@ -3,8 +3,6 @@
 #include <rain.hpp>
 
 namespace Xena {
-	class Chunk;
-
 	class Path {
 		private:
 		static inline std::size_t ID_NEXT{0};
