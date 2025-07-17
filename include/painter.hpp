@@ -22,14 +22,16 @@ namespace Xena {
 		static inline Gdiplus::Point const CHUNK_SIZE_DP{512, 512};
 		Gdiplus::Point const CHUNK_SIZE_PX;
 
-		Gdiplus::SolidBrush const GDIPLUS_BLACK_BRUSH{Gdiplus::Color(0xff000000)},
-			GDIPLUS_WHITE_BRUSH{Gdiplus::Color(0xffffffff)};
 		bool const IS_LIGHT_THEME{Rain::Windows::isLightTheme()};
 
-		HWND hWnd;
-
-		// Const except that start/end cap need to be set.
-		Gdiplus::Pen blackPen, whitePen, blackPenThick, whitePenThick;
+		HWND const hWnd;
+		POINT size;
+		HDC const hDc, hTentativeDc;
+		bool isTentativeDirty;
+		HBITMAP const hTentativeBitmap, hOrigBitmap;
+		HBRUSH const hBackgroundBrush{Rain::Windows::validateSystemCall(
+			CreateSolidBrush(IS_LIGHT_THEME ? 0x00ffffff : 0x00000000))};
+		HPEN const hDrawPen, hErasePen, hOrigPen;
 
 		Gdiplus::Point viewportPosition, currentChunk;
 
@@ -43,6 +45,7 @@ namespace Xena {
 		Svg svg;
 
 		Painter(std::string const &, HWND);
+		~Painter();
 
 		void rePaint();
 		LRESULT onPaint(HWND, WPARAM, LPARAM);
@@ -52,6 +55,10 @@ namespace Xena {
 
 		void updateViewportPosition(Gdiplus::Point const &);
 		Gdiplus::Point const &getViewportPosition();
+
+		void tentativeClear();
+		void tentativeMoveTo(POINT const &);
+		void tentativeLineTo(POINT const &);
 
 		private:
 		Gdiplus::Point getChunkCoordinateForPoint(Gdiplus::PointF const &);
