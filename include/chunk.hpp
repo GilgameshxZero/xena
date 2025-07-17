@@ -7,7 +7,7 @@
 namespace Xena {
 	class Chunk {
 		public:
-		static inline long long const AA_SCALE{4};
+		static inline long long const AA_SCALE{2};
 
 		private:
 		Gdiplus::Point const SIZE, POSITION;

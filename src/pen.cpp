@@ -1,7 +1,10 @@
 #include <pen.hpp>
 
 namespace Xena {
-	Pen::Pen(Painter &painter) : painter(painter) {}
+	Pen::Pen(Painter &painter)
+			// TODO: Why 2520 instead of 2540?
+			: HIMETRIC_TO_PX{painter.DP_TO_PX * USER_DEFAULT_SCREEN_DPI / 2520},
+				painter(painter) {}
 
 	void Pen::onPenDown(
 		Interaction &interaction,
@@ -12,9 +15,11 @@ namespace Xena {
 		this->isDrawing = true;
 		this->path.reset(new Path);
 		this->path->addPoint(
-			{viewportPosition.X + position.x, viewportPosition.Y + position.y});
+			{viewportPosition.X + position.x * this->HIMETRIC_TO_PX,
+			 viewportPosition.Y + position.y * this->HIMETRIC_TO_PX});
 		this->painter.tentativeMoveTo(
-			{static_cast<LONG>(position.x), static_cast<LONG>(position.y)});
+			{static_cast<LONG>(position.x * this->HIMETRIC_TO_PX),
+			 static_cast<LONG>(position.y * this->HIMETRIC_TO_PX)});
 	}
 	void Pen::onPenUp(
 		Interaction &interaction,
@@ -24,7 +29,8 @@ namespace Xena {
 		Gdiplus::Point const &viewportPosition{this->painter.getViewportPosition()};
 		this->isDrawing = false;
 		this->path->addPoint(
-			{viewportPosition.X + position.x, viewportPosition.Y + position.y});
+			{viewportPosition.X + position.x * this->HIMETRIC_TO_PX,
+			 viewportPosition.Y + position.y * this->HIMETRIC_TO_PX});
 		this->painter.addPath(this->path);
 		this->painter.tentativeClear();
 		this->painter.rePaint();
@@ -35,9 +41,11 @@ namespace Xena {
 		POINT position) {
 		Gdiplus::Point const &viewportPosition{this->painter.getViewportPosition()};
 		this->path->addPoint(
-			{viewportPosition.X + position.x, viewportPosition.Y + position.y});
+			{viewportPosition.X + position.x * this->HIMETRIC_TO_PX,
+			 viewportPosition.Y + position.y * this->HIMETRIC_TO_PX});
 		this->painter.tentativeLineTo(
-			{static_cast<LONG>(position.x), static_cast<LONG>(position.y)});
+			{static_cast<LONG>(position.x * this->HIMETRIC_TO_PX),
+			 static_cast<LONG>(position.y * this->HIMETRIC_TO_PX)});
 		this->painter.rePaint();
 	}
 }

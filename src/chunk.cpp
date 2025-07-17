@@ -20,7 +20,7 @@ namespace Xena {
 					size.Y * Chunk::AA_SCALE))},
 				hOrigBitmapAA{static_cast<HBITMAP>(Rain::Windows::validateSystemCall(
 					SelectObject(this->hDcAA, this->hBitmapAA)))} {
-		SetStretchBltMode(this->hDc, HALFTONE);
+		Rain::Windows::validateSystemCall(SetStretchBltMode(this->hDc, HALFTONE));
 		RECT rect{0, 0, size.X, size.Y};
 		Rain::Windows::validateSystemCall(FillRect(this->hDc, &rect, hBrush));
 	}
