@@ -7,10 +7,12 @@
 namespace Xena {
 	class Chunk {
 		public:
+		using PointLl = Rain::Algorithm::Geometry::PointLl;
+
 		static inline long long const AA_SCALE{2};
 
 		private:
-		Gdiplus::Point const SIZE, POSITION;
+		PointLl const SIZE, POSITION;
 
 		public:
 		HDC const hDc;
@@ -20,7 +22,11 @@ namespace Xena {
 		HBITMAP const hBitmap, hOrigBitmap, hBitmapAA, hOrigBitmapAA;
 
 		public:
-		Chunk(HDC, Gdiplus::Point const &, Gdiplus::Point const &, HBRUSH);
+		Chunk(
+			HDC,
+			PointLl const &,
+			PointLl const &,
+			Rain::Windows::SolidBrush const &);
 		~Chunk();
 
 		// Draw path with specified brush with the chunk offset. To erase, use a

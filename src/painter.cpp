@@ -7,10 +7,12 @@ namespace Xena {
 			: DP_TO_PX{static_cast<long double>(Rain::Windows::validateSystemCall(GetDpiForWindow(hWnd))) / USER_DEFAULT_SCREEN_DPI},
 				STROKE_WIDTH_PX{Painter::STROKE_WIDTH_DP * this->DP_TO_PX},
 				CHUNK_SIZE_PX{
-					static_cast<int>(Painter::CHUNK_SIZE_DP.X * this->DP_TO_PX),
-					static_cast<int>(Painter::CHUNK_SIZE_DP.Y * this->DP_TO_PX)},
+					static_cast<int>(Painter::CHUNK_SIZE_DP.x * this->DP_TO_PX),
+					static_cast<int>(Painter::CHUNK_SIZE_DP.y * this->DP_TO_PX)},
 				hWnd{hWnd},
-				size{Rain::Windows::getHWndSize(this->hWnd)},
+				size{
+					Rain::Windows::getHWndSize(this->hWnd).x,
+					Rain::Windows::getHWndSize(this->hWnd).y},
 				hDc{Rain::Windows::validateSystemCall(GetDC(this->hWnd))},
 				hTentativeDc{
 					Rain::Windows::validateSystemCall(CreateCompatibleDC(this->hDc))},
@@ -48,7 +50,6 @@ namespace Xena {
 		DeleteDC(this->hTentativeDc);
 		DeleteObject(this->hErasePen);
 		DeleteObject(this->hDrawPen);
-		DeleteObject(this->hBackgroundBrush);
 		DeleteDC(this->hDc);
 	}
 
@@ -66,21 +67,19 @@ namespace Xena {
 			ps.rcPaint.bottom - ps.rcPaint.top);
 		if (!this->isTentativeDirty) {
 			auto chunkBegin{this->getChunkCoordinateForPoint(
-				{static_cast<Gdiplus::REAL>(this->viewportPosition.X),
-				 static_cast<Gdiplus::REAL>(this->viewportPosition.Y)})},
+				{this->viewportPosition.x, this->viewportPosition.y})},
 				chunkEnd{this->getChunkCoordinateForPoint(
-					{static_cast<Gdiplus::REAL>(this->viewportPosition.X + rcPaint.Width),
-					 static_cast<Gdiplus::REAL>(
-						 this->viewportPosition.Y + rcPaint.Height)})};
-			for (int i{chunkBegin.X}; i <= chunkEnd.X; i++) {
-				for (int j{chunkBegin.Y}; j <= chunkEnd.Y; j++) {
+					{this->viewportPosition.x + rcPaint.Width,
+					 this->viewportPosition.y + rcPaint.Height})};
+			for (long long i{chunkBegin.x}; i <= chunkEnd.x; i++) {
+				for (long long j{chunkBegin.y}; j <= chunkEnd.y; j++) {
 					std::shared_ptr<Chunk> &chunk{this->getChunkPair({i, j}).first};
 					BitBlt(
 						ps.hdc,
-						i * this->CHUNK_SIZE_PX.X - this->viewportPosition.X,
-						j * this->CHUNK_SIZE_PX.Y - this->viewportPosition.Y,
-						this->CHUNK_SIZE_PX.X,
-						this->CHUNK_SIZE_PX.Y,
+						i * this->CHUNK_SIZE_PX.x - this->viewportPosition.x,
+						j * this->CHUNK_SIZE_PX.y - this->viewportPosition.y,
+						this->CHUNK_SIZE_PX.x,
+						this->CHUNK_SIZE_PX.y,
 						chunk->hDc,
 						0,
 						0,
@@ -106,19 +105,22 @@ namespace Xena {
 	void Painter::addPath(std::shared_ptr<Path const> const &path) {
 		// Adding an existing path ID is not allowed.
 		assert(this->paths.count(path->ID) == 0);
-		std::unordered_set<Gdiplus::Point> &containingChunks{
+		std::unordered_set<PointLl> &containingChunks{
 			this->paths
-				.emplace(
-					path->ID, std::make_pair(path, std::unordered_set<Gdiplus::Point>()))
+				.emplace(path->ID, std::make_pair(path, std::unordered_set<PointLl>()))
 				.first->second.second};
 
 		// Compute all chunks which contain path.
-		std::vector<Path::Point> const &points{path->getPoints()};
+		std::vector<PointLd> const &points{path->getPoints()};
 		for (std::size_t i{1}; i < points.size(); i++) {
-			auto chunkBegin{Painter::getChunkCoordinateForPoint(points[i - 1])},
-				chunkEnd{Painter::getChunkCoordinateForPoint(points[i])};
-			for (int j{chunkBegin.X}; j <= chunkEnd.X; j++) {
-				for (int k{chunkBegin.Y}; k <= chunkEnd.Y; k++) {
+			auto chunkBegin{Painter::getChunkCoordinateForPoint(
+				{static_cast<long long>(points[i - 1].x),
+				 static_cast<long long>(points[i - 1].y)})},
+				chunkEnd{Painter::getChunkCoordinateForPoint(
+					{static_cast<long long>(points[i].x),
+					 static_cast<long long>(points[i].y)})};
+			for (long long j{chunkBegin.x}; j <= chunkEnd.x; j++) {
+				for (long long k{chunkBegin.y}; k <= chunkEnd.y; k++) {
 					containingChunks.emplace(j, k);
 				}
 			}
@@ -132,9 +134,9 @@ namespace Xena {
 				"Painter::addPath: Added path ",
 				path->ID,
 				" to chunk (",
-				i.X,
+				i.x,
 				", ",
-				i.Y,
+				i.y,
 				").");
 		}
 		this->rePaint();
@@ -143,8 +145,8 @@ namespace Xena {
 		auto it{this->paths.find(pathId)};
 		assert(it != this->paths.end());
 		std::shared_ptr<Path const> &path{it->second.first};
-		std::unordered_set<Gdiplus::Point> &containingChunks{it->second.second};
-		for (Gdiplus::Point const &coordinate : containingChunks) {
+		std::unordered_set<PointLl> &containingChunks{it->second.second};
+		for (PointLl const &coordinate : containingChunks) {
 			auto &chunkPair{this->getChunkPair(coordinate)};
 			chunkPair.first->drawPath(path, this->hErasePen);
 			chunkPair.second.erase(pathId);
@@ -153,47 +155,47 @@ namespace Xena {
 		this->rePaint();
 	}
 
-	void Painter::updateViewportPosition(
-		Gdiplus::Point const &newViewportPosition) {
-		this->viewportPosition.X = newViewportPosition.X;
-		this->viewportPosition.Y = newViewportPosition.Y;
+	void Painter::updateViewportPosition(PointLl const &newViewportPosition) {
+		this->viewportPosition.x = newViewportPosition.x;
+		this->viewportPosition.y = newViewportPosition.y;
 	}
-	Gdiplus::Point const &Painter::getViewportPosition() {
+	Rain::Algorithm::Geometry::PointLl const &Painter::getViewportPosition() {
 		return this->viewportPosition;
 	}
 
 	void Painter::tentativeClear() {
 		RECT rect{0, 0, this->size.x, this->size.y};
 		Rain::Windows::validateSystemCall(
-			FillRect(this->hTentativeDc, &rect, this->hBackgroundBrush));
+			FillRect(this->hTentativeDc, &rect, this->backgroundBrush));
 		this->isTentativeDirty = false;
 	}
-	void Painter::tentativeMoveTo(POINT const &point) {
+	void Painter::tentativeMoveTo(PointLd const &point) {
 		Rain::Windows::validateSystemCall(
 			MoveToEx(this->hTentativeDc, point.x, point.y, NULL));
 	}
-	void Painter::tentativeLineTo(POINT const &point) {
+	void Painter::tentativeLineTo(PointLd const &point) {
 		Rain::Windows::validateSystemCall(
 			LineTo(this->hTentativeDc, point.x, point.y));
 		this->isTentativeDirty = true;
 	}
 
-	Gdiplus::Point Painter::getChunkCoordinateForPoint(Path::Point const &point) {
+	Rain::Algorithm::Geometry::PointLl Painter::getChunkCoordinateForPoint(
+		PointLl const &point) {
 		return {
-			static_cast<int>(std::floorf(point.first / this->CHUNK_SIZE_PX.X)),
-			static_cast<int>(std::floorf(point.second / this->CHUNK_SIZE_PX.Y))};
+			static_cast<int>(std::floorf(point.x / this->CHUNK_SIZE_PX.x)),
+			static_cast<int>(std::floorf(point.y / this->CHUNK_SIZE_PX.y))};
 	}
 	std::pair<std::shared_ptr<Chunk>, std::unordered_set<std::size_t>> &
-	Painter::getChunkPair(Gdiplus::Point const &coordinate) {
+	Painter::getChunkPair(PointLl const &coordinate) {
 		auto it{this->chunks.find(coordinate)};
 		if (it != this->chunks.end()) {
 			return it->second;
 		}
 		Rain::Log::verbose(
 			"Painter::getChunkPair: Created chunk (",
-			coordinate.X,
+			coordinate.x,
 			", ",
-			coordinate.Y,
+			coordinate.y,
 			").");
 		return this->chunks
 			.emplace(
@@ -202,9 +204,9 @@ namespace Xena {
 					new Chunk(
 						this->hDc,
 						Painter::CHUNK_SIZE_PX,
-						{Painter::CHUNK_SIZE_PX.X * coordinate.X,
-						 Painter::CHUNK_SIZE_PX.Y * coordinate.Y},
-						this->hBackgroundBrush),
+						{Painter::CHUNK_SIZE_PX.x * coordinate.x,
+						 Painter::CHUNK_SIZE_PX.y * coordinate.y},
+						this->backgroundBrush),
 					std::unordered_set<std::size_t>{}))
 			.first->second;
 	}

@@ -7,8 +7,10 @@
 namespace Xena {
 	class Painter {
 		public:
+		using PointLl = Rain::Algorithm::Geometry::PointLl;
+		using PointLd = Rain::Algorithm::Geometry::PointLd;
 		using Chunks = std::unordered_map<
-			Gdiplus::Point,
+			PointLl,
 			std::pair<std::shared_ptr<Chunk>, std::unordered_set<std::size_t>>>;
 
 		long double const DP_TO_PX;
@@ -19,21 +21,21 @@ namespace Xena {
 
 		// Chunks are created with a fixed DPI which does not change throughout its
 		// lifetime.
-		static inline Gdiplus::Point const CHUNK_SIZE_DP{512, 512};
-		Gdiplus::Point const CHUNK_SIZE_PX;
+		static inline PointLl const CHUNK_SIZE_DP{512, 512};
+		PointLl const CHUNK_SIZE_PX;
 
 		bool const IS_LIGHT_THEME{Rain::Windows::isLightTheme()};
 
 		HWND const hWnd;
-		POINT size;
+		PointLl size;
 		HDC const hDc, hTentativeDc;
 		bool isTentativeDirty;
 		HBITMAP const hTentativeBitmap, hOrigBitmap;
-		HBRUSH const hBackgroundBrush{Rain::Windows::validateSystemCall(
-			CreateSolidBrush(IS_LIGHT_THEME ? 0x00ffffff : 0x00000000))};
+		Rain::Windows::SolidBrush const backgroundBrush{
+			IS_LIGHT_THEME ? 0x00ffffff : 0x00000000};
 		HPEN const hDrawPen, hErasePen, hTentativeDrawPen, hOrigPen;
 
-		Gdiplus::Point viewportPosition, currentChunk;
+		PointLl viewportPosition, currentChunk;
 
 		// Maps a chunk coordinate to the chunk, and all path IDs in the chunk.
 		Chunks chunks;
@@ -53,18 +55,18 @@ namespace Xena {
 		void addPath(std::shared_ptr<Path const> const &);
 		void removePath(std::size_t);
 
-		void updateViewportPosition(Gdiplus::Point const &);
-		Gdiplus::Point const &getViewportPosition();
+		void updateViewportPosition(PointLl const &);
+		PointLl const &getViewportPosition();
 
 		void tentativeClear();
-		void tentativeMoveTo(POINT const &);
-		void tentativeLineTo(POINT const &);
+		void tentativeMoveTo(PointLd const &);
+		void tentativeLineTo(PointLd const &);
 
 		private:
-		Gdiplus::Point getChunkCoordinateForPoint(Path::Point const &);
+		PointLl getChunkCoordinateForPoint(PointLl const &);
 
 		// Get a chunk if it exists, or create and return it if it doesn't.
 		std::pair<std::shared_ptr<Chunk>, std::unordered_set<std::size_t>> &
-		getChunkPair(Gdiplus::Point const &);
+		getChunkPair(PointLl const &);
 	};
 }
