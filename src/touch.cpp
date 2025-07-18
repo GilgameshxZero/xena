@@ -26,9 +26,9 @@ namespace Xena {
 			"Touch::onTouchUp: (", position.x, ", ", position.y, ").");
 
 		this->painter.updateViewportPosition(
-			{this->origViewportPosition.X +
+			{this->origViewportPosition.x +
 				 static_cast<int>((this->origPanPosition.x - position.x)),
-			 this->origViewportPosition.Y +
+			 this->origViewportPosition.y +
 				 static_cast<int>((this->origPanPosition.y - position.y))});
 		this->painter.rePaint();
 	}
@@ -44,9 +44,9 @@ namespace Xena {
 		}
 
 		this->painter.updateViewportPosition(
-			{this->origViewportPosition.X +
+			{this->origViewportPosition.x +
 				 static_cast<int>((this->origPanPosition.x - position.x)),
-			 this->origViewportPosition.Y +
+			 this->origViewportPosition.y +
 				 static_cast<int>((this->origPanPosition.y - position.y))});
 		this->painter.rePaint();
 	}

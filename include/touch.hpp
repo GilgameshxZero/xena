@@ -7,10 +7,13 @@
 
 namespace Xena {
 	class Touch {
+		public:
+		using PointLl = Rain::Algorithm::Geometry::PointLl;
+
 		private:
 		Painter &painter;
 
-		Gdiplus::Point origViewportPosition;
+		PointLl origViewportPosition;
 		POINT origPanPosition;
 
 		public:
