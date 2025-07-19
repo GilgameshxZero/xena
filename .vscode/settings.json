@@ -8,7 +8,7 @@
 	"files.eol": "\n",
 
 	"C_Cpp.default.includePath": ["include/", "rain/include/"],
-	"C_Cpp.default.cppStandard": "c++17",
+	"C_Cpp.default.cppStandard": "c++20",
 	"C_Cpp.autoAddFileAssociations": false,
 
 	"java.settings.url": ".vscode/settings.prefs",
@@ -20,5 +20,6 @@
 	"[cpp]": {
 		"editor.defaultFormatter": "ms-vscode.cpptools",
 		"editor.wordWrap": "on"
-	}
+	},
+	"C_Cpp.errorSquiggles": "disabled"
 }

@@ -7,6 +7,9 @@
 
 namespace Xena {
 	class Pen {
+		public:
+		using PointL = Rain::Algorithm::Geometry::PointL;
+
 		private:
 		long double const HIMETRIC_TO_PX;
 
@@ -19,8 +22,17 @@ namespace Xena {
 
 		Pen(Painter &);
 
-		void onPenDown(Interaction &, std::chrono::steady_clock::time_point, POINT);
-		void onPenUp(Interaction &, std::chrono::steady_clock::time_point, POINT);
-		void onPenMove(Interaction &, std::chrono::steady_clock::time_point, POINT);
+		void onPenDown(
+			Interaction &,
+			std::chrono::steady_clock::time_point const &,
+			PointL const &);
+		void onPenUp(
+			Interaction &,
+			std::chrono::steady_clock::time_point const &,
+			PointL const &);
+		void onPenMove(
+			Interaction &,
+			std::chrono::steady_clock::time_point const &,
+			PointL const &);
 	};
 }

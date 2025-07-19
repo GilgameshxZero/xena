@@ -7,30 +7,31 @@
 namespace Xena {
 	class Chunk {
 		public:
-		using PointLl = Rain::Algorithm::Geometry::PointLl;
+		using PointL = Rain::Algorithm::Geometry::PointL;
 
-		static inline long long const AA_SCALE{2};
+		static inline long const AA_SCALE{2l};
 
 		private:
-		PointLl const SIZE, POSITION;
+		PointL const SIZE, POSITION;
+		Rain::Windows::Bitmap const bitmap, bitmapAa;
 
 		public:
-		HDC const hDc;
+		Rain::Windows::DeviceContextMemory dc;
 
 		private:
-		HDC const hDcAA;
-		HBITMAP const hBitmap, hOrigBitmap, hBitmapAA, hOrigBitmapAA;
+		Rain::Windows::DeviceContextMemory dcAa;
 
 		public:
 		Chunk(
 			HDC,
-			PointLl const &,
-			PointLl const &,
+			PointL const &,
+			PointL const &,
 			Rain::Windows::SolidBrush const &);
-		~Chunk();
 
 		// Draw path with specified brush with the chunk offset. To erase, use a
 		// brush with the same color as the background.
-		void drawPath(std::shared_ptr<Path const> const &, HPEN);
+		void drawPath(
+			std::shared_ptr<Path const> const &,
+			Rain::Windows::SolidPen const &);
 	};
 }

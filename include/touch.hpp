@@ -8,21 +8,26 @@
 namespace Xena {
 	class Touch {
 		public:
-		using PointLl = Rain::Algorithm::Geometry::PointLl;
+		using PointL = Rain::Algorithm::Geometry::PointL;
 
 		private:
 		Painter &painter;
-
-		PointLl origViewportPosition;
-		POINT origPanPosition;
+		PointL origViewportPosition, origPanPosition;
 
 		public:
 		Touch(Painter &);
 
-		void
-		onTouchDown(Interaction &, std::chrono::steady_clock::time_point, POINT);
-		void onTouchUp(Interaction &, std::chrono::steady_clock::time_point, POINT);
-		void
-		onTouchMove(Interaction &, std::chrono::steady_clock::time_point, POINT);
+		void onTouchDown(
+			Interaction &,
+			std::chrono::steady_clock::time_point const &,
+			PointL const &);
+		void onTouchUp(
+			Interaction &,
+			std::chrono::steady_clock::time_point const &,
+			PointL const &);
+		void onTouchMove(
+			Interaction &,
+			std::chrono::steady_clock::time_point const &,
+			PointL const &);
 	};
 }

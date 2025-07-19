@@ -34,24 +34,13 @@ int main() {
 			return 0;
 		}
 
-		Rain::Windows::validateSystemCall(EnableMouseInPointer(TRUE));
 		// DPI awareness can also be set in the manifest, but we set it here.
 		Rain::Windows::validateSystemCall(
 			SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2));
+		Rain::Windows::validateSystemCall(EnableMouseInPointer(TRUE));
 		Xena::MainWindow mainWindow(
 			nonKeyedArguments.empty() ? "xena.svg" : nonKeyedArguments.front());
-
-		BOOL bRet;
-		MSG msg;
-		while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0) {
-			if (bRet == -1) {
-				MessageBox(NULL, "GetMessage returned -1.", WINDOW_NAME.c_str(), MB_OK);
-				break;
-			} else {
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-		}
+		Rain::Windows::runMessageLoop();
 		return 0;
 	} catch (std::exception const &exception) {
 		std::cerr << exception.what();

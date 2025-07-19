@@ -10,29 +10,25 @@
 #include <rain.hpp>
 
 namespace Xena {
-	class MainWindow {
+	class MainWindow : public Rain::Windows::Window {
 		public:
-		Painter painter;
-
 		MainWindow(std::string const &);
 
 		private:
-		static LRESULT CALLBACK wndProc(HWND, UINT, WPARAM, LPARAM);
-
 		std::unordered_map<UINT32, Interaction> interactions;
+		Painter painter;
 		Mouse mouse;
 		Touch touch;
 		Pen pen;
 		Eraser eraser;
 
-		HWND createWindow();
+		LRESULT onCreate(WPARAM, LPARAM) override;
+		LRESULT onDestroy(WPARAM, LPARAM) override;
+		LRESULT onPaint(WPARAM, LPARAM) override;
+		LRESULT onPointerDown(WPARAM, LPARAM) override;
+		LRESULT onPointerUp(WPARAM, LPARAM) override;
+		LRESULT onPointerUpdate(WPARAM, LPARAM) override;
 
-		LRESULT onDestroy(HWND, WPARAM, LPARAM);
-		LRESULT onPaint(HWND, WPARAM, LPARAM);
-		LRESULT onPointerDown(HWND, WPARAM, LPARAM);
-		LRESULT onPointerUp(HWND, WPARAM, LPARAM);
-		LRESULT onPointerUpdate(HWND, WPARAM, LPARAM);
-
-		LRESULT onPointerEvent(HWND, WPARAM, LPARAM);
+		LRESULT onPointerEvent(WPARAM, LPARAM);
 	};
 }
