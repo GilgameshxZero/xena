@@ -8,19 +8,19 @@
 namespace Xena {
 	class Svg {
 		public:
-		using PointLl = Rain::Algorithm::Geometry::PointLl;
+		using PointL = Rain::Algorithm::Geometry::PointL;
 		using Paths = std::unordered_map<
 			std::size_t,
-			std::pair<std::shared_ptr<Path const>, std::unordered_set<PointLl>>>;
+			std::pair<std::shared_ptr<Path const>, std::unordered_set<PointL>>>;
 
 		private:
 		std::string filePath;
 
-		PointLl &viewportPosition;
+		PointL &viewportPosition;
 		Paths &paths;
 
 		public:
-		Svg(std::string const &, PointLl &, Paths &);
+		Svg(std::string const &, PointL &, Paths &);
 
 		void load();
 		void save();

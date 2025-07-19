@@ -4,8 +4,8 @@ namespace Xena {
 	Touch::Touch(Painter &painter) : painter(painter) {}
 	void Touch::onTouchDown(
 		Interaction &interaction,
-		std::chrono::steady_clock::time_point now,
-		POINT position) {
+		std::chrono::steady_clock::time_point const &now,
+		PointL const &position) {
 		Rain::Log::verbose(
 			"Touch::onTouchDown: (", position.x, ", ", position.y, ").");
 
@@ -14,8 +14,8 @@ namespace Xena {
 	}
 	void Touch::onTouchUp(
 		Interaction &interaction,
-		std::chrono::steady_clock::time_point now,
-		POINT position) {
+		std::chrono::steady_clock::time_point const &now,
+		PointL const &position) {
 		if (
 			interaction.contactSizeMax >= Interaction::CONTACT_SIZE_THRESHOLD ||
 			now - interaction.timeDown <= Interaction::IGNORE_SHORT_THRESHOLD) {
@@ -34,8 +34,8 @@ namespace Xena {
 	}
 	void Touch::onTouchMove(
 		Interaction &interaction,
-		std::chrono::steady_clock::time_point now,
-		POINT position) {
+		std::chrono::steady_clock::time_point const &now,
+		PointL const &position) {
 		// Suspect palm touch if contact size is too large or event is too short.
 		if (
 			interaction.contactSizeMax >= Interaction::CONTACT_SIZE_THRESHOLD ||

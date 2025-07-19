@@ -3,7 +3,7 @@
 namespace Xena {
 	Svg::Svg(
 		std::string const &fileToLoad,
-		PointLl &viewportPosition,
+		PointL &viewportPosition,
 		Paths &paths)
 			: filePath{fileToLoad}, viewportPosition{viewportPosition}, paths{paths} {
 		this->load();

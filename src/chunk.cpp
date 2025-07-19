@@ -3,60 +3,49 @@
 namespace Xena {
 	Chunk::Chunk(
 		HDC hDc,
-		PointLl const &size,
-		PointLl const &position,
+		PointL const &size,
+		PointL const &position,
 		Rain::Windows::SolidBrush const &brush)
 			: SIZE{size},
 				POSITION{position},
-				hDc{Rain::Windows::validateSystemCall(CreateCompatibleDC(hDc))},
-				hDcAA{Rain::Windows::validateSystemCall(CreateCompatibleDC(hDc))},
-				hBitmap{Rain::Windows::validateSystemCall(
-					CreateCompatibleBitmap(hDc, size.x, size.y))},
-				hOrigBitmap{static_cast<HBITMAP>(Rain::Windows::validateSystemCall(
-					SelectObject(this->hDc, this->hBitmap)))},
-				hBitmapAA{Rain::Windows::validateSystemCall(CreateCompatibleBitmap(
-					hDc,
-					size.x * Chunk::AA_SCALE,
-					size.y * Chunk::AA_SCALE))},
-				hOrigBitmapAA{static_cast<HBITMAP>(Rain::Windows::validateSystemCall(
-					SelectObject(this->hDcAA, this->hBitmapAA)))} {
-		Rain::Windows::validateSystemCall(SetStretchBltMode(this->hDc, HALFTONE));
-		RECT rect{0, 0, size.x, size.y};
-		Rain::Windows::validateSystemCall(FillRect(this->hDc, &rect, brush));
-	}
-	Chunk::~Chunk() {
-		SelectObject(this->hDcAA, this->hOrigBitmapAA);
-		DeleteObject(this->hBitmapAA);
-		DeleteDC(this->hDcAA);
-		SelectObject(this->hDc, this->hOrigBitmap);
-		DeleteObject(this->hBitmap);
-		DeleteDC(this->hDc);
+				bitmap{hDc, size.x, size.y},
+				bitmapAa{hDc, size.x * Chunk::AA_SCALE, size.y * Chunk::AA_SCALE},
+				dc{hDc},
+				dcAa{hDc} {
+		Rain::Windows::validateSystemCall(SetStretchBltMode(this->dc, HALFTONE));
+
+		this->dc.select(this->bitmap);
+		this->dcAa.select(this->bitmapAa);
+
+		this->dc.fillRect({{0, 0}, size}, brush);
+		this->dcAa.fillRect(
+			{0, 0, size.x * Chunk::AA_SCALE, size.y * Chunk::AA_SCALE}, brush);
 	}
 
-	void Chunk::drawPath(std::shared_ptr<Path const> const &path, HPEN hPen) {
+	void Chunk::drawPath(
+		std::shared_ptr<Path const> const &path,
+		Rain::Windows::SolidPen const &pen) {
 		using Rain::Windows::validateSystemCall;
-		std::vector<Path::PointLd> const &points{path->getPoints()};
-		HPEN hOrigPen{
-			static_cast<HPEN>(validateSystemCall(SelectObject(this->hDcAA, hPen)))};
-		validateSystemCall(MoveToEx(
-			this->hDcAA,
-			(points[0].x - this->POSITION.x) * Chunk::AA_SCALE,
-			(points[0].y - this->POSITION.y) * Chunk::AA_SCALE,
-			NULL));
+		auto const &points{path->getPoints()};
+
+		this->dcAa.moveTo(
+			{std::lroundl((points[0].x - this->POSITION.x) * Chunk::AA_SCALE),
+			 std::lroundl((points[0].y - this->POSITION.y) * Chunk::AA_SCALE)});
+		this->dcAa.select(pen);
 		for (std::size_t i{1}; i < points.size(); i++) {
-			validateSystemCall(LineTo(
-				this->hDcAA,
-				(points[i].x - this->POSITION.x) * Chunk::AA_SCALE,
-				(points[i].y - this->POSITION.y) * Chunk::AA_SCALE));
+			this->dcAa.lineTo(
+				{std::lroundl((points[i].x - this->POSITION.x) * Chunk::AA_SCALE),
+				 std::lroundl((points[i].y - this->POSITION.y) * Chunk::AA_SCALE)});
 		}
-		validateSystemCall(SelectObject(this->hDcAA, hOrigPen));
+		this->dcAa.deselect();
+
 		validateSystemCall(StretchBlt(
-			this->hDc,
+			this->dc,
 			0,
 			0,
 			this->SIZE.x,
 			this->SIZE.y,
-			this->hDcAA,
+			this->dcAa,
 			0,
 			0,
 			this->SIZE.x * Chunk::AA_SCALE,

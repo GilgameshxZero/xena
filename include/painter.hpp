@@ -7,35 +7,39 @@
 namespace Xena {
 	class Painter {
 		public:
-		using PointLl = Rain::Algorithm::Geometry::PointLl;
+		using PointL = Rain::Algorithm::Geometry::PointL;
 		using PointLd = Rain::Algorithm::Geometry::PointLd;
 		using Chunks = std::unordered_map<
-			PointLl,
+			PointL,
 			std::pair<std::shared_ptr<Chunk>, std::unordered_set<std::size_t>>>;
 
+		private:
+		Rain::Windows::Window window;
+
+		public:
 		long double const DP_TO_PX;
 
 		private:
-		static inline long double const STROKE_WIDTH_DP{2.5f};
+		static inline long double const STROKE_WIDTH_DP{2.5l};
 		long double const STROKE_WIDTH_PX;
 
 		// Chunks are created with a fixed DPI which does not change throughout its
 		// lifetime.
-		static inline PointLl const CHUNK_SIZE_DP{512, 512};
-		PointLl const CHUNK_SIZE_PX;
+		static inline PointL const CHUNK_SIZE_DP{512, 512};
+		PointL const CHUNK_SIZE_PX;
 
 		bool const IS_LIGHT_THEME{Rain::Windows::isLightTheme()};
 
-		HWND const hWnd;
-		PointLl size;
-		HDC const hDc, hTentativeDc;
-		bool isTentativeDirty;
-		HBITMAP const hTentativeBitmap, hOrigBitmap;
+		PointL size;
+		Rain::Windows::DeviceContext dc;
+		Rain::Windows::DeviceContextMemory tentativeDc;
+		bool isTentativeDirty{false};
+		Rain::Windows::Bitmap tentativeBitmap;
 		Rain::Windows::SolidBrush const backgroundBrush{
 			IS_LIGHT_THEME ? 0x00ffffff : 0x00000000};
-		HPEN const hDrawPen, hErasePen, hTentativeDrawPen, hOrigPen;
+		Rain::Windows::SolidPen drawPen, erasePen, tentativeDrawPen;
 
-		PointLl viewportPosition, currentChunk;
+		PointL viewportPosition, currentChunk;
 
 		// Maps a chunk coordinate to the chunk, and all path IDs in the chunk.
 		Chunks chunks;
@@ -50,23 +54,24 @@ namespace Xena {
 		~Painter();
 
 		void rePaint();
-		LRESULT onPaint(HWND, WPARAM, LPARAM);
+		LRESULT onPaint(WPARAM, LPARAM);
 
 		void addPath(std::shared_ptr<Path const> const &);
 		void removePath(std::size_t);
 
-		void updateViewportPosition(PointLl const &);
-		PointLl const &getViewportPosition();
+		void updateViewportPosition(PointL const &);
+		PointL const &getViewportPosition();
 
 		void tentativeClear();
-		void tentativeMoveTo(PointLd const &);
-		void tentativeLineTo(PointLd const &);
+		void tentativeMoveTo(PointL const &);
+		void tentativeLineTo(PointL const &);
 
 		private:
-		PointLl getChunkCoordinateForPoint(PointLl const &);
-
+		PointL getSizeFromHWnd(HWND);
+		template <typename PrecisionType>
+		long getChunkForPixel(PrecisionType const &);
 		// Get a chunk if it exists, or create and return it if it doesn't.
 		std::pair<std::shared_ptr<Chunk>, std::unordered_set<std::size_t>> &
-		getChunkPair(PointLl const &);
+		getChunkPair(PointL const &);
 	};
 }

@@ -4,101 +4,36 @@
 
 namespace Xena {
 	MainWindow::MainWindow(std::string const &fileToLoad)
-			: painter(fileToLoad, this->createWindow()),
+			: Window({.dwStyle = WS_POPUP | WS_VISIBLE | WS_MAXIMIZE}),
+				painter(fileToLoad, *this),
 				mouse(this->painter),
 				touch(this->painter),
 				pen(this->painter),
 				eraser(this->painter) {}
 
-	LRESULT CALLBACK
-	MainWindow::wndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-		try {
-			if (uMsg == WM_CREATE) {
-				Rain::Log::verbose("MainWindow::MainWindow: Created window.");
-				CREATESTRUCT *createStruct{reinterpret_cast<CREATESTRUCT *>(lParam)};
-				SetWindowLongPtr(
-					hWnd,
-					GWLP_USERDATA,
-					reinterpret_cast<LONG_PTR>(createStruct->lpCreateParams));
-				return 0;
-			}
-			MainWindow *that{
-				reinterpret_cast<MainWindow *>(GetWindowLongPtr(hWnd, GWLP_USERDATA))};
-			if (that == NULL) {
-				return DefWindowProc(hWnd, uMsg, wParam, lParam);
-			}
-			switch (uMsg) {
-				case WM_DESTROY:
-					return that->onDestroy(hWnd, wParam, lParam);
-				case WM_PAINT:
-					return that->onPaint(hWnd, wParam, lParam);
-				case WM_POINTERDOWN:
-					return that->onPointerDown(hWnd, wParam, lParam);
-				case WM_POINTERUP:
-					return that->onPointerUp(hWnd, wParam, lParam);
-				case WM_POINTERUPDATE:
-					return that->onPointerUpdate(hWnd, wParam, lParam);
-				default:
-					return DefWindowProc(hWnd, uMsg, wParam, lParam);
-			}
-		} catch (std::exception const &exception) {
-			std::cerr << exception.what();
-			return 0;
-		}
+	LRESULT MainWindow::onCreate(WPARAM wParam, LPARAM lParam) {
+		Rain::Windows::validateSystemCall(RegisterTouchWindow(*this, NULL));
+		return 0;
 	}
-
-	HWND MainWindow::createWindow() {
-		HINSTANCE hInstance{GetModuleHandle(NULL)};
-		WNDCLASSEX wndClassEx{
-			sizeof(WNDCLASSEX),
-			CS_HREDRAW | CS_VREDRAW,
-			MainWindow::wndProc,
-			0,
-			0,
-			hInstance,
-			NULL,
-			LoadCursor(NULL, IDC_ARROW),
-			(HBRUSH)(COLOR_WINDOW + 1),
-			NULL,
-			typeid(*this).name(),
-			NULL};
-		Rain::Windows::validateSystemCall(RegisterClassEx(&wndClassEx));
-		HWND hWnd{Rain::Windows::validateSystemCall(CreateWindowEx(
-			NULL,
-			wndClassEx.lpszClassName,
-			"",
-			WS_POPUP | WS_VISIBLE | WS_MAXIMIZE,
-			0,
-			0,
-			0,
-			0,
-			NULL,
-			NULL,
-			hInstance,
-			reinterpret_cast<LPVOID>(this)))};
-		Rain::Windows::validateSystemCall(RegisterTouchWindow(hWnd, NULL));
-		return hWnd;
-	}
-
-	LRESULT MainWindow::onDestroy(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+	LRESULT MainWindow::onDestroy(WPARAM wParam, LPARAM lParam) {
 		this->painter.svg.save();
 		PostQuitMessage(0);
 		return 0;
 	}
-	LRESULT MainWindow::onPaint(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-		return this->painter.onPaint(hWnd, wParam, lParam);
+	LRESULT MainWindow::onPaint(WPARAM wParam, LPARAM lParam) {
+		return this->painter.onPaint(wParam, lParam);
 	}
-	LRESULT MainWindow::onPointerDown(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-		return this->onPointerEvent(hWnd, wParam, lParam);
+	LRESULT MainWindow::onPointerDown(WPARAM wParam, LPARAM lParam) {
+		return this->onPointerEvent(wParam, lParam);
 	}
-	LRESULT MainWindow::onPointerUp(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-		return this->onPointerEvent(hWnd, wParam, lParam);
+	LRESULT MainWindow::onPointerUp(WPARAM wParam, LPARAM lParam) {
+		return this->onPointerEvent(wParam, lParam);
 	}
-	LRESULT MainWindow::onPointerUpdate(HWND hWnd, WPARAM wParam, LPARAM lParam) {
-		return this->onPointerEvent(hWnd, wParam, lParam);
+	LRESULT MainWindow::onPointerUpdate(WPARAM wParam, LPARAM lParam) {
+		return this->onPointerEvent(wParam, lParam);
 	}
 
-	LRESULT MainWindow::onPointerEvent(HWND hWnd, WPARAM wParam, LPARAM lParam) {
+	LRESULT MainWindow::onPointerEvent(WPARAM wParam, LPARAM lParam) {
 		POINTER_INPUT_TYPE pointerInputType;
 		Rain::Windows::validateSystemCall(
 			GetPointerType(GET_POINTERID_WPARAM(wParam), &pointerInputType));
@@ -175,7 +110,8 @@ namespace Xena {
 							interaction, now, pointerInfo->ptPixelLocation);
 						break;
 					case Interaction::Type::PEN:
-						this->pen.onPenDown(interaction, now, pointerInfo->ptHimetricLocation);
+						this->pen.onPenDown(
+							interaction, now, pointerInfo->ptHimetricLocation);
 						break;
 					case Interaction::Type::ERASER:
 						this->eraser.onEraserDown(

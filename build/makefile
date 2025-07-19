@@ -115,7 +115,7 @@ RAIN_INCLUDES =
 
 COMPILER = cl /c
 COMPILER_FLAGS_INCLUDES = /I$(PROJECT_INCLUDE_DIR) /I$(ROOT_DIR)rain\include^\
-COMPILER_FLAGS_COMMON = $(COMPILER_FLAGS_INCLUDES) /std:c++17 /D _CONSOLE\
+COMPILER_FLAGS_COMMON = $(COMPILER_FLAGS_INCLUDES) /std:c++20 /D _CONSOLE\
 	/Fd$(PROJECT_OBJ_DIR).pdb /Fo$(PROJECT_OBJ_DIR) /Fp$(PROJECT_OBJ_DIR).pch\
 	/fp:fast /MP /permissive- /Zc:wchar_t /Zc:forScope /Zc:inline /Zf\
 	/GS /W3 /WX- /wd4250 /sdl /diagnostics:column /EHsc /Gm- /nologo
