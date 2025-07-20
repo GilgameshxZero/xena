@@ -2,7 +2,7 @@
 
 namespace Xena {
 	Path::Path() : ID{Path::ID_NEXT++} {
-		Rain::Log::verbose("Path::Path: Created path ", this->ID, ".");
+		Rain::Console::log("Path::Path: Created path ", this->ID, ".");
 	}
 
 	std::vector<Path::PointLd> const &Path::getPoints() const {

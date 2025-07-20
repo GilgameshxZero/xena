@@ -68,7 +68,7 @@ namespace Xena {
 			std::getline(in, buffer);
 		}
 
-		Rain::Log::verbose(
+		Rain::Console::log(
 			"Svg::load: Loaded ",
 			this->painter.getPaths().size(),
 			" paths from \"",
@@ -123,7 +123,7 @@ namespace Xena {
 		out.clear();
 		out << "</svg>\n";
 
-		Rain::Log::verbose(
+		Rain::Console::log(
 			"Svg::save: Saved ",
 			this->painter.getPaths().size(),
 			" paths to \"",

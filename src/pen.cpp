@@ -10,7 +10,7 @@ namespace Xena {
 		Interaction &interaction,
 		std::chrono::steady_clock::time_point const &now,
 		PointL const &position) {
-		Rain::Log::verbose("Pen::onPenDown: ", position, ".");
+		Rain::Console::log("Pen::onPenDown: ", position, ".");
 		auto const &viewportPosition{this->painter.getViewportPosition()};
 		this->isDrawing = true;
 		this->path.reset(new Path);
@@ -22,7 +22,7 @@ namespace Xena {
 		Interaction &interaction,
 		std::chrono::steady_clock::time_point const &now,
 		PointL const &position) {
-		Rain::Log::verbose("Pen::onPenUp: ", position, ".");
+		Rain::Console::log("Pen::onPenUp: ", position, ".");
 		auto const &viewportPosition{this->painter.getViewportPosition()};
 		this->isDrawing = false;
 		this->path->addPoint(viewportPosition + position * this->HIMETRIC_TO_PX);

@@ -121,7 +121,7 @@ namespace Xena {
 			auto &chunkPair{this->getChunkPair(i)};
 			chunkPair.first->drawPath(dedupPath, this->drawPen);
 			chunkPair.second.emplace(dedupPath->ID);
-			Rain::Log::verbose(
+			Rain::Console::log(
 				"Painter::addPath: Added path ",
 				dedupPath->ID,
 				" to chunk (",
@@ -149,7 +149,7 @@ namespace Xena {
 		}
 		this->paths.erase(it);
 		this->rePaint();
-		Rain::Log::verbose("Painter::removePath: Removed path ", pathId, ".");
+		Rain::Console::log("Painter::removePath: Removed path ", pathId, ".");
 	}
 	Painter::Paths const &Painter::getPaths() {
 		return this->paths;
@@ -196,7 +196,7 @@ namespace Xena {
 		if (it != this->chunks.end()) {
 			return it->second;
 		}
-		Rain::Log::verbose(
+		Rain::Console::log(
 			"Painter::getChunkPair: Created chunk (",
 			coordinate.x,
 			", ",
