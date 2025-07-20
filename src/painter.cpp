@@ -3,15 +3,15 @@
 #include <cassert>
 
 namespace Xena {
-	Painter::Painter(std::string const &fileToLoad, HWND hWnd)
-			: window{hWnd},
+	Painter::Painter(std::string const &fileToLoad, Rain::Windows::Window &window)
+			: window{window},
 				DP_TO_PX{static_cast<long double>(window.getDpi()) / 160.0l},
 				STROKE_WIDTH_PX{Painter::STROKE_WIDTH_DP * this->DP_TO_PX},
 				PATH_MIN_DELTA_PX{Painter::PATH_MIN_DELTA_DP * this->DP_TO_PX},
 				CHUNK_SIZE_PX{
 					std::lroundl(Painter::CHUNK_SIZE_DP.x * this->DP_TO_PX),
 					std::lroundl(Painter::CHUNK_SIZE_DP.y * this->DP_TO_PX)},
-				size{this->getSizeFromHWnd(hWnd)},
+				size{window.getClientRect().size()},
 				dc{Rain::Windows::validateSystemCall(GetDC(this->window))},
 				tentativeDc{this->dc},
 				tentativeBitmap{this->dc, this->size.x, this->size.y},
@@ -44,14 +44,9 @@ namespace Xena {
 	LRESULT Painter::onPaint(WPARAM wParam, LPARAM lParam) {
 		Rain::Windows::PaintStruct ps(this->window);
 		if (!this->isTentativeDirty) {
-			PointL chunkBegin{
-				Painter::getChunkForPixel(this->viewportPosition.x),
-				Painter::getChunkForPixel(this->viewportPosition.y)},
-				chunkEnd{
-					Painter::getChunkForPixel(
-						this->viewportPosition.x + ps.rcPaint().width()),
-					Painter::getChunkForPixel(
-						this->viewportPosition.y + ps.rcPaint().height())};
+			PointL chunkBegin{Painter::getChunkForPoint(this->viewportPosition)},
+				chunkEnd{Painter::getChunkForPoint(
+					this->viewportPosition + ps.rcPaint().size())};
 			if (chunkBegin.x > chunkEnd.x) {
 				std::swap(chunkBegin.x, chunkEnd.x);
 			}
@@ -108,16 +103,10 @@ namespace Xena {
 		}
 
 		// Compute all chunks which contain path.
-		containingChunks.emplace(
-			Painter::getChunkForPixel(points[0].x),
-			Painter::getChunkForPixel(points[0].y));
+		containingChunks.emplace(Painter::getChunkForPoint(points[0]));
 		for (std::size_t i{1}; i < points.size(); i++) {
-			PointL chunkBegin{
-				Painter::getChunkForPixel(points[i - 1].x),
-				Painter::getChunkForPixel(points[i - 1].y)},
-				chunkEnd{
-					Painter::getChunkForPixel(points[i].x),
-					Painter::getChunkForPixel(points[i].y)};
+			PointL chunkBegin{Painter::getChunkForPoint(points[i - 1])},
+				chunkEnd{Painter::getChunkForPoint(points[i])};
 			if (chunkBegin.x > chunkEnd.x) {
 				std::swap(chunkBegin.x, chunkEnd.x);
 			}
@@ -184,15 +173,10 @@ namespace Xena {
 		this->isTentativeDirty = true;
 	}
 
-	Rain::Algorithm::Geometry::PointL Painter::getSizeFromHWnd(HWND hWnd) {
-		RECT rect;
-		Rain::Windows::validateSystemCall(GetWindowRect(hWnd, &rect));
-		return {rect.right - rect.left, rect.bottom - rect.top};
-	}
 	template <typename PrecisionType>
-	long Painter::getChunkForPixel(PrecisionType const &pixel) {
-		return static_cast<long>(
-			std::floorl(static_cast<long double>(pixel) / this->CHUNK_SIZE_PX.x));
+	Rain::Algorithm::Geometry::PointL Painter::getChunkForPoint(
+		Rain::Algorithm::Geometry::Point<PrecisionType> const &point) {
+		return (point / this->CHUNK_SIZE_PX).floor<long>();
 	}
 	std::pair<std::shared_ptr<Chunk>, std::unordered_set<std::size_t>> &
 	Painter::getChunkPair(PointL const &coordinate) {

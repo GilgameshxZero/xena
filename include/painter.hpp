@@ -14,7 +14,7 @@ namespace Xena {
 			std::pair<std::shared_ptr<Chunk>, std::unordered_set<std::size_t>>>;
 
 		private:
-		Rain::Windows::Window window;
+		Rain::Windows::Window &window;
 
 		public:
 		long double const DP_TO_PX;
@@ -52,7 +52,7 @@ namespace Xena {
 		public:
 		Svg svg;
 
-		Painter(std::string const &, HWND);
+		Painter(std::string const &, Rain::Windows::Window &);
 		~Painter();
 
 		void rePaint();
@@ -69,9 +69,9 @@ namespace Xena {
 		void tentativeLineTo(PointL const &);
 
 		private:
-		PointL getSizeFromHWnd(HWND);
 		template <typename PrecisionType>
-		long getChunkForPixel(PrecisionType const &);
+		PointL getChunkForPoint(
+			Rain::Algorithm::Geometry::Point<PrecisionType> const &);
 		// Get a chunk if it exists, or create and return it if it doesn't.
 		std::pair<std::shared_ptr<Chunk>, std::unordered_set<std::size_t>> &
 		getChunkPair(PointL const &);
