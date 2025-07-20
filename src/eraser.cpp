@@ -7,15 +7,13 @@ namespace Xena {
 		Interaction &interaction,
 		std::chrono::steady_clock::time_point const &now,
 		PointL const &position) {
-		Rain::Log::verbose(
-			"Eraser::onEraserDown: (", position.x, ", ", position.y, ").");
+		Rain::Log::verbose("Eraser::onEraserDown: ", position, ".");
 	}
 	void Eraser::onEraserUp(
 		Interaction &interaction,
 		std::chrono::steady_clock::time_point const &now,
 		PointL const &position) {
-		Rain::Log::verbose(
-			"Eraser::onEraserUp: (", position.x, ", ", position.y, ").");
+		Rain::Log::verbose("Eraser::onEraserUp: ", position, ".");
 	}
 	void Eraser::onEraserMove(
 		Interaction &interaction,

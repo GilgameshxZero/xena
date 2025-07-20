@@ -7,6 +7,11 @@
 
 namespace Xena {
 	class Svg {
+		private:
+		static inline long double const COORDINATE_SCALE_PX{12.0l};
+		long double const COORDINATE_SCALE_DP;
+		long double const STROKE_WIDTH_PX;
+
 		public:
 		using PointL = Rain::Algorithm::Geometry::PointL;
 		using Paths = std::unordered_map<
@@ -20,7 +25,7 @@ namespace Xena {
 		Paths &paths;
 
 		public:
-		Svg(std::string const &, PointL &, Paths &);
+		Svg(long double, long double, std::string const &, PointL &, Paths &);
 
 		void load();
 		void save();

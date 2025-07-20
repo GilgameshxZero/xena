@@ -5,9 +5,9 @@
 namespace Xena {
 	Painter::Painter(std::string const &fileToLoad, HWND hWnd)
 			: window{hWnd},
-				DP_TO_PX{
-					static_cast<long double>(window.getDpi()) / USER_DEFAULT_SCREEN_DPI},
+				DP_TO_PX{static_cast<long double>(window.getDpi()) / 160.0l},
 				STROKE_WIDTH_PX{Painter::STROKE_WIDTH_DP * this->DP_TO_PX},
+				PATH_MIN_DELTA_PX{Painter::PATH_MIN_DELTA_DP * this->DP_TO_PX},
 				CHUNK_SIZE_PX{
 					std::lroundl(Painter::CHUNK_SIZE_DP.x * this->DP_TO_PX),
 					std::lroundl(Painter::CHUNK_SIZE_DP.y * this->DP_TO_PX)},
@@ -24,15 +24,15 @@ namespace Xena {
 				tentativeDrawPen{
 					std::lroundl(this->STROKE_WIDTH_PX),
 					this->IS_LIGHT_THEME ? 0x00000000 : 0x00ffffff},
-				svg(fileToLoad, this->viewportPosition, this->paths) {
+				svg(
+					this->DP_TO_PX,
+					this->STROKE_WIDTH_PX,
+					fileToLoad,
+					this->viewportPosition,
+					this->paths) {
 		this->tentativeDc.select(this->tentativeBitmap);
 		this->tentativeDc.select(this->tentativeDrawPen);
 		this->tentativeClear();
-
-		std::shared_ptr<Path> path(new Path);
-		path->addPoint({100.0f, 100.0f});
-		path->addPoint({1300.0f, 200.0f});
-		this->addPath(path);
 	}
 	Painter::~Painter() {
 		DeleteDC(this->dc);
@@ -96,8 +96,21 @@ namespace Xena {
 				.emplace(path->ID, std::make_pair(path, std::unordered_set<PointL>()))
 				.first->second.second};
 
+		// Deduplicate close points.
+		std::shared_ptr<Path> dedupPath(new Path);
+		std::vector<PointLd> const &origPoints{path->getPoints()},
+			&points{dedupPath->getPoints()};
+		dedupPath->addPoint(origPoints[0]);
+		for (std::size_t i{1}; i < origPoints.size(); i++) {
+			if (origPoints[i].distanceTo(points.back()) >= this->PATH_MIN_DELTA_PX) {
+				dedupPath->addPoint(origPoints[i]);
+			}
+		}
+
 		// Compute all chunks which contain path.
-		std::vector<PointLd> const &points{path->getPoints()};
+		containingChunks.emplace(
+			Painter::getChunkForPixel(points[0].x),
+			Painter::getChunkForPixel(points[0].y));
 		for (std::size_t i{1}; i < points.size(); i++) {
 			PointL chunkBegin{
 				Painter::getChunkForPixel(points[i - 1].x),
@@ -120,11 +133,11 @@ namespace Xena {
 
 		for (auto const &i : containingChunks) {
 			auto &chunkPair{this->getChunkPair(i)};
-			chunkPair.first->drawPath(path, this->drawPen);
-			chunkPair.second.emplace(path->ID);
+			chunkPair.first->drawPath(dedupPath, this->drawPen);
+			chunkPair.second.emplace(dedupPath->ID);
 			Rain::Log::verbose(
 				"Painter::addPath: Added path ",
-				path->ID,
+				dedupPath->ID,
 				" to chunk (",
 				i.x,
 				", ",

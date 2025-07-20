@@ -4,6 +4,11 @@
 
 1. Split up Makefile into easier-to-manage chunks.
 
+## 1.5.0
+
+1. Windows: standardized DPI, points.
+2. Windows: enabled SVG save.
+
 ## 1.4.11
 
 1. Alpha release for Windows, without SVG save/load, erase, and fast erasing.

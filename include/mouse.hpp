@@ -1,7 +1,7 @@
 #pragma once
 
 #include <interaction.hpp>
-#include <painter.hpp>
+#include <pan-handler.hpp>
 
 #include <rain.hpp>
 
@@ -11,10 +11,10 @@ namespace Xena {
 		using PointL = Rain::Algorithm::Geometry::PointL;
 
 		private:
-		Painter &painter;
+		PanHandler &panHandler;
 
 		public:
-		Mouse(Painter &);
+		Mouse(PanHandler &);
 
 		void onMouseDown(
 			Interaction &,
