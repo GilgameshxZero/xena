@@ -1,30 +1,31 @@
 #pragma once
 
 #include <interaction.hpp>
-#include <pan-handler.hpp>
+#include <painter.hpp>
 
 #include <rain.hpp>
 
 namespace Xena {
-	class Touch {
+	class PanHandler {
 		public:
 		using PointL = Rain::Algorithm::Geometry::PointL;
 
 		private:
-		PanHandler &panHandler;
+		Painter &painter;
+		PointL origViewportPosition, origPanPosition;
 
 		public:
-		Touch(PanHandler &);
+		PanHandler(Painter &);
 
-		void onTouchDown(
+		void onPanBegin(
 			Interaction &,
 			std::chrono::steady_clock::time_point const &,
 			PointL const &);
-		void onTouchUp(
+		void onPanEnd(
 			Interaction &,
 			std::chrono::steady_clock::time_point const &,
 			PointL const &);
-		void onTouchMove(
+		void onPanUpdate(
 			Interaction &,
 			std::chrono::steady_clock::time_point const &,
 			PointL const &);

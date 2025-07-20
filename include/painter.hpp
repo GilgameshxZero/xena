@@ -22,10 +22,12 @@ namespace Xena {
 		private:
 		static inline long double const STROKE_WIDTH_DP{2.5l};
 		long double const STROKE_WIDTH_PX;
+		static inline long double const PATH_MIN_DELTA_DP{2.0l};
+		long double const PATH_MIN_DELTA_PX;
 
 		// Chunks are created with a fixed DPI which does not change throughout its
 		// lifetime.
-		static inline PointL const CHUNK_SIZE_DP{512, 512};
+		static inline PointL const CHUNK_SIZE_DP{512l, 512l};
 		PointL const CHUNK_SIZE_PX;
 
 		bool const IS_LIGHT_THEME{Rain::Windows::isLightTheme()};

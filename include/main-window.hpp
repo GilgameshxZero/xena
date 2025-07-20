@@ -4,6 +4,7 @@
 #include <interaction.hpp>
 #include <mouse.hpp>
 #include <painter.hpp>
+#include <pan-handler.hpp>
 #include <pen.hpp>
 #include <touch.hpp>
 
@@ -17,6 +18,7 @@ namespace Xena {
 		private:
 		std::unordered_map<UINT32, Interaction> interactions;
 		Painter painter;
+		PanHandler panHandler;
 		Mouse mouse;
 		Touch touch;
 		Pen pen;

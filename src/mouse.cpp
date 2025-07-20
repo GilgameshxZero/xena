@@ -1,24 +1,24 @@
 #include <mouse.hpp>
 
 namespace Xena {
-	Mouse::Mouse(Painter &painter) : painter(painter) {}
+	Mouse::Mouse(PanHandler &panHandler) : panHandler(panHandler) {}
 
 	void Mouse::onMouseDown(
 		Interaction &interaction,
 		std::chrono::steady_clock::time_point const &now,
 		PointL const &position) {
-		Rain::Log::verbose(
-			"Mouse::onMouseDown: (", position.x, ", ", position.y, ").");
+		this->panHandler.onPanBegin(interaction, now, position);
 	}
 	void Mouse::onMouseUp(
 		Interaction &interaction,
 		std::chrono::steady_clock::time_point const &now,
 		PointL const &position) {
-		Rain::Log::verbose(
-			"Mouse::onMouseUp: (", position.x, ", ", position.y, ").");
+		this->panHandler.onPanEnd(interaction, now, position);
 	}
 	void Mouse::onMouseMove(
 		Interaction &interaction,
 		std::chrono::steady_clock::time_point const &now,
-		PointL const &position) {}
+		PointL const &position) {
+		this->panHandler.onPanUpdate(interaction, now, position);
+	}
 }

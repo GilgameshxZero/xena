@@ -6,8 +6,9 @@ namespace Xena {
 	MainWindow::MainWindow(std::string const &fileToLoad)
 			: Window({.dwStyle = WS_POPUP | WS_VISIBLE | WS_MAXIMIZE}),
 				painter(fileToLoad, *this),
-				mouse(this->painter),
-				touch(this->painter),
+				panHandler(this->painter),
+				mouse(this->panHandler),
+				touch(this->panHandler),
 				pen(this->painter),
 				eraser(this->painter) {}
 

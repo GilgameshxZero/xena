@@ -18,8 +18,7 @@ namespace Xena {
 		this->dcAa.select(this->bitmapAa);
 
 		this->dc.fillRect({{0, 0}, size}, brush);
-		this->dcAa.fillRect(
-			{0, 0, size.x * Chunk::AA_SCALE, size.y * Chunk::AA_SCALE}, brush);
+		this->dcAa.fillRect({{0, 0}, size * Chunk::AA_SCALE}, brush);
 	}
 
 	void Chunk::drawPath(
@@ -29,13 +28,12 @@ namespace Xena {
 		auto const &points{path->getPoints()};
 
 		this->dcAa.moveTo(
-			{std::lroundl((points[0].x - this->POSITION.x) * Chunk::AA_SCALE),
-			 std::lroundl((points[0].y - this->POSITION.y) * Chunk::AA_SCALE)});
+			((points[0] - this->POSITION) * Chunk::AA_SCALE).round<long>());
 		this->dcAa.select(pen);
-		for (std::size_t i{1}; i < points.size(); i++) {
+		// Zero to draw single points.
+		for (std::size_t i{0}; i < points.size(); i++) {
 			this->dcAa.lineTo(
-				{std::lroundl((points[i].x - this->POSITION.x) * Chunk::AA_SCALE),
-				 std::lroundl((points[i].y - this->POSITION.y) * Chunk::AA_SCALE)});
+				((points[i] - this->POSITION) * Chunk::AA_SCALE).round<long>());
 		}
 		this->dcAa.deselect();
 
