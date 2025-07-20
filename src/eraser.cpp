@@ -42,11 +42,12 @@ namespace Xena {
 				for (auto k : containedPaths) {
 					auto const &points{paths.at(k).first->getPoints()};
 					for (std::size_t l{1}; l < points.size(); l++) {
-						if (Rain::Algorithm::Geometry::isSegmentsIntersecting<long double>(
-									points[l - 1],
-									points[l],
-									this->previousPoint,
-									position + this->painter.getViewportPosition())) {
+						if (Rain::Algorithm::Geometry::LineSegmentLd(
+									points[l - 1], points[l])
+									.intersects(
+										Rain::Algorithm::Geometry::LineSegmentL(
+											this->previousPoint,
+											position + this->painter.getViewportPosition()))) {
 							toRemove.insert(k);
 							break;
 						}

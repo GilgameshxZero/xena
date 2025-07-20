@@ -16,15 +16,11 @@ namespace Xena {
 		std::stringstream ss;
 
 		std::getline(in, buffer);
-		lagger = Rain::Algorithm::kmpSearch(buffer, "data-xena=\"").first;
+		lagger = buffer.find("data-xena=\"");
 		if (lagger == buffer.npos) {
 			return;
 		}
-		location =
-			Rain::Algorithm::kmpSearch(
-				buffer.c_str() + lagger + 11, buffer.size() - lagger - 11, "\"", 1)
-				.first -
-			(buffer.c_str() + lagger + 11);
+		location = buffer.find("\"", lagger + 11);
 		Rain::Algorithm::Geometry::PointLd viewportPositionLd;
 		ss << buffer.substr(lagger, location);
 		ss >> viewportPositionLd.x >> viewportPositionLd.y;
