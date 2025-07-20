@@ -23,7 +23,7 @@ int main() {
 				MB_OK);
 			return -1;
 		}
-		Rain::Log::verbose("main: ", "Parsed command line options.");
+		Rain::Console::log("main: ", "Parsed command line options.");
 		if (showHelp) {
 			MessageBox(
 				NULL,

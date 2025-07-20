@@ -9,14 +9,14 @@ namespace Xena {
 		Interaction &interaction,
 		std::chrono::steady_clock::time_point const &now,
 		PointL const &position) {
-		Rain::Log::verbose("Eraser::onEraserDown: ", position, ".");
+		Rain::Console::log("Eraser::onEraserDown: ", position, ".");
 		this->previousPoint = position + this->painter.getViewportPosition();
 	}
 	void Eraser::onEraserUp(
 		Interaction &interaction,
 		std::chrono::steady_clock::time_point const &now,
 		PointL const &position) {
-		Rain::Log::verbose("Eraser::onEraserUp: ", position, ".");
+		Rain::Console::log("Eraser::onEraserUp: ", position, ".");
 
 		this->onEraserMove(interaction, now, position);
 	}
