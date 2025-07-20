@@ -9,7 +9,6 @@ import android.graphics.PointF;
 
 // Used by PanManager and alt-mode PenManager.
 public class PanManager {
-	static private final float FLICK_MOVE_RATIO = 0.85f;
 	static private final int FLICK_LOWER_BOUND_MS = 10;
 	static private final int FLICK_UPPER_BOUND_MS = 210;
 	static private final float FLICK_OFFSET_THRESHOLD_DP = 10;
@@ -140,7 +139,7 @@ public class PanManager {
 					.setViewportOffset(new PointF(this.panBeginOffset.x,
 						this.panBeginOffset.y
 							+ direction * this.scribbleActivity.scribbleView.getHeight()
-								* PanManager.FLICK_MOVE_RATIO / zoomScale));
+								* XenaApplication.getFlickDistance() / zoomScale));
 				this.scribbleActivity.refreshTextViewStatus();
 				this.scribbleActivity.svgFileScribe.saveTask
 					.debounce(SvgFileScribe.DEBOUNCE_SAVE_MS);

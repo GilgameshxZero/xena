@@ -1,24 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<style name="file_picker_pane_directory">
-		<!-- Layout params cannot be specified in a style which will be applied via theming. -->
-		<item name="android:padding">12dp</item>
-		<item name="android:textSize">30dp</item>
+		<!-- Layout params cannot be specified in a style which will be applied via
+		theming. -->
+		<item name="android:paddingLeft">12dp</item>
+		<item name="android:paddingTop">6dp</item>
+		<item name="android:paddingRight">12dp</item>
+		<item name="android:paddingBottom">6dp</item>
+		<item name="android:textSize">34dp</item>
+		<item name="android:maxLines">2</item>
 		<item name="android:ellipsize">start</item>
-		<item name="android:singleLine">true</item>
+		<item name="android:singleLine">false</item>
 		<item name="android:gravity">left|center_vertical</item>
 		<item name="android:textColor">@android:color/black</item>
 		<item name="android:background">@drawable/solid_empty</item>
 		<item name="android:onClick">onClick</item>
 	</style>
 	<style name="file_picker_pane_file">
-		<item name="android:padding">12dp</item>
-		<item name="android:textSize">30dp</item>
+		<item name="android:paddingLeft">12dp</item>
+		<item name="android:paddingTop">6dp</item>
+		<item name="android:paddingRight">12dp</item>
+		<item name="android:paddingBottom">6dp</item>
+		<item name="android:textSize">34dp</item>
+		<item name="android:maxLines">2</item>
 		<item name="android:ellipsize">start</item>
-		<item name="android:singleLine">true</item>
+		<item name="android:singleLine">false</item>
+		<item name="android:scrollHorizontally">true</item>
 		<item name="android:gravity">left|center_vertical</item>
 		<item name="android:textColor">@android:color/black</item>
 		<item name="android:background">@drawable/dotted_empty</item>
 		<item name="android:onClick">onClick</item>
+	</style>
+	<style name="file_picker_pane_row">
+		<item name="android:orientation">horizontal</item>
+		<item name="android:gravity">center</item>
 	</style>
 </resources>

@@ -38,12 +38,12 @@ public class FilePickerActivity extends BaseActivity
 	static private final String EDIT_TEXT_DEFAULT
 		= Environment.getExternalStorageDirectory().toString();
 
-	static private final Point MIN_PANE_SIZE_DP = new Point(384, 72);
+	static private final Point MIN_PANE_SIZE_DP = new Point(400, 105);
 	static private final Point MIN_PANE_SIZE_PX
 		= new Point(
 			FilePickerActivity.MIN_PANE_SIZE_DP.x * XenaApplication.DPI / 160,
 			FilePickerActivity.MIN_PANE_SIZE_DP.y * XenaApplication.DPI / 160);
-	static private final int MARGIN_SIZE_DP = 6;
+	static private final int MARGIN_SIZE_DP = 3;
 	static private final int MARGIN_SIZE_PX
 		= FilePickerActivity.MARGIN_SIZE_DP * XenaApplication.DPI / 160;
 	static private final LayoutParams LISTING_ROW_PARAMS
@@ -61,6 +61,7 @@ public class FilePickerActivity extends BaseActivity
 	private EditText modalEditPalm;
 	private ImageView modalEditPanUpdate;
 	private EditText modalEditDrawRefresh;
+	private EditText modalEditFlickDistance;
 
 	private FilePickerTouchManager touchManager;
 
@@ -82,6 +83,8 @@ public class FilePickerActivity extends BaseActivity
 			= findViewById(R.id.file_picker_activity_modal_edit_pan_update);
 		this.modalEditDrawRefresh
 			= findViewById(R.id.file_picker_activity_modal_edit_draw_refresh);
+		this.modalEditFlickDistance
+			= findViewById(R.id.file_picker_activity_modal_edit_flick_distance);
 
 		this.touchManager = new FilePickerTouchManager(this);
 
@@ -156,6 +159,8 @@ public class FilePickerActivity extends BaseActivity
 						: R.drawable.solid_empty);
 				this.modalEditDrawRefresh
 					.setText(String.valueOf(XenaApplication.getDrawEndRefresh()));
+				this.modalEditFlickDistance
+					.setText(String.valueOf(XenaApplication.getFlickDistance()));
 				this.modal.setVisibility(View.VISIBLE);
 				break;
 			case R.id.file_picker_activity_button_date:
@@ -184,6 +189,8 @@ public class FilePickerActivity extends BaseActivity
 					.setPanUpdateEnabled(this.tentativeModalEditPanUpdateState);
 				XenaApplication.setDrawEndRefresh(
 					Integer.parseInt(this.modalEditDrawRefresh.getText().toString()));
+				XenaApplication.setFlickDistance(
+					Float.parseFloat(this.modalEditFlickDistance.getText().toString()));
 				this.modal.setVisibility(View.GONE);
 				break;
 			default:
@@ -302,7 +309,9 @@ public class FilePickerActivity extends BaseActivity
 
 		// Add all panes to listingLayout.
 		for (int i = 0; i < this.GRID_DIMENSIONS.y; i++) {
-			LinearLayout row = new LinearLayout(this);
+			LinearLayout row
+				= new LinearLayout(
+					new ContextThemeWrapper(this, R.style.file_picker_pane_row));
 			for (int j = 0; j < this.GRID_DIMENSIONS.x; j++) {
 				int idx
 					= i * this.GRID_DIMENSIONS.x + j

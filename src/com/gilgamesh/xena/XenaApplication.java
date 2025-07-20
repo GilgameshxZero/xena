@@ -25,6 +25,10 @@ public class XenaApplication extends Application {
 		= "SHARED_PREFERENCES_DRAW_END_REFRESH";
 	static private final int DRAW_END_REFRESH_DEFAULT = 60000;
 	static private int DRAW_END_REFRESH;
+	static private final String SHARED_PREFERENCES_FLICK_DISTANCE
+		= "SHARED_PREFERENCES_FLICK_DISTANCE";
+	static private final float FLICK_DISTANCE_DEFAULT = 0.8f;
+	static private float FLICK_DISTANCE;
 
 	static public boolean IS_DEBUG = false;
 	static public SharedPreferences preferences;
@@ -49,6 +53,10 @@ public class XenaApplication extends Application {
 			= XenaApplication.preferences.getInt(
 				XenaApplication.SHARED_PREFERENCES_DRAW_END_REFRESH,
 				XenaApplication.DRAW_END_REFRESH_DEFAULT);
+		XenaApplication.FLICK_DISTANCE
+			= XenaApplication.preferences.getFloat(
+				XenaApplication.SHARED_PREFERENCES_FLICK_DISTANCE,
+				XenaApplication.FLICK_DISTANCE_DEFAULT);
 	}
 
 	static public void log(Object... objects) {
@@ -111,5 +119,17 @@ public class XenaApplication extends Application {
 
 	static public int getDrawEndRefresh() {
 		return XenaApplication.DRAW_END_REFRESH;
+	}
+
+	static public void setFlickDistance(float value) {
+		XenaApplication.FLICK_DISTANCE = value;
+
+		SharedPreferences.Editor editor = XenaApplication.preferences.edit();
+		editor.putFloat(XenaApplication.SHARED_PREFERENCES_FLICK_DISTANCE, value);
+		editor.commit();
+	}
+
+	static public float getFlickDistance() {
+		return XenaApplication.FLICK_DISTANCE;
 	}
 }

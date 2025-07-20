@@ -5,6 +5,7 @@
 	android:orientation="vertical"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
+	android:padding="6dp"
 	android:gravity="top"
 	android:background="@android:color/white">
 	<include
@@ -14,51 +15,48 @@
 		android:orientation="horizontal"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
-		android:layout_marginTop="6dp"
-		android:layout_marginRight="6dp"
+		android:layout_marginTop="3dp"
+		android:layout_marginRight="3dp"
 		android:layout_marginBottom="0dp"
-		android:layout_marginLeft="6dp"
+		android:layout_marginLeft="3dp"
 		android:background="@android:color/white">
-		<Button
-			android:id="@+id/file_picker_activity_button_settings"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:layout_margin="6dp"
-			android:padding="12dp"
-			android:textSize="30dp"
+		<ImageView android:id="@+id/file_picker_activity_button_settings"
+			android:layout_width="60dp"
+			android:layout_height="60dp"
+			android:layout_margin="3dp"
+			android:padding="6dp"
+			android:src="@drawable/gear"
 			android:background="@drawable/solid_empty"
-			android:onClick="onClick"
-			android:text="SETTINGS" />
+			android:onClick="onClick" />
 		<EditText
 			android:id="@+id/file_picker_activity_edit_text"
 			android:layout_weight="1"
-			android:layout_height="wrap_content"
+			android:layout_height="60dp"
 			android:layout_width="fill_parent"
-			android:layout_margin="6dp"
-			android:textSize="30dp"
+			android:layout_margin="3dp"
+			android:paddingLeft="12dp"
+			android:paddingTop="6dp"
+			android:paddingRight="12dp"
+			android:paddingBottom="6dp"
+			android:textSize="34dp"
 			android:background="@drawable/solid_empty"
-			android:padding="12dp"
 			android:inputType="textNoSuggestions" />
-		<Button
-			android:id="@+id/file_picker_activity_button_date"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:layout_margin="6dp"
-			android:padding="12dp"
-			android:textSize="30dp"
+		<ImageView android:id="@+id/file_picker_activity_button_date"
+			android:layout_width="60dp"
+			android:layout_height="60dp"
+			android:layout_margin="3dp"
+			android:padding="6dp"
+			android:src="@drawable/calendar"
 			android:background="@drawable/solid_empty"
-			android:onClick="onClick"
-			android:text="DATE" />
-		<Button
-			android:id="@+id/file_picker_activity_button_svg"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:layout_margin="6dp"
-			android:padding="12dp"
-			android:textSize="30dp"
+			android:onClick="onClick" />
+		<ImageView android:id="@+id/file_picker_activity_button_svg"
+			android:layout_width="60dp"
+			android:layout_height="60dp"
+			android:layout_margin="3dp"
+			android:padding="6dp"
+			android:src="@drawable/right"
 			android:background="@drawable/solid_empty"
-			android:onClick="onClick"
-			android:text="START" />
+			android:onClick="onClick" />
 	</LinearLayout>
 	<LinearLayout
 		android:id="@+id/file_picker_activity_layout_listing"
@@ -66,10 +64,10 @@
 		android:layout_weight="1"
 		android:layout_width="match_parent"
 		android:layout_height="fill_parent"
+		android:layout_marginLeft="3dp"
 		android:layout_marginTop="0dp"
-		android:layout_marginRight="6dp"
-		android:layout_marginBottom="6dp"
-		android:layout_marginLeft="6dp"
+		android:layout_marginRight="3dp"
+		android:layout_marginBottom="3dp"
 		android:background="@android:color/white">
 	</LinearLayout>
 </LinearLayout>
