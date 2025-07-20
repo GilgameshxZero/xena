@@ -1,7 +1,6 @@
 #pragma once
 
-#include <chunk.hpp>
-#include <path.hpp>
+#include <painter.hpp>
 
 #include <rain.hpp>
 
@@ -14,18 +13,13 @@ namespace Xena {
 
 		public:
 		using PointL = Rain::Algorithm::Geometry::PointL;
-		using Paths = std::unordered_map<
-			std::size_t,
-			std::pair<std::shared_ptr<Path const>, std::unordered_set<PointL>>>;
 
 		private:
+		Painter &painter;
 		std::string filePath;
 
-		PointL &viewportPosition;
-		Paths &paths;
-
 		public:
-		Svg(long double, long double, std::string const &, PointL &, Paths &);
+		Svg(Painter &, std::string const &);
 
 		void load();
 		void save();

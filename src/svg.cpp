@@ -1,33 +1,80 @@
 #include <svg.hpp>
 
 namespace Xena {
-	Svg::Svg(
-		long double dpToPx,
-		long double strokeWidthPx,
-		std::string const &fileToLoad,
-		PointL &viewportPosition,
-		Paths &paths)
-			: COORDINATE_SCALE_DP{Svg::COORDINATE_SCALE_PX / dpToPx},
-				STROKE_WIDTH_PX{strokeWidthPx},
-				filePath{fileToLoad},
-				viewportPosition{viewportPosition},
-				paths{paths} {
+	Svg::Svg(Painter &painter, std::string const &fileToLoad)
+			: COORDINATE_SCALE_DP{Svg::COORDINATE_SCALE_PX / painter.DP_TO_PX},
+				STROKE_WIDTH_PX{painter.STROKE_WIDTH_PX},
+				painter{painter},
+				filePath{fileToLoad} {
 		this->load();
 	}
 
 	void Svg::load() {
 		std::ifstream in(this->filePath, std::ios::binary);
-		std::string buffer, tag;
-		std::getline(in, buffer, '<');
-		while (in) {
-			std::getline(in, buffer, ' ');
-			tag = buffer;
-			Rain::Log::verbose("Svg::load: Found tag ", tag, ".");
-			std::getline(in, buffer, '<');
+		std::string buffer;
+		std::size_t location, lagger;
+		std::stringstream ss;
+
+		std::getline(in, buffer);
+		lagger = Rain::Algorithm::kmpSearch(buffer, "data-xena=\"").first;
+		if (lagger == buffer.npos) {
+			return;
 		}
+		location =
+			Rain::Algorithm::kmpSearch(
+				buffer.c_str() + lagger + 11, buffer.size() - lagger - 11, "\"", 1)
+				.first -
+			(buffer.c_str() + lagger + 11);
+		Rain::Algorithm::Geometry::PointLd viewportPositionLd;
+		ss << buffer.substr(lagger, location);
+		ss >> viewportPositionLd.x >> viewportPositionLd.y;
+		this->painter.updateViewportPosition(
+			(viewportPositionLd * -160.0l * Svg::COORDINATE_SCALE_PX /
+			 this->COORDINATE_SCALE_DP)
+				.round<long>());
+
+		std::getline(in, buffer);
+		while (in) {
+			lagger = buffer.find("d=\"");
+			if (lagger == buffer.npos) {
+				break;
+			}
+			while (buffer.back() != '\"') {
+				buffer.pop_back();
+			}
+			buffer.pop_back();
+
+			std::shared_ptr<Path> path(new Path);
+			Rain::Algorithm::Geometry::PointLd point;
+			auto const &points{path->getPoints()};
+			location = buffer.find("l", lagger + 3);
+			ss.str("");
+			ss.clear();
+			ss << buffer.substr(lagger + 4, location);
+			ss >> point.x >> point.y;
+			path->addPoint(point / this->COORDINATE_SCALE_DP);
+
+			location++;
+			while (location < buffer.size()) {
+				lagger = std::min(
+					buffer.find(' ', location + 1), buffer.find('-', location + 1));
+				if (lagger == buffer.npos) {
+					break;
+				}
+				point.x = std::stold(buffer.substr(location, lagger));
+				location =
+					std::min(buffer.find(' ', lagger + 1), buffer.find('-', lagger + 1));
+				point.y = std::stold(buffer.substr(lagger, location));
+				path->addPoint(points.back() + point / this->COORDINATE_SCALE_DP);
+			}
+
+			this->painter.addPath(path);
+			std::getline(in, buffer);
+		}
+
 		Rain::Log::verbose(
 			"Svg::load: Loaded ",
-			this->paths.size(),
+			this->painter.getPaths().size(),
 			" paths from \"",
 			this->filePath,
 			"\".");
@@ -37,7 +84,7 @@ namespace Xena {
 		std::stringstream ss;
 		Rain::Algorithm::Geometry::RectangleL bounds{
 			LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN};
-		for (auto &i : this->paths) {
+		for (auto &i : this->painter.getPaths()) {
 			std::shared_ptr<Path const> path{i.second.first};
 			auto const &points{path->getPoints()};
 			Rain::Algorithm::Geometry::PointLd error;
@@ -54,14 +101,8 @@ namespace Xena {
 						.round<long>();
 				error = (points[j] - points[j - 1]) * this->COORDINATE_SCALE_DP +
 					error - delta;
-				if (delta.x >= 0) {
-					ss << ' ';
-				}
-				ss << delta.x;
-				if (delta.y >= 0) {
-					ss << ' ';
-				}
-				ss << delta.y;
+				ss << (delta.x >= 0 ? " " : "") << delta.x;
+				ss << (delta.y >= 0 ? " " : "") << delta.y;
 				bounds.include((points[j] * this->COORDINATE_SCALE_DP).round<long>());
 			}
 			ss << "\"/>\n";
@@ -69,8 +110,8 @@ namespace Xena {
 		bounds.expand(
 			std::lroundl(this->STROKE_WIDTH_PX * this->COORDINATE_SCALE_DP));
 		auto viewportPositionRounded{
-			(this->viewportPosition * this->COORDINATE_SCALE_DP /
-			 this->COORDINATE_SCALE_PX / 160l)
+			(this->painter.getViewportPosition() * this->COORDINATE_SCALE_DP /
+			 Svg::COORDINATE_SCALE_PX / 160.0l)
 				.round<long>()};
 		out << "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"" << bounds.left
 				<< ' ' << bounds.top << ' ' << bounds.width() << ' ' << bounds.height()
@@ -81,12 +122,14 @@ namespace Xena {
 				<< -viewportPositionRounded.x << ' ' << -viewportPositionRounded.y
 				<< " 0\">"
 				<< "<style>@media(prefers-color-scheme:dark){svg{background-color:"
-					 "black;stroke:white;}}</style>\n"
-				<< ss.rdbuf() << "</svg>\n";
+					 "black;stroke:white;}}</style>\n";
+		out << ss.rdbuf();
+		out.clear();
+		out << "</svg>\n";
 
 		Rain::Log::verbose(
 			"Svg::save: Saved ",
-			this->paths.size(),
+			this->painter.getPaths().size(),
 			" paths to \"",
 			this->filePath,
 			"\".");

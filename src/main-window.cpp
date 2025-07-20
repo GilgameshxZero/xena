@@ -6,6 +6,7 @@ namespace Xena {
 	MainWindow::MainWindow(std::string const &fileToLoad)
 			: Window({.dwStyle = WS_POPUP | WS_VISIBLE | WS_MAXIMIZE}),
 				painter(fileToLoad, *this),
+				svg(painter, fileToLoad),
 				panHandler(this->painter),
 				mouse(this->panHandler),
 				touch(this->panHandler),
@@ -17,7 +18,7 @@ namespace Xena {
 		return 0;
 	}
 	LRESULT MainWindow::onDestroy(WPARAM wParam, LPARAM lParam) {
-		this->painter.svg.save();
+		this->svg.save();
 		PostQuitMessage(0);
 		return 0;
 	}

@@ -23,13 +23,7 @@ namespace Xena {
 					this->IS_LIGHT_THEME ? 0x00ffffff : 0x00000000},
 				tentativeDrawPen{
 					std::lroundl(this->STROKE_WIDTH_PX),
-					this->IS_LIGHT_THEME ? 0x00000000 : 0x00ffffff},
-				svg(
-					this->DP_TO_PX,
-					this->STROKE_WIDTH_PX,
-					fileToLoad,
-					this->viewportPosition,
-					this->paths) {
+					this->IS_LIGHT_THEME ? 0x00000000 : 0x00ffffff} {
 		this->tentativeDc.select(this->tentativeBitmap);
 		this->tentativeDc.select(this->tentativeDrawPen);
 		this->tentativeClear();
@@ -147,6 +141,9 @@ namespace Xena {
 		}
 		this->paths.erase(it);
 		this->rePaint();
+	}
+	Painter::Paths const &Painter::getPaths() {
+		return this->paths;
 	}
 
 	void Painter::updateViewportPosition(PointL const &newViewportPosition) {

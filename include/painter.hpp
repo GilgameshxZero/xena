@@ -1,6 +1,7 @@
 #pragma once
 
-#include <svg.hpp>
+#include <chunk.hpp>
+#include <path.hpp>
 
 #include <rain.hpp>
 
@@ -12,6 +13,9 @@ namespace Xena {
 		using Chunks = std::unordered_map<
 			PointL,
 			std::pair<std::shared_ptr<Chunk>, std::unordered_set<std::size_t>>>;
+		using Paths = std::unordered_map<
+			std::size_t,
+			std::pair<std::shared_ptr<Path const>, std::unordered_set<PointL>>>;
 
 		private:
 		Rain::Windows::Window &window;
@@ -21,7 +25,11 @@ namespace Xena {
 
 		private:
 		static inline long double const STROKE_WIDTH_DP{2.5l};
+
+		public:
 		long double const STROKE_WIDTH_PX;
+
+		private:
 		static inline long double const PATH_MIN_DELTA_DP{2.0l};
 		long double const PATH_MIN_DELTA_PX;
 
@@ -47,11 +55,9 @@ namespace Xena {
 		Chunks chunks;
 
 		// Maps a path ID to a path, and all chunks the path spans.
-		Svg::Paths paths;
+		Paths paths;
 
 		public:
-		Svg svg;
-
 		Painter(std::string const &, Rain::Windows::Window &);
 		~Painter();
 
@@ -60,6 +66,7 @@ namespace Xena {
 
 		void addPath(std::shared_ptr<Path const> const &);
 		void removePath(std::size_t);
+		Paths const &getPaths();
 
 		void updateViewportPosition(PointL const &);
 		PointL const &getViewportPosition();
