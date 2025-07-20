@@ -4,6 +4,11 @@
 
 1. Split up Makefile into easier-to-manage chunks.
 
+## 1.5.1
+
+1. More efficient SVG loading on Windows.
+2. Enabled eraser on Windows.
+
 ## 1.5.0
 
 1. Windows: standardized DPI, points.

@@ -21,6 +21,8 @@ namespace Xena {
 		private:
 		Rain::Windows::DeviceContextMemory dcAa;
 
+		bool isAaDirty{false};
+
 		public:
 		Chunk(
 			HDC,
@@ -33,5 +35,6 @@ namespace Xena {
 		void drawPath(
 			std::shared_ptr<Path const> const &,
 			Rain::Windows::SolidPen const &);
+		void renderAa();
 	};
 }

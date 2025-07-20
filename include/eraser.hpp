@@ -11,7 +11,11 @@ namespace Xena {
 		using PointL = Rain::Algorithm::Geometry::PointL;
 
 		private:
+		static inline long double const SHORT_DISTANCE_EPS_DP{12.0l};
+		long double const SHORT_DISTANCE_EPS_PX;
+
 		Painter &painter;
+		PointL previousPoint;
 
 		public:
 		Eraser(Painter &);

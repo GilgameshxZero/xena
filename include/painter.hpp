@@ -67,6 +67,7 @@ namespace Xena {
 		void addPath(std::shared_ptr<Path const> const &);
 		void removePath(std::size_t);
 		Paths const &getPaths();
+		Chunks const &getChunks();
 
 		void updateViewportPosition(PointL const &);
 		PointL const &getViewportPosition();
@@ -75,10 +76,11 @@ namespace Xena {
 		void tentativeMoveTo(PointL const &);
 		void tentativeLineTo(PointL const &);
 
-		private:
 		template <typename PrecisionType>
 		PointL getChunkForPoint(
 			Rain::Algorithm::Geometry::Point<PrecisionType> const &);
+
+		private:
 		// Get a chunk if it exists, or create and return it if it doesn't.
 		std::pair<std::shared_ptr<Chunk>, std::unordered_set<std::size_t>> &
 		getChunkPair(PointL const &);
