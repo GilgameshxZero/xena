@@ -7,6 +7,7 @@
 #include <pan-handler.hpp>
 #include <pen.hpp>
 #include <touch.hpp>
+#include <svg.hpp>
 
 #include <rain.hpp>
 
@@ -18,6 +19,7 @@ namespace Xena {
 		private:
 		std::unordered_map<UINT32, Interaction> interactions;
 		Painter painter;
+		Svg svg;
 		PanHandler panHandler;
 		Mouse mouse;
 		Touch touch;
