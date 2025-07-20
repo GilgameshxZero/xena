@@ -36,8 +36,13 @@ namespace Xena {
 				((points[i] - this->POSITION) * Chunk::AA_SCALE).round<long>());
 		}
 		this->dcAa.deselect();
-
-		validateSystemCall(StretchBlt(
+		this->isAaDirty = true;
+	}
+	void Chunk::renderAa() {
+		if (!this->isAaDirty) {
+			return;
+		}
+		Rain::Windows::validateSystemCall(StretchBlt(
 			this->dc,
 			0,
 			0,
@@ -49,5 +54,6 @@ namespace Xena {
 			this->SIZE.x * Chunk::AA_SCALE,
 			this->SIZE.y * Chunk::AA_SCALE,
 			SRCCOPY));
+		this->isAaDirty = false;
 	}
 }

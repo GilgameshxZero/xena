@@ -38,9 +38,9 @@ namespace Xena {
 	LRESULT Painter::onPaint(WPARAM wParam, LPARAM lParam) {
 		Rain::Windows::PaintStruct ps(this->window);
 		if (!this->isTentativeDirty) {
-			PointL chunkBegin{Painter::getChunkForPoint(this->viewportPosition)},
-				chunkEnd{Painter::getChunkForPoint(
-					this->viewportPosition + ps.rcPaint().size())};
+			PointL chunkBegin{this->getChunkForPoint(this->viewportPosition)},
+				chunkEnd{
+					this->getChunkForPoint(this->viewportPosition + ps.rcPaint().size())};
 			if (chunkBegin.x > chunkEnd.x) {
 				std::swap(chunkBegin.x, chunkEnd.x);
 			}
@@ -50,6 +50,7 @@ namespace Xena {
 			for (long i{chunkBegin.x}; i <= chunkEnd.x; i++) {
 				for (long j{chunkBegin.y}; j <= chunkEnd.y; j++) {
 					std::shared_ptr<Chunk> &chunk{this->getChunkPair({i, j}).first};
+					chunk->renderAa();
 					BitBlt(
 						ps.hDc(),
 						i * this->CHUNK_SIZE_PX.x - this->viewportPosition.x,
@@ -80,10 +81,6 @@ namespace Xena {
 	void Painter::addPath(std::shared_ptr<Path const> const &path) {
 		// Adding an existing path ID is not allowed.
 		assert(this->paths.count(path->ID) == 0);
-		std::unordered_set<PointL> &containingChunks{
-			this->paths
-				.emplace(path->ID, std::make_pair(path, std::unordered_set<PointL>()))
-				.first->second.second};
 
 		// Deduplicate close points.
 		std::shared_ptr<Path> dedupPath(new Path);
@@ -95,12 +92,18 @@ namespace Xena {
 				dedupPath->addPoint(origPoints[i]);
 			}
 		}
+		std::unordered_set<PointL> &containingChunks{
+			this->paths
+				.emplace(
+					dedupPath->ID,
+					std::make_pair(dedupPath, std::unordered_set<PointL>()))
+				.first->second.second};
 
 		// Compute all chunks which contain path.
-		containingChunks.emplace(Painter::getChunkForPoint(points[0]));
+		containingChunks.emplace(this->getChunkForPoint(points[0]));
 		for (std::size_t i{1}; i < points.size(); i++) {
-			PointL chunkBegin{Painter::getChunkForPoint(points[i - 1])},
-				chunkEnd{Painter::getChunkForPoint(points[i])};
+			PointL chunkBegin{this->getChunkForPoint(points[i - 1])},
+				chunkEnd{this->getChunkForPoint(points[i])};
 			if (chunkBegin.x > chunkEnd.x) {
 				std::swap(chunkBegin.x, chunkEnd.x);
 			}
@@ -138,12 +141,21 @@ namespace Xena {
 			auto &chunkPair{this->getChunkPair(coordinate)};
 			chunkPair.first->drawPath(path, this->erasePen);
 			chunkPair.second.erase(pathId);
+
+			// Re-render all other paths on this chunk.
+			for (auto i : chunkPair.second) {
+				chunkPair.first->drawPath(this->paths.at(i).first, this->drawPen);
+			}
 		}
 		this->paths.erase(it);
 		this->rePaint();
+		Rain::Log::verbose("Painter::removePath: Removed path ", pathId, ".");
 	}
 	Painter::Paths const &Painter::getPaths() {
 		return this->paths;
+	}
+	Painter::Chunks const &Painter::getChunks() {
+		return this->chunks;
 	}
 
 	void Painter::updateViewportPosition(PointL const &newViewportPosition) {
@@ -173,7 +185,10 @@ namespace Xena {
 	template <typename PrecisionType>
 	Rain::Algorithm::Geometry::PointL Painter::getChunkForPoint(
 		Rain::Algorithm::Geometry::Point<PrecisionType> const &point) {
-		return (point / this->CHUNK_SIZE_PX).floor<long>();
+		return (point /
+						static_cast<Rain::Algorithm::Geometry::PointLd>(
+							this->CHUNK_SIZE_PX))
+			.floor<long>();
 	}
 	std::pair<std::shared_ptr<Chunk>, std::unordered_set<std::size_t>> &
 	Painter::getChunkPair(PointL const &coordinate) {
