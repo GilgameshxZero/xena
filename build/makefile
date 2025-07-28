@@ -64,8 +64,8 @@ PROJECT_INCLUDE_DIR = $(ROOT_DIR)include^\
 
 # Some sources must be manually specified here.
 SOURCES_JAVA = $(ROOT_DIR)src\$(PACKAGE_PATH)\BaseActivity.java $(ROOT_DIR)src\$(PACKAGE_PATH)\XenaApplication.java $(ROOT_DIR)src\$(NAMESPACE_PATH)\algorithm\*.java $(ROOT_DIR)src\$(NAMESPACE_PATH)\multithreading\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\filesystem\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\pdf\*.java $(ROOT_DIR)src\$(PACKAGE_PATH)\scribble\*.java
-SOURCES_RES = $(ROOT_DIR)res\drawable\* $(ROOT_DIR)res\layout\* $(ROOT_DIR)res\values\id.xml $(ROOT_DIR)res\values\style.xml
 SOURCES_RC = $(ROOT_DIR)rc\*
+SOURCES_RES = $(ROOT_DIR)res\drawable\* $(ROOT_DIR)res\layout\* $(ROOT_DIR)res\values\*
 !IFNDEF SOURCES_CPP
 SOURCES_CPP = *.cpp
 !ENDIF
@@ -107,12 +107,6 @@ PACKAGE_NAME = com.gilgamesh.$(PROJECT_NAME)
 MAIN_CLASS = filesystem.FilePickerActivity
 
 # CPP settings.
-# TODO: This macro should include all header files under PROJECT_INCLUDE_DIR,
-# but doesn't work for now due to various dependency issues.
-PROJECT_INCLUDES =
-# TODO: This macro should include all header files in Rain.
-RAIN_INCLUDES =
-
 COMPILER = cl /c
 COMPILER_FLAGS_INCLUDES = /I$(PROJECT_INCLUDE_DIR) /I$(ROOT_DIR)rain\include^\
 COMPILER_FLAGS_COMMON = $(COMPILER_FLAGS_INCLUDES) /std:c++20 /D _CONSOLE\
@@ -150,8 +144,9 @@ LINKER_FLAGS = $(LINKER_FLAGS_COMMON) $(LINKER_FLAGS_DEBUG)
 _default: build
 
 # Increment version number.
-$(VERSION_BUILD_TXT): $(SOURCES_JAVA) $(PROJECT_INCLUDES) $(PROJECT_SRC_DIR)$(SOURCES_CPP) $(RAIN_INCLUDES) $(SOURCES_RC)
+$(VERSION_BUILD_TXT): $(SOURCES_JAVA) $(SOURCES_RES) $(DEPENDENCIES) $(PROJECT_SRC_DIR)$(SOURCES_CPP) $(SOURCES_RC)
 	@version.bat
+	@$(MAKE) $(MAKEFLAGS) /C /T $(VERSION_BUILD_TXT)
 
 # Download and extract JDK.
 $(JDK_DIR).make:
@@ -352,6 +347,7 @@ logcat:
 build-exe: $(VERSION_BUILD_TXT) $(PROJECT_BIN)
 # Build and run.
 run-exe: build-exe
+	@ECHO Running $(PROJECT_BIN)...
 	@CD $(BIN_DIR) && $(PROJECT_BIN) $(ARGS)
 # Clean target removes all intermediates.
 
@@ -359,12 +355,15 @@ run-exe: build-exe
 DBLSUB_DEP_SRC_DIR_TO_OBJ_DIR = $(**:..\=..\obj\)
 # First compile all outdated files (with /MP), then link everything together.
 # TODO: Dependencies are parsed incorrectly once PROJECT_INCLUDES is set.
-$(PROJECT_BIN): $(PROJECT_SRC_DIR)$(SOURCES_CPP) $(PROJECT_INCLUDES) $(RAIN_INCLUDES)
+$(PROJECT_BIN): $(PROJECT_SRC_DIR)$(SOURCES_CPP)
 	@IF NOT EXIST $(PROJECT_BIN_DIR) MD $(PROJECT_BIN_DIR)
 	@IF NOT EXIST $(PROJECT_OBJ_DIR) MD $(PROJECT_OBJ_DIR)
+	@ECHO Building $(PROJECT_BIN)...
 	@$(COMPILER) $(COMPILER_FLAGS) $?
-	@ECHO $(PROJECT_BIN)
+	@ECHO Linking $(PROJECT_BIN)...
 	@$(LINKER) $(LINKER_FLAGS) $(DBLSUB_DEP_SRC_DIR_TO_OBJ_DIR:.cpp=.obj)
+
+$(PROJECT_SRC_DIR)$(SOURCES_CPP): $(DEPENDENCIES)
 
 build: build-apk build-exe
 run: run-apk run-exe
