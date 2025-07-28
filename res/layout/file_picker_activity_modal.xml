@@ -31,7 +31,7 @@
 				android:background="@android:color/white"
 				android:text="Palm threshold:" />
 			<EditText android:id="@+id/file_picker_activity_modal_edit_palm"
-				android:layout_width="100dp"
+				android:layout_width="200dp"
 				android:layout_height="60dp"
 				android:gravity="center"
 				android:inputType="number"
@@ -92,7 +92,7 @@
 				android:background="@android:color/white"
 				android:text="Draw refresh delay:" />
 			<EditText android:id="@+id/file_picker_activity_modal_edit_draw_refresh"
-				android:layout_width="100dp"
+				android:layout_width="200dp"
 				android:layout_height="60dp"
 				android:gravity="center"
 				android:inputType="number"
@@ -124,7 +124,7 @@
 				android:background="@android:color/white"
 				android:text="Flick distance:" />
 			<EditText android:id="@+id/file_picker_activity_modal_edit_flick_distance"
-				android:layout_width="100dp"
+				android:layout_width="200dp"
 				android:layout_height="60dp"
 				android:gravity="center"
 				android:inputType="number"
