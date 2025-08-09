@@ -9,11 +9,8 @@ import com.gilgamesh.xena.XenaApplication;
 
 import com.onyx.android.sdk.pen.TouchHelper;
 
-import android.graphics.BitmapFactory;
-import android.graphics.BitmapShader;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.graphics.Shader;
 import android.graphics.PointF;
 import android.net.Uri;
 import android.os.Bundle;
@@ -37,6 +34,9 @@ public class ScribbleActivity extends BaseActivity
 
 	static private final PointF PIXELS_PER_PAGE
 		= new PointF((int) XenaApplication.DPI * 8.5f, XenaApplication.DPI * 11f);
+
+	private Point PIXELS_PER_ACTIVITY;
+	private Point VIEW_OFFSET_PX;
 
 	final DebouncedTask redrawTask
 		= new DebouncedTask(new DebouncedTask.Callback() {
@@ -197,11 +197,9 @@ public class ScribbleActivity extends BaseActivity
 			case R.id.scribble_activity_text_status:
 				XenaApplication
 					.log("ScribbleActivity::onClick: scribble_activity_text_status.");
-				PointF viewportOffset = this.pathManager.getViewportOffset();
-				this.modalEditX.setText(String.valueOf((int) Math
-					.floor(-viewportOffset.x / ScribbleActivity.PIXELS_PER_PAGE.x)));
-				this.modalEditY.setText(String.valueOf((int) Math
-					.floor(-viewportOffset.y / ScribbleActivity.PIXELS_PER_PAGE.y)));
+				Point pageOffset = this.getPageOffsetAtActivityCenter();
+				this.modalEditX.setText(String.valueOf(pageOffset.x));
+				this.modalEditY.setText(String.valueOf(pageOffset.y));
 				this.modalEditZoom
 					.setText(String.valueOf(this.pathManager.getZoomStepId()));
 				this.modal.setVisibility(View.VISIBLE);
@@ -249,20 +247,34 @@ public class ScribbleActivity extends BaseActivity
 					this.modalEditX.getText().toString(), ", ",
 					this.modalEditY.getText().toString(), ").");
 				this.pathManager.setViewportOffset(new PointF(
-					-Integer.parseInt(this.modalEditX.getText().toString())
-						* ScribbleActivity.PIXELS_PER_PAGE.x,
-					-Integer.parseInt(this.modalEditY.getText().toString())
-						* ScribbleActivity.PIXELS_PER_PAGE.y));
+					-(Integer.parseInt(this.modalEditX.getText().toString()) + 0.5f)
+						* ScribbleActivity.PIXELS_PER_PAGE.x
+						+ this.PIXELS_PER_ACTIVITY.x / 2,
+					-(Integer.parseInt(this.modalEditY.getText().toString()) + 0.5f)
+						* ScribbleActivity.PIXELS_PER_PAGE.y
+						+ this.PIXELS_PER_ACTIVITY.y / 2));
 				this.pathManager.setZoomStepId(
 					Integer.parseInt(this.modalEditZoom.getText().toString()));
 				this.refreshTextViewStatus();
 				this.modal.setVisibility(View.GONE);
+				XenaApplication.hideKeyboard(this, this.modal);
 				this.openTouchHelperRawDrawing();
+				this.redraw(this.redrawTask.isAwaiting());
 				break;
 		}
 	}
 
 	private void onScribbleViewReady() {
+		this.PIXELS_PER_ACTIVITY
+			= new Point(this.scribbleView.getMeasuredWidth(),
+				this.scribbleView.getMeasuredHeight());
+		this.VIEW_OFFSET_PX
+			= new Point(
+				XenaApplication.DISPLAY_METRICS.widthPixels
+					- this.PIXELS_PER_ACTIVITY.x,
+				XenaApplication.DISPLAY_METRICS.heightPixels
+					- this.PIXELS_PER_ACTIVITY.y);
+
 		this.drawManager = new DrawManager(this);
 		this.panManager = new PanManager(this);
 		this.penManager = new PenManager(this);
@@ -328,14 +340,19 @@ public class ScribbleActivity extends BaseActivity
 		}
 	}
 
-	void refreshTextViewStatus() {
+	private Point getPageOffsetAtActivityCenter() {
 		PointF viewportOffset = this.pathManager.getViewportOffset();
-		this.textViewStatus.setText(
-			(int) Math.floor(-viewportOffset.x / ScribbleActivity.PIXELS_PER_PAGE.x)
-				+ ", "
-				+ (int) Math
-					.floor(-viewportOffset.y / ScribbleActivity.PIXELS_PER_PAGE.y)
-				+ " @ " + Math.round(this.pathManager.getZoomScale() * 100) + "%");
+		return new Point(
+			(int) Math.floor((-viewportOffset.x + this.PIXELS_PER_ACTIVITY.x / 2)
+				/ ScribbleActivity.PIXELS_PER_PAGE.x),
+			(int) Math.floor((-viewportOffset.y + this.PIXELS_PER_ACTIVITY.y / 2)
+				/ ScribbleActivity.PIXELS_PER_PAGE.y));
+	}
+
+	void refreshTextViewStatus() {
+		Point pageOffset = this.getPageOffsetAtActivityCenter();
+		this.textViewStatus.setText(pageOffset.x + ", " + pageOffset.y + " @ "
+			+ Math.round(this.pathManager.getZoomScale() * 100) + "%");
 	}
 
 	private void refreshTextViewPath(boolean isSaved) {
@@ -361,8 +378,12 @@ public class ScribbleActivity extends BaseActivity
 	}
 
 	private Rect getViewRect(View view) {
-		return new Rect(view.getLeft(), view.getTop(), view.getRight(),
-			view.getBottom());
+		int[] location = new int[2];
+		view.getLocationOnScreen(location);
+		return new Rect(location[0] + this.VIEW_OFFSET_PX.x,
+			location[1] + this.VIEW_OFFSET_PX.y,
+			location[0] + this.VIEW_OFFSET_PX.x + view.getWidth(),
+			location[1] + this.VIEW_OFFSET_PX.y + view.getHeight());
 	}
 
 	public void toggleDrawErase() {
@@ -414,12 +435,6 @@ public class ScribbleActivity extends BaseActivity
 					.setStrokeColor(0x40000000);
 				ScribbleView.PAINT_TENTATIVE.setColor(0x40000000);
 				Chunk.PAINT.setColor(0x40000000);
-				ScribbleView.PAINT_TENTATIVE.setShader(new BitmapShader(
-					BitmapFactory.decodeResource(this.getResources(), R.drawable.xena),
-					Shader.TileMode.REPEAT, Shader.TileMode.REPEAT));
-				Chunk.PAINT.setShader(new BitmapShader(
-					BitmapFactory.decodeResource(this.getResources(), R.drawable.xena),
-					Shader.TileMode.REPEAT, Shader.TileMode.REPEAT));
 				break;
 		}
 	}
