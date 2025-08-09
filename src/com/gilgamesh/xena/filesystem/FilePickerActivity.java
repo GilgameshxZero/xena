@@ -192,6 +192,7 @@ public class FilePickerActivity extends BaseActivity
 				XenaApplication.setFlickDistance(
 					Float.parseFloat(this.modalEditFlickDistance.getText().toString()));
 				this.modal.setVisibility(View.GONE);
+				XenaApplication.hideKeyboard(this, this.modal);
 				break;
 			default:
 				String text = ((TextView) view).getText().toString();

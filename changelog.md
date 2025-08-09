@@ -4,6 +4,13 @@
 
 1. Split up Makefile into easier-to-manage chunks.
 
+## 1.5.4
+
+1. Update viewport offset UI to evaluate the half-page at the center of the screen.
+2. All modals now automatically hide keyboard when closed.
+3. Changing the page in `ScribbleActivity` will redraw immediately.
+4. Raw drawing exclusions for controls bar is now offset on Y-axis correctly.
+
 ## 1.5.3
 
 1. Changed settings to icon.

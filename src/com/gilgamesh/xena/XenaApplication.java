@@ -1,16 +1,22 @@
 package com.gilgamesh.xena;
 
+import android.app.Activity;
 import android.app.Application;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.res.Resources;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import androidx.preference.PreferenceManager;
 
 public class XenaApplication extends Application {
 	static public final String TAG = "Xena";
-	static public final int DPI
-		= Resources.getSystem().getDisplayMetrics().densityDpi;
+	static public final DisplayMetrics DISPLAY_METRICS
+		= Resources.getSystem().getDisplayMetrics();
+	static public final int DPI = XenaApplication.DISPLAY_METRICS.densityDpi;
 
 	// Global settings are stored on XenaApplication.
 	static private final String SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD
@@ -23,7 +29,7 @@ public class XenaApplication extends Application {
 	static private boolean PAN_UPDATE_ENABLED;
 	static private final String SHARED_PREFERENCES_DRAW_END_REFRESH
 		= "SHARED_PREFERENCES_DRAW_END_REFRESH";
-	static private final int DRAW_END_REFRESH_DEFAULT = 60000;
+	static private final int DRAW_END_REFRESH_DEFAULT = 8000;
 	static private int DRAW_END_REFRESH;
 	static private final String SHARED_PREFERENCES_FLICK_DISTANCE
 		= "SHARED_PREFERENCES_FLICK_DISTANCE";
@@ -81,6 +87,12 @@ public class XenaApplication extends Application {
 			}
 		}
 		return concatenated;
+	}
+
+	static public void hideKeyboard(Activity activity, View view) {
+		((InputMethodManager) activity
+			.getSystemService(Context.INPUT_METHOD_SERVICE))
+			.hideSoftInputFromWindow(view.getWindowToken(), 0);
 	}
 
 	static public void setPalmTouchThreshold(int value) {
