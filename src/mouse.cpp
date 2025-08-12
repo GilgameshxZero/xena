@@ -1,3 +1,5 @@
+#include <rain.hpp>
+
 #include <mouse.hpp>
 
 namespace Xena {

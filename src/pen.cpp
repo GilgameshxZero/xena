@@ -1,3 +1,5 @@
+#include <rain.hpp>
+
 #include <pen.hpp>
 
 namespace Xena {

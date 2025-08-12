@@ -1,7 +1,8 @@
-#include <main-window.hpp>
+#include <rain.hpp>
+
 #include <xena.hpp>
 
-#include <rain.hpp>
+#include <main-window.hpp>
 
 int main() {
 	try {

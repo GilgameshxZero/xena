@@ -1,3 +1,3 @@
 #pragma once
 
-#include "version.hpp"
+#include "../build/version.hpp"

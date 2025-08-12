@@ -1,3 +1,5 @@
+#include <rain.hpp>
+
 #include <chunk.hpp>
 
 namespace Xena {
