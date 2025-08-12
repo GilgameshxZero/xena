@@ -1,4 +1,7 @@
+#include <rain.hpp>
+
 #include <main-window.hpp>
+
 #include <pen.hpp>
 #include <touch.hpp>
 

@@ -1,15 +1,13 @@
-@ECHO OFF
 @REM Increments build version number at compile-time, and compiles the version numbers into all relevant files for compilation.
-
+@ECHO OFF
 @REM LF newline variable.
 (SET \n=^
 
 )
-
 SETLOCAL ENABLEDELAYEDEXPANSION
 
 SET ROOT_DIR=%~dp0..\
-SET PROJECT_NAME=XENA
+SET REPO_NAME=%1
 
 SET /P VERSION_MAJOR=<version.major.txt
 SET /P VERSION_MINOR=<version.minor.txt
@@ -22,11 +20,11 @@ SET /A VERSION_BUILD=!VERSION_BUILD!+1
 <NUL SET /P=^
 #pragma once!\n!^
 !\n!^
-#define !PROJECT_NAME!_VERSION_MAJOR !VERSION_MAJOR!!\n!^
-#define !PROJECT_NAME!_VERSION_MINOR !VERSION_MINOR!!\n!^
-#define !PROJECT_NAME!_VERSION_REVISION !VERSION_REVISION!!\n!^
-#define !PROJECT_NAME!_VERSION_BUILD !VERSION_BUILD!!\n!> ^
-!ROOT_DIR!include\version.hpp
+#define !REPO_NAME!_VERSION_MAJOR !VERSION_MAJOR!!\n!^
+#define !REPO_NAME!_VERSION_MINOR !VERSION_MINOR!!\n!^
+#define !REPO_NAME!_VERSION_REVISION !VERSION_REVISION!!\n!^
+#define !REPO_NAME!_VERSION_BUILD !VERSION_BUILD!!\n!> ^
+version.hpp
 
 @REM .apk build. ^ for newline continuation consumes the next character, so we
 @REM have it consume a ^ in some instances. In other cases we want a tab.

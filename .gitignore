@@ -10,6 +10,3 @@ priv/
 # Android.
 res/values/version.xml
 src/com/gilgamesh/xena/R.java
-
-# Windows.
-include/version.hpp

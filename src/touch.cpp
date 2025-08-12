@@ -1,3 +1,5 @@
+#include <rain.hpp>
+
 #include <touch.hpp>
 
 namespace Xena {

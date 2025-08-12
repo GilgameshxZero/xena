@@ -1,3 +1,5 @@
+#include <rain.hpp>
+
 #include <eraser.hpp>
 
 namespace Xena {

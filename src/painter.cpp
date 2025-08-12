@@ -1,6 +1,6 @@
-#include <painter.hpp>
+#include <rain.hpp>
 
-#include <cassert>
+#include <painter.hpp>
 
 namespace Xena {
 	Painter::Painter(std::string const &fileToLoad, Rain::Windows::Window &window)
