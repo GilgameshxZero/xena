@@ -401,8 +401,6 @@ $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pch: pch.cpp
 pch.cpp: $(INCL_PCH)
 
 # Build target.
-# First compile all outdated files (with /MP), then link everything together.
-# Need additional variable to parse dependencies correctly.
 $(PROJ_BIN): $(PROJ_SRC)
 !IF $(PCH) == 1
 	@$(MAKE) /C $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pch\
