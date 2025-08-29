@@ -87,18 +87,18 @@ ARCH = 64
 PCH = 1
 !ENDIF
 
-BIN_DIR = $(ROOT_DIR)bin^\
+BIN_DIR = $(ROOT_DIR).bin^\
 PROJ_BIN = $(BIN_DIR)$(PROJ_NAME)\$(BIN_NAME).$(BUILD_NAME).x$(ARCH).exe
 PROJ_BIN_DIR = $(BIN_DIR)$(PROJ_NAME)^\
-OBJ_DIR = $(ROOT_DIR)obj^\
+OBJ_DIR = $(ROOT_DIR).obj^\
 PROJ_OBJ_DIR = $(OBJ_DIR)$(PROJ_NAME)^\
 PROJ_SRC_DIR = $(ROOT_DIR)$(PROJ_NAME)^\
 PROJ_SRC = $(patsubsti %,$(PROJ_SRC_DIR)\%,$(SRC_NAME))
-DEV_DIR = $(ROOT_DIR)dev^\
-LIB_DIR = $(DEV_DIR)lib^\
-JDK_DIR = $(DEV_DIR)jdk-17.0.2^\
+DATA_DIR = $(ROOT_DIR).data^\
+LIB_DIR = $(DATA_DIR)lib^\
+JDK_DIR = $(DATA_DIR)jdk-17.0.2^\
 # We use ADK_DIR instead of ANDROID_HOME to distinguish this project's copy of the Android tools vs. any global copy that exists.
-ADK_DIR = $(DEV_DIR)adk-$(ADK_VERSION)^\
+ADK_DIR = $(DATA_DIR)adk-$(ADK_VERSION)^\
 ADK_BUILD_TOOLS_DIR = $(ADK_DIR)build-tools\$(ANDROID_TARGET_VERSION).0.0^\
 ADK_PLATFORM_TOOLS_DIR = $(ADK_DIR)platform-tools^\
 ADK_PLATFORMS_DIR = $(ADK_DIR)platforms\android-$(ANDROID_TARGET_VERSION)^\
@@ -181,7 +181,7 @@ LINKER_FLAGS = $(LINKER_FLAGS) $(LINKER_FLAGS_64)
 _default: build
 build: build-apk build-exe
 run: run-apk run-exe
-build-apk: version.build.txt "$(ROOT_DIR)bin\$(REPO_NAME).$(BUILD_NAME).apk"
+build-apk: version.build.txt "$(BIN_DIR)$(REPO_NAME).$(BUILD_NAME).apk"
 # Build and install. App may not run if timings are off.
 run-apk: "$(ROOT_DIR)bin\$(REPO_NAME).$(BUILD_NAME).apk"
 	@CALL "$(ADK_PLATFORM_TOOLS_DIR)adb.exe" install \
@@ -215,34 +215,33 @@ shallow-clean:
 	@IF EXIST "$(BIN_DIR)" RD /Q /S "$(BIN_DIR)"
 	@IF EXIST "$(OBJ_DIR)" RD /Q /S "$(OBJ_DIR)"
 	@IF EXIST "$(ROOT_DIR)build/lib" RD /Q /S "$(ROOT_DIR)build/lib"
-	@IF EXIST "$(ROOT_DIR)src\$(APK_PACKAGE_PATH)\R.java" \
-		DEL "$(ROOT_DIR)src\$(APK_PACKAGE_PATH)\R.java"
+	@IF EXIST "$(PROJ_SRC_DIR)$(APK_PACKAGE_PATH)\R.java" \
+		DEL "$(PROJ_SRC_DIR)$(APK_PACKAGE_PATH)\R.java"
 	@ECHO Uninstalling from device...
 	@IF EXIST "$(ADK_PLATFORM_TOOLS_DIR)adb.exe" \
 		@CALL "$(ADK_PLATFORM_TOOLS_DIR)adb.exe" uninstall $(APK_PACKAGE_NAME) &
 	@IF EXIST "$(ADK_PLATFORM_TOOLS_DIR)adb.exe" \
 		@CALL "$(ADK_PLATFORM_TOOLS_DIR)adb.exe" kill-server &
 clean: shallow-clean
-	@IF EXIST "$(DEV_DIR)" RD /Q /S "$(DEV_DIR)"
+	@IF EXIST "$(DATA_DIR)" RD /Q /S "$(DATA_DIR)"
 
 # Increment version number.
 version.build.txt: $(INCL) $(PROJ_SRC) $(PROJ_SRC_JAVA) $(PROJ_SRC_RES)
-	@FOR %%I IN ($?) DO @ECHO Outdated: %%I.
 	@version.bat $(uppercase $(REPO_NAME))
 	@$(MAKE) /C /T version.build.txt
 
 # Download and extract JDK.
 $(JDK_DIR).make:
-	@IF EXIST $(DEV_DIR) RD /Q /S $(DEV_DIR)
-	@MD $(DEV_DIR)
+	@IF EXIST $(DATA_DIR) RD /Q /S $(DATA_DIR)
+	@MD $(DATA_DIR)
 	@ECHO Downloading $(JDK_DOWNLOAD_URI)...
 	@BITSADMIN /RAWRETURN /TRANSFER LIB_DOWNLOAD \
 		/DOWNLOAD /PRIORITY FOREGROUND \
 		"$(JDK_DOWNLOAD_URI)" \
-		$(DEV_DIR)jdk.zip
+		$(DATA_DIR)jdk.zip
 	@ECHO Extracting to $(JDK_DIR)...
-	@TAR -xf $(DEV_DIR)jdk.zip -C $(DEV_DIR)
-	@DEL $(DEV_DIR)jdk.zip
+	@TAR -xf $(DATA_DIR)jdk.zip -C $(DATA_DIR)
+	@DEL $(DATA_DIR)jdk.zip
 	@COPY NUL $(JDK_DIR).make
 
 # Download and extract all relevant Android development tools.
@@ -299,7 +298,7 @@ $(LIB_DIR).make: $(JDK_DIR).make
 # Create R.java.
 $(ROOT_DIR)src\$(APK_PACKAGE_PATH)\R.java: $(ADK_DIR).make $(PROJ_SRC_RES)
 	@ECHO Creating $(ROOT_DIR)src\$(APK_PACKAGE_PATH)\R.java...
-	@IF NOT EXIST $(ROOT_DIR)obj MD $(ROOT_DIR)obj
+	@IF NOT EXIST $(OBJ_DIR) MD $(OBJ_DIR)
 	@CALL $(ADK_BUILD_TOOLS_DIR)aapt.exe package -f -m \
 		$(AAPT_BUILD_FLAGS) \
 		-S "$(ROOT_DIR)res" \
@@ -322,45 +321,45 @@ $(ROOT_DIR)priv\.make: $(JDK_DIR).make
 	@COPY NUL $(ROOT_DIR)priv\.make
 
 # Compile target: .java to .class.
-$(ROOT_DIR)obj\$(APK_PACKAGE_PATH)\R.class: $(JDK_DIR).make $(LIB_DIR).make $(ROOT_DIR)src\$(APK_PACKAGE_PATH)\R.java $(PROJ_SRC_JAVA)
+$(OBJ_DIR)$(APK_PACKAGE_PATH)\R.class: $(JDK_DIR).make $(LIB_DIR).make $(PROJ_SRC_DIR)$(APK_PACKAGE_PATH)\R.java $(PROJ_SRC_JAVA)
 	@ECHO Compiling to .class...
-	@DIR /A-D /S /B $(ROOT_DIR)src\*.java > src.tmp
+	@DIR /A-D /S /B $(PROJ_SRC_DIR)*.java > src.tmp
 	@CALL "$(JDK_DIR)bin\javac" \
 		-source $(JDK_VERSION) \
 		-target $(JDK_VERSION) \
-		-d "$(ROOT_DIR)obj" \
+		-d "$(ROOT_DIR)\.obj" \
 		-cp "$(ADK_PLATFORMS_DIR)android.jar";"$(LIB_DIR)*" \
-		-sourcepath "$(ROOT_DIR)src" \
+		-sourcepath "$(PROJ_SRC_DIR)*" \
 		-Xlint:deprecation \
 		@src.tmp
 	@DEL src.tmp
 
 # Build target. R.class is used as dependency alias for compilation.
-$(ROOT_DIR)bin\$(REPO_NAME).$(BUILD_NAME).apk: $(ADK_DIR).make $(ROOT_DIR)obj\$(APK_PACKAGE_PATH)\R.class $(ROOT_DIR)priv\.make $(ROOT_DIR)AndroidManifest.xml
-	@ECHO Building to $(ROOT_DIR)bin\$(REPO_NAME).$(BUILD_NAME).apk...
-	@IF NOT EXIST $(ROOT_DIR)bin MD $(ROOT_DIR)bin
+$(BIN_DIR)$(REPO_NAME).$(BUILD_NAME).apk: $(ADK_DIR).make $(OBJ_DIR)$(APK_PACKAGE_PATH)\R.class $(ROOT_DIR)priv\.make $(ROOT_DIR)AndroidManifest.xml
+	@ECHO Building to $(BIN_DIR)$(REPO_NAME).$(BUILD_NAME).apk...
+	@IF NOT EXIST $(BIN_DIR) MD $(BIN_DIR)
 # Generate APK.
 	@CALL SET "JAVA_HOME=$(JDK_DIR)" && "$(ADK_BUILD_TOOLS_DIR)aapt.exe" package \
 		-f -m \
 		$(AAPT_BUILD_FLAGS) \
-		-F "$(ROOT_DIR)bin\$(REPO_NAME).$(BUILD_NAME).unsigned.unaligned.apk" \
+		-F "$(BIN_DIR)$(REPO_NAME).$(BUILD_NAME).unsigned.unaligned.apk" \
 		-M "$(ROOT_DIR)AndroidManifest.xml" \
 		-S "$(ROOT_DIR)res" \
 		-I "$(ADK_PLATFORMS_DIR)android.jar"
 # Convert to DEX.
-	@DIR /A-D /S /B $(ROOT_DIR)obj\*.class > obj.tmp
+	@DIR /A-D /S /B $(OBJ_DIR)*.class > obj.tmp
 	@CALL SET "JAVA_HOME=$(JDK_DIR)" && "$(ADK_BUILD_TOOLS_DIR)d8.bat" \
 		--lib "$(ADK_PLATFORMS_DIR)android.jar" \
 		--min-api $(ANDROID_TARGET_VERSION) \
 		--$(BUILD_NAME) \
-		--output "$(ROOT_DIR)bin" \
+		--output "$(ROOT_DIR).bin" \
 		"@obj.tmp" \
 		$(LIB_DIR)*.jar
 	@DEL obj.tmp
 # For some reason, aapt add only works for classes.dex in the current directory.
-	@MOVE "$(ROOT_DIR)bin\classes.dex" . >NUL
+	@MOVE "$(BIN_DIR)classes.dex" . >NUL
 	@CALL SET "JAVA_HOME=$(JDK_DIR)" && "$(ADK_BUILD_TOOLS_DIR)aapt.exe" add \
-		"$(ROOT_DIR)bin\$(REPO_NAME).$(BUILD_NAME).unsigned.unaligned.apk" \
+		"$(BIN_DIR)$(REPO_NAME).$(BUILD_NAME).unsigned.unaligned.apk" \
 		classes.dex
 	@DEL classes.dex
 # Add shared dependencies.
@@ -368,25 +367,25 @@ $(ROOT_DIR)bin\$(REPO_NAME).$(BUILD_NAME).apk: $(ADK_DIR).make $(ROOT_DIR)obj\$(
 	@COPY "$(ROOT_DIR)lib\arm64-v8a" lib\arm64-v8a >NUL
 	@COPY "$(ROOT_DIR)lib\x86_64" lib\x86_64 >NUL
 	@CALL SET "JAVA_HOME=$(JDK_DIR)" && "$(ADK_BUILD_TOOLS_DIR)aapt.exe" add \
-		"$(ROOT_DIR)bin\$(REPO_NAME).$(BUILD_NAME).unsigned.unaligned.apk" \
+		"$(BIN_DIR)$(REPO_NAME).$(BUILD_NAME).unsigned.unaligned.apk" \
 		lib/arm64-v8a/libonyx_pen_touch_reader.so \
 		lib/arm64-v8a/libc++_shared.so \
 		lib/x86_64/libc++_shared.so
 	@RD /Q /S lib
 # Align to 4-byte boundaries.
 	@CALL SET "JAVA_HOME=$(JDK_DIR)" && "$(ADK_BUILD_TOOLS_DIR)zipalign.exe" -f 4 \
-	"$(ROOT_DIR)bin\$(REPO_NAME).$(BUILD_NAME).unsigned.unaligned.apk" \
-	"$(ROOT_DIR)bin\$(REPO_NAME).$(BUILD_NAME).unsigned.apk"
-	@DEL "$(ROOT_DIR)bin\$(REPO_NAME).$(BUILD_NAME).unsigned.unaligned.apk"
+	"$(BIN_DIR)$(REPO_NAME).$(BUILD_NAME).unsigned.unaligned.apk" \
+	"$(BIN_DIR)$(REPO_NAME).$(BUILD_NAME).unsigned.apk"
+	@DEL "$(BIN_DIR)$(REPO_NAME).$(BUILD_NAME).unsigned.unaligned.apk"
 # Sign package.
 	@CALL SET "JAVA_HOME=$(JDK_DIR)" && "$(ADK_BUILD_TOOLS_DIR)apksigner.bat" sign \
 		--ks "$(ROOT_DIR)priv\$(REPO_NAME).$(BUILD_NAME).keystore" \
 		--ks-pass pass:android \
 		--ks-key-alias "$(REPO_NAME)_key" \
 		--key-pass pass:android \
-		--out "$(ROOT_DIR)bin\$(REPO_NAME).$(BUILD_NAME).apk" \
-		"$(ROOT_DIR)bin\$(REPO_NAME).$(BUILD_NAME).unsigned.apk"
-	@DEL "$(ROOT_DIR)bin\$(REPO_NAME).$(BUILD_NAME).unsigned.apk"
+		--out "$(BIN_DIR)$(REPO_NAME).$(BUILD_NAME).apk" \
+		"$(BIN_DIR)$(REPO_NAME).$(BUILD_NAME).unsigned.apk"
+	@DEL "$(BIN_DIR)$(REPO_NAME).$(BUILD_NAME).unsigned.apk"
 
 # Precompiled headers.
 $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pch: pch.cpp
