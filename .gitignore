@@ -3,6 +3,10 @@ dev/
 obj/
 priv/
 
+.bin/
+.obj/
+.data/
+
 # Makefile artifacts.
 **.tmp
 **.tmp.*
