@@ -3,6 +3,11 @@
 ## TODO
 
 1. Split up Makefile into easier-to-manage chunks.
+2. Display read percentage for PDFs.
+3. Track directory page in file picker.
+4. Fix off-by-one bug for pages in file picker.
+5. Fix full screen refresh in regal mode when scrolling.
+6. Eraser size/velocity dependence.
 
 ## 1.5.4
 
