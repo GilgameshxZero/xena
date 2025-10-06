@@ -183,9 +183,9 @@ build: build-apk build-exe
 run: run-apk run-exe
 build-apk: version.build.txt "$(BIN_DIR)$(REPO_NAME).$(BUILD_NAME).apk"
 # Build and install. App may not run if timings are off.
-run-apk: "$(ROOT_DIR)bin\$(REPO_NAME).$(BUILD_NAME).apk"
+run-apk: "$(BIN_DIR)$(REPO_NAME).$(BUILD_NAME).apk"
 	@CALL "$(ADK_PLATFORM_TOOLS_DIR)adb.exe" install \
-		"$(ROOT_DIR)bin\$(REPO_NAME).$(BUILD_NAME).apk"
+		"$(BIN_DIR)$(REPO_NAME).$(BUILD_NAME).apk"
 	@ECHO Cooling down after install...
 	@TIMEOUT /T 2 >NUL
 	@CALL "$(ADK_PLATFORM_TOOLS_DIR)adb.exe" shell am start -n \
@@ -227,6 +227,7 @@ clean: shallow-clean
 
 # Increment version number.
 version.build.txt: $(INCL) $(PROJ_SRC) $(PROJ_SRC_JAVA) $(PROJ_SRC_RES)
+# @FOR %%I IN ($?) DO @ECHO Outdated: %%I.
 	@version.bat $(uppercase $(REPO_NAME))
 	@$(MAKE) /C /T version.build.txt
 
