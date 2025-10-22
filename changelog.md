@@ -8,6 +8,8 @@
 4. Fix off-by-one bug for pages in file picker.
 5. Fix full screen refresh in regal mode when scrolling.
 6. Eraser size/velocity dependence.
+7. Fix EXE command line parsing with input file being read as command line value.
+8. Note that Windows EXE “open with” only works with release builds, for some reason.
 
 ## 1.5.4
 

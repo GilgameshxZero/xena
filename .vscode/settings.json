@@ -13,7 +13,7 @@
 
 	"java.settings.url": ".vscode/settings.prefs",
 	"java.project.referencedLibraries": {
-		"include": ["dev/adk-13114758/platforms/android-34/*.jar", "dev/lib/*.jar"]
+		"include": [".data/adk-13114758/platforms/android-34/*.jar", ".data/lib/*.jar"]
 	},
 	"java.inlayHints.parameterNames.enabled": "none",
 
