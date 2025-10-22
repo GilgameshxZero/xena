@@ -168,7 +168,7 @@ public class DrawManager {
 				= new PointF(position.x / zoomScale - viewportOffset.x,
 					position.y / zoomScale - viewportOffset.y);
 
-		if (this.currentPath.points.size() > 1 && Geometry.distance(lastPoint,
+		if (this.currentPath.points.size() >= 1 && Geometry.distance(lastPoint,
 			newPoint) < DrawManager.DRAW_MOVE_EPSILON_PX) {
 			return;
 		}

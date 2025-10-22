@@ -17,13 +17,13 @@
 			"timeout": 1
 		},
 		{
-			"name": "debug-exe",
+			"name": "debug-exe-x64",
 			"type": "cppdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/bin/xena",
+			"program": "${workspaceFolder}/.bin/src/xena.debug.x64",
 			"args": [],
 			"stopAtEntry": false,
-			"cwd": "${workspaceFolder}/bin",
+			"cwd": "${workspaceFolder}/.bin/src",
 			"console": "integratedTerminal",
 			"preLaunchTask": "build-exe-debug",
 			"MIMode": "gdb",
@@ -32,13 +32,13 @@
 			"osx": { "MIMode": "lldb" }
 		},
 		{
-			"name": "release-exe",
+			"name": "release-exe-x64",
 			"type": "cppdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/bin/xena",
+			"program": "${workspaceFolder}/.bin/src/xena.release.x64",
 			"args": [],
 			"stopAtEntry": false,
-			"cwd": "${workspaceFolder}/bin",
+			"cwd": "${workspaceFolder}/.bin/src",
 			"console": "integratedTerminal",
 			"preLaunchTask": "build-exe-release",
 			"MIMode": "gdb",

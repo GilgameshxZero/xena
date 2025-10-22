@@ -24,7 +24,7 @@ namespace Xena {
 		}
 		location = buffer.find("\"", lagger + 11);
 		Rain::Algorithm::Geometry::PointLd viewportPositionLd;
-		ss << buffer.substr(lagger, location);
+		ss << buffer.substr(lagger + 11, location - lagger - 11);
 		ss >> viewportPositionLd.x >> viewportPositionLd.y;
 		this->painter.updateViewportPosition(
 			(viewportPositionLd * -160.0l * Svg::COORDINATE_SCALE_PX /
