@@ -90,9 +90,6 @@ namespace Xena {
 		for (std::size_t i{1}; i < origPoints.size(); i++) {
 			if (origPoints[i].distanceTo(points.back()) >= this->PATH_MIN_DELTA_PX) {
 				dedupPath->addPoint(origPoints[i]);
-			} else if (i != 1) {
-				long double k = origPoints[i].distanceTo(points.back());
-				int j = 1;
 			}
 		}
 		std::unordered_set<PointL> &containingChunks{
