@@ -41,6 +41,7 @@ public class CompoundPath {
 		// PointF constructor only available in API version 30.
 		this.points.add(new PointF(point.x, point.y));
 		this.path.moveTo(point.x, point.y);
+		this.path.lineTo(point.x, point.y);
 		this.bounds.set(point.x, point.y, point.x, point.y);
 		this.callback = callback;
 		this.callback.onPointAdded(this, null, point);
@@ -70,13 +71,17 @@ public class CompoundPath {
 			return false;
 		}
 
-		for (int i = 0; i < points.size() - 1; i++) {
-			if (Geometry.isSegmentsIntersecting(points.get(i), points.get(i + 1),
-				start, end)
-				|| Geometry.distance(points.get(i),
-					start) < CompoundPath.SHORT_DISTANCE_EPS_PX
+		for (int i = 0; i < points.size(); i++) {
+			if (Geometry.distance(points.get(i),
+				start) < CompoundPath.SHORT_DISTANCE_EPS_PX
 				|| Geometry.distance(points.get(i),
 					end) < CompoundPath.SHORT_DISTANCE_EPS_PX) {
+				return true;
+			}
+		}
+		for (int i = 0; i < points.size() - 1; i++) {
+			if (Geometry.isSegmentsIntersecting(points.get(i), points.get(i + 1),
+				start, end)) {
 				return true;
 			}
 		}
