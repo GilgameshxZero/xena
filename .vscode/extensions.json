@@ -1,3 +1,10 @@
 {
-	"recommendations": ["redhat.java", "redhat.vscode-xml"]
+	"recommendations": [
+		"redhat.java",
+		"redhat.vscode-xml",
+		"kylinideteam.cppdebug",
+		"llvm-vs-code-extensions.vscode-clangd",
+		"streetsidesoftware.code-spell-checker",
+		"esbenp.prettier-vscode"
+	]
 }

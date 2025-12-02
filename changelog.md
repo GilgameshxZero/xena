@@ -10,6 +10,7 @@
 6. Eraser size/velocity dependence.
 7. Fix EXE command line parsing with input file being read as command line value.
 8. Note that Windows EXE “open with” only works with release builds, for some reason.
+9. Ensure working with Android 9 (no method `ConcurrentHashMap.keySet()`).
 
 ## 1.5.4
 
