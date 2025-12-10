@@ -74,8 +74,8 @@ public class ScribbleActivity extends BaseActivity
 	private ImageView exit;
 	private ImageView drawPanToggle;
 	private TextView textViewStatus;
-	private ImageView artToggle;
-	private TextView textViewPath;
+	// private ImageView artToggle;
+	// private TextView textViewPath;
 	ImageView drawEraseToggle;
 	private LinearLayout modal;
 	private EditText modalEditX;
@@ -107,8 +107,8 @@ public class ScribbleActivity extends BaseActivity
 		this.exit = findViewById(R.id.scribble_activity_exit);
 		this.drawPanToggle = findViewById(R.id.scribble_activity_draw_pan_toggle);
 		this.textViewStatus = findViewById(R.id.scribble_activity_text_status);
-		this.artToggle = findViewById(R.id.scribble_activity_art_toggle);
-		this.textViewPath = findViewById(R.id.scribble_activity_text_path);
+		// this.artToggle = findViewById(R.id.scribble_activity_art_toggle);
+		// this.textViewPath = findViewById(R.id.scribble_activity_text_path);
 		this.drawEraseToggle
 			= findViewById(R.id.scribble_activity_draw_erase_toggle);
 		this.modal = findViewById(R.id.scribble_activity_modal);
@@ -197,6 +197,10 @@ public class ScribbleActivity extends BaseActivity
 			case R.id.scribble_activity_text_status:
 				XenaApplication
 					.log("ScribbleActivity::onClick: scribble_activity_text_status.");
+				// Also manually save, since we disabled `scribble_activity_text_path`.
+				this.redraw(this.redrawTask.isAwaiting());
+				this.svgFileScribe.saveTask.debounce(0);
+
 				Point pageOffset = this.getPageOffsetAtActivityCenter();
 				this.modalEditX.setText(String.valueOf(pageOffset.x));
 				this.modalEditY.setText(String.valueOf(pageOffset.y));
@@ -213,13 +217,13 @@ public class ScribbleActivity extends BaseActivity
 					case DEFAULT:
 						this.touchHelper.closeRawDrawing();
 						this.brushMode = BrushMode.CHARCOAL;
-						this.artToggle.setBackgroundResource(R.drawable.solid_empty);
+						// this.artToggle.setBackgroundResource(R.drawable.solid_empty);
 						this.openTouchHelperRawDrawing();
 						break;
 					case CHARCOAL:
 						this.touchHelper.closeRawDrawing();
 						this.brushMode = BrushMode.DEFAULT;
-						this.artToggle.setBackgroundResource(R.drawable.dotted_empty);
+						// this.artToggle.setBackgroundResource(R.drawable.dotted_empty);
 						this.openTouchHelperRawDrawing();
 						break;
 				}
@@ -358,9 +362,9 @@ public class ScribbleActivity extends BaseActivity
 	private void refreshTextViewPath(boolean isSaved) {
 		String uriString
 			= this.pdfUri != null ? this.pdfUri.toString() : this.svgUri.toString();
-		this.textViewPath.setText(uriString);
-		this.textViewPath.setBackgroundResource(
-			isSaved ? R.drawable.solid_empty : R.drawable.dotted_empty);
+		// this.textViewPath.setText(uriString);
+		// this.textViewPath.setBackgroundResource(
+		// isSaved ? R.drawable.solid_empty : R.drawable.dotted_empty);
 	}
 
 	private ArrayList<Rect> getRawDrawingExclusions() {
@@ -371,8 +375,8 @@ public class ScribbleActivity extends BaseActivity
 		exclusions.add(this.getViewRect(this.exit));
 		exclusions.add(this.getViewRect(this.drawPanToggle));
 		exclusions.add(this.getViewRect(this.textViewStatus));
-		exclusions.add(this.getViewRect(this.artToggle));
-		exclusions.add(this.getViewRect(this.textViewPath));
+		// exclusions.add(this.getViewRect(this.artToggle));
+		// exclusions.add(this.getViewRect(this.textViewPath));
 		exclusions.add(this.getViewRect(this.drawEraseToggle));
 		return exclusions;
 	}
