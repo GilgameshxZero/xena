@@ -53,7 +53,7 @@
 			android:background="@drawable/solid_empty"
 			android:gravity="center"
 			android:onClick="onClick" />
-		<ImageView android:id="@+id/scribble_activity_art_toggle"
+		<!-- <ImageView android:id="@+id/scribble_activity_art_toggle"
 			android:layout_width="60dp"
 			android:layout_height="60dp"
 			android:layout_marginRight="6dp"
@@ -75,7 +75,7 @@
 			android:ellipsize="start"
 			android:singleLine="true"
 			android:gravity="center"
-			android:onClick="onClick" />
+			android:onClick="onClick" /> -->
 		<ImageView android:id="@+id/scribble_activity_draw_pan_toggle"
 			android:layout_width="60dp"
 			android:layout_height="60dp"

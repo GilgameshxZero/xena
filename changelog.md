@@ -5,12 +5,21 @@
 1. Split up Makefile into easier-to-manage chunks.
 2. Display read percentage for PDFs.
 3. Track directory page in file picker.
-4. Fix off-by-one bug for pages in file picker.
-5. Fix full screen refresh in regal mode when scrolling.
-6. Eraser size/velocity dependence.
-7. Fix EXE command line parsing with input file being read as command line value.
-8. Note that Windows EXE “open with” only works with release builds, for some reason.
-9. Ensure working with Android 9 (no method `ConcurrentHashMap.keySet()`).
+4. Fix full screen refresh in regal mode when scrolling.
+5. Eraser size/velocity dependence.
+6. Fix EXE command line parsing with input file being read as command line value.
+7. Note that Windows EXE “open with” only works with release builds, for some reason.
+
+## 1.5.5
+
+1. Fix off-by-one bug for max pages count in file picker.
+2. Swap `ConcurrentHashMap.keySet()` for `ConcurrentHashMap.keys()` so that it now runs on Android x86.
+3. Misc:
+	1. Standardize build process to hide intermediates and build artifacts.
+	2. Track `R.java`.
+	3. Standardize single-point paths on Android.
+	4. Fix SVG view position loading on Windows.
+	5. Update `rain`.
 
 ## 1.5.4
 

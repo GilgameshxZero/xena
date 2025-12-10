@@ -18,9 +18,10 @@ import android.util.Xml;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.Iterator;
-import java.util.concurrent.ConcurrentHashMap.KeySetView;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.nio.file.Paths;
@@ -257,12 +258,11 @@ public class SvgFileScribe {
 						Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY);
 				StringBuilder stringBuilder = new StringBuilder();
 				// Guarantee order for version control.
-				KeySetView<Integer, CompoundPath> keySetView
-					= pathManager.getPathsKeySetView();
-				Integer[] ids = keySetView.toArray(new Integer[keySetView.size()]);
-				Arrays.sort(ids);
-				for (int i = 0; i < ids.length; i++) {
-					CompoundPath path = pathManager.getPath(ids[i]);
+				Enumeration<Integer> keys = pathManager.getPathsKeys();
+				ArrayList<Integer> ids = Collections.list(keys);
+				ids.sort(null);
+				for (int i = 0; i < ids.size(); i++) {
+					CompoundPath path = pathManager.getPath(ids.get(i));
 					// May be null by concurrency.
 					if (path == null) {
 						continue;

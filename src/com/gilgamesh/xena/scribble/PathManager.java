@@ -2,9 +2,9 @@ package com.gilgamesh.xena.scribble;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentHashMap.KeySetView;
 
 import com.gilgamesh.xena.XenaApplication;
 
@@ -84,8 +84,8 @@ public class PathManager {
 		return this.paths.size();
 	}
 
-	public KeySetView<Integer, CompoundPath> getPathsKeySetView() {
-		return this.paths.keySet();
+	public Enumeration<Integer> getPathsKeys() {
+		return this.paths.keys();
 	}
 
 	// MUST call this function to remove a path iterator. This will remove the

@@ -305,7 +305,7 @@ public class FilePickerActivity extends BaseActivity
 
 		// Wrap listingPage.
 		final int C_PAGES
-			= (filesList.size() + this.PANES_PER_PAGE) / this.PANES_PER_PAGE;
+			= (filesList.size() + this.PANES_PER_PAGE - 1) / this.PANES_PER_PAGE;
 		this.listingPage = (this.listingPage % C_PAGES + C_PAGES) % C_PAGES;
 
 		// Add all panes to listingLayout.
