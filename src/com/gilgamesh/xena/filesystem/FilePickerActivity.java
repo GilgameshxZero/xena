@@ -165,7 +165,7 @@ public class FilePickerActivity extends BaseActivity
 				break;
 			case R.id.file_picker_activity_button_date:
 				this.setEditText(
-					path + "/" + new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
+					path + "/" + new SimpleDateFormat("yyyy_MM_dd").format(new Date()));
 				this.maybeStartScribbleActivity(true);
 				break;
 			case R.id.file_picker_activity_button_svg:

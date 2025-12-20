@@ -6,10 +6,8 @@
 	"editor.tabSize": 2,
 	"files.insertFinalNewline": true,
 	"files.eol": "\n",
-
-	"C_Cpp.default.includePath": ["include/", "rain/include/"],
-	"C_Cpp.default.cppStandard": "c++20",
-	"C_Cpp.autoAddFileAssociations": false,
+	
+	"clangd.fallbackFlags": ["-I${workspaceFolder}/include/", "-I${workspaceFolder}/rain/include/", "-std=c++20"],
 
 	"java.settings.url": ".vscode/settings.prefs",
 	"java.project.referencedLibraries": {
@@ -21,5 +19,4 @@
 		"editor.defaultFormatter": "ms-vscode.cpptools",
 		"editor.wordWrap": "on"
 	},
-	"C_Cpp.errorSquiggles": "disabled"
 }
