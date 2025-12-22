@@ -363,12 +363,13 @@ public class ScribbleActivity extends BaseActivity
 			+ " @ " + Math.round(this.pathManager.getZoomScale() * 100) + "%");
 	}
 
+	// TODO: Rename to reflect new usage.
 	private void refreshTextViewPath(boolean isSaved) {
-		String uriString
-			= this.pdfUri != null ? this.pdfUri.toString() : this.svgUri.toString();
+		// String uriString
+		// = this.pdfUri != null ? this.pdfUri.toString() : this.svgUri.toString();
 		// this.textViewPath.setText(uriString);
-		// this.textViewPath.setBackgroundResource(
-		// isSaved ? R.drawable.solid_empty : R.drawable.dotted_empty);
+		this.textViewStatus.setBackgroundResource(
+			isSaved ? R.drawable.solid_empty : R.drawable.dotted_empty);
 	}
 
 	private ArrayList<Rect> getRawDrawingExclusions() {
