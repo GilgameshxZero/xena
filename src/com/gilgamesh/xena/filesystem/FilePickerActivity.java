@@ -23,6 +23,7 @@ import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,6 +38,9 @@ public class FilePickerActivity extends BaseActivity
 		= "SHARED_PREFERENCES_EDIT_TEXT";
 	static private final String EDIT_TEXT_DEFAULT
 		= Environment.getExternalStorageDirectory().toString();
+	static private final String SHARED_PREFERENCES_LISTING_PAGE
+		= "SHARED_PREFERENCES_LISTING_PAGE";
+	static private final int LISTING_PAGE_DEFAULT = 0;
 
 	static private final Point MIN_PANE_SIZE_DP = new Point(400, 105);
 	static private final Point MIN_PANE_SIZE_PX
@@ -68,7 +72,7 @@ public class FilePickerActivity extends BaseActivity
 	private boolean tentativeModalEditPanUpdateState;
 	private boolean ready = false;
 
-	int listingPage = 0;
+	int listingPage;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -132,6 +136,11 @@ public class FilePickerActivity extends BaseActivity
 			FilePickerActivity.MARGIN_SIZE_PX);
 
 		// Update listingLayout only after layout is ready.
+		this.listingPage
+			= XenaApplication.preferences.getInt(
+				FilePickerActivity.SHARED_PREFERENCES_LISTING_PAGE,
+				FilePickerActivity.LISTING_PAGE_DEFAULT);
+		XenaApplication.log("Retrieved listing page: ", this.listingPage, ".");
 		XenaApplication.log("FilePickerActivity::onListingReady: LISTING_SIZE = (",
 			this.LISTING_SIZE.x, ", ", this.LISTING_SIZE.y, "), GRID_DIMENSIONS = (",
 			this.GRID_DIMENSIONS, "), PANE_SIZE = (", this.PANE_SIZE, ").");
@@ -148,9 +157,6 @@ public class FilePickerActivity extends BaseActivity
 			case R.id.file_picker_activity_button_settings:
 				this.modalEditPalm
 					.setText(String.valueOf(XenaApplication.getPalmTouchThreshold()));
-				this.setEditText(XenaApplication.preferences.getString(
-					FilePickerActivity.SHARED_PREFERENCES_EDIT_TEXT,
-					Environment.getExternalStorageDirectory().toString() + "/"));
 				this.tentativeModalEditPanUpdateState
 					= XenaApplication.getPanUpdateEnabled();
 				this.modalEditPanUpdate
@@ -164,12 +170,11 @@ public class FilePickerActivity extends BaseActivity
 				this.modal.setVisibility(View.VISIBLE);
 				break;
 			case R.id.file_picker_activity_button_date:
-				this.setEditText(
+				this.maybeStartScribbleActivity(true,
 					path + "/" + new SimpleDateFormat("yyyy_MM_dd").format(new Date()));
-				this.maybeStartScribbleActivity(true);
 				break;
 			case R.id.file_picker_activity_button_svg:
-				this.maybeStartScribbleActivity(true);
+				this.maybeStartScribbleActivity(true, null);
 				break;
 			case R.id.file_picker_activity_modal_edit_pan_update:
 				this.tentativeModalEditPanUpdateState
@@ -198,10 +203,10 @@ public class FilePickerActivity extends BaseActivity
 				String text = ((TextView) view).getText().toString();
 				XenaApplication.log("FilePickerActivity::onClick: Pane, text = \"",
 					text, "\".");
-				this.setEditText(text.equals("../")
-					? path.substring(0, path.lastIndexOf('/')) + "/"
-					: path + "/" + text);
-				this.maybeStartScribbleActivity(false);
+				this.maybeStartScribbleActivity(false,
+					text.equals("../")
+						? path.substring(0, path.lastIndexOf('/')) + "/"
+						: path + "/" + text);
 				break;
 		}
 	}
@@ -230,13 +235,18 @@ public class FilePickerActivity extends BaseActivity
 
 	// Attempts starting scribble activity using the current path file. Only
 	// starts it if it is of type .svg or .pdf, or forceStart is set.
-	private void maybeStartScribbleActivity(boolean forceStart) {
-		String path = this.editText.getText().toString();
+	private void maybeStartScribbleActivity(boolean forceStart,
+		String forcePath) {
+		String editTextString = this.editText.getText().toString(),
+			path = forcePath == null ? editTextString : forcePath;
 
 		// Update shared preferences to current path.
 		SharedPreferences.Editor editor = XenaApplication.preferences.edit();
 		editor.putString(FilePickerActivity.SHARED_PREFERENCES_EDIT_TEXT, path);
+		editor.putInt(FilePickerActivity.SHARED_PREFERENCES_LISTING_PAGE,
+			this.listingPage);
 		editor.commit();
+		XenaApplication.log("Set listing page: ", this.listingPage, ".");
 
 		// Case based on extension.
 		int extensionSeparator = path.lastIndexOf('.');
@@ -258,6 +268,10 @@ public class FilePickerActivity extends BaseActivity
 			this.startActivity(new Intent(this, ScribbleActivity.class)
 				.setAction(Intent.ACTION_RUN).addCategory(Intent.CATEGORY_DEFAULT)
 				.putExtra(ScribbleActivity.EXTRA_SVG_PATH, path + ".svg"));
+		} else if (forcePath != null) {
+			// If we are forcing a path but did not start an activity, update the edit
+			// text instead.
+			this.setEditText(forcePath);
 		}
 	}
 
@@ -277,11 +291,19 @@ public class FilePickerActivity extends BaseActivity
 
 		// Get files in current directory.
 		String path = this.editText.getText().toString();
-		path = path.substring(0, path.lastIndexOf('/'));
+		int lastPathSeparatorIdx = path.lastIndexOf('/');
+		String prefix = path.substring(lastPathSeparatorIdx + 1);
+		path = path.substring(0, lastPathSeparatorIdx);
 		XenaApplication.log("FilePickerActivity::refreshListing: path = \"", path,
 			"\".");
 
-		File[] files = new File(path).listFiles();
+		// List both files and directories.
+		File[] files = new File(path).listFiles(new FilenameFilter() {
+			@Override
+			public boolean accept(File file, String name) {
+				return name.startsWith(prefix);
+			}
+		});
 		if (files == null) {
 			files = new File[0];
 		}
@@ -306,7 +328,7 @@ public class FilePickerActivity extends BaseActivity
 		// Wrap listingPage.
 		final int C_PAGES
 			= (filesList.size() + this.PANES_PER_PAGE - 1) / this.PANES_PER_PAGE;
-		this.listingPage = (this.listingPage % C_PAGES + C_PAGES) % C_PAGES;
+		this.listingPage = (this.listingPage + C_PAGES) % C_PAGES;
 
 		// Add all panes to listingLayout.
 		for (int i = 0; i < this.GRID_DIMENSIONS.y; i++) {
