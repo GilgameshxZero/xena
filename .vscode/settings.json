@@ -16,7 +16,7 @@
 	"java.inlayHints.parameterNames.enabled": "none",
 
 	"[cpp]": {
-		"editor.defaultFormatter": "ms-vscode.cpptools",
+		"editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
 		"editor.wordWrap": "on"
 	},
 }
