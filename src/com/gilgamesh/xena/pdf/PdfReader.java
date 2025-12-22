@@ -90,6 +90,12 @@ public class PdfReader {
 		}
 	}
 
+	// Returns 0 if not yet ready.
+	public float getBottomY() {
+		PageBitmap page = this.pages[this.pages.length - 1];
+		return page == null ? 0 : page.location.bottom;
+	}
+
 	private PageBitmap getBitmapForPage(int pageIdx, boolean preload) {
 		// Do nothing if not yet ready, since we cannot open multiple pages at once.
 		if (pageIdx < 0 || pageIdx >= this.pages.length) {

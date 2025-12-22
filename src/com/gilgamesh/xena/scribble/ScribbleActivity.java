@@ -355,8 +355,12 @@ public class ScribbleActivity extends BaseActivity
 
 	void refreshTextViewStatus() {
 		Point pageOffset = this.getPageOffsetAtActivityCenter();
-		this.textViewStatus.setText(pageOffset.x + ", " + pageOffset.y + " @ "
-			+ Math.round(this.pathManager.getZoomScale() * 100) + "%");
+		this.textViewStatus.setText(pageOffset.x + ", " + pageOffset.y
+			+ (this.pdfUri != null
+				? "/" + Math.round(Math.ceil(
+					this.pdfReader.getBottomY() / ScribbleActivity.PIXELS_PER_PAGE.y))
+				: "")
+			+ " @ " + Math.round(this.pathManager.getZoomScale() * 100) + "%");
 	}
 
 	private void refreshTextViewPath(boolean isSaved) {
