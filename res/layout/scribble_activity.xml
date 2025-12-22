@@ -41,7 +41,7 @@
 			android:background="@drawable/dotted_empty"
 			android:onClick="onClick" />
 		<TextView android:id="@+id/scribble_activity_text_status"
-			android:layout_width="300dp"
+			android:layout_width="360dp"
 			android:layout_height="60dp"
 			android:layout_marginRight="6dp"
 			android:paddingLeft="12dp"

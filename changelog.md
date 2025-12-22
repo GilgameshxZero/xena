@@ -3,13 +3,10 @@
 ## TODO
 
 1. Split up Makefile into easier-to-manage chunks.
-2. Display read percentage for PDFs.
-3. Track directory page in file picker.
-4. Fix full screen refresh in regal mode when scrolling.
-	1. May not be relevant anymore.
-5. Eraser size/velocity dependence.
-6. Fix EXE command line parsing with input file being read as command line value.
-7. Note that Windows EXE “open with” only works with release builds, for some reason.
+2. Eraser size/velocity dependence.
+3. Fix EXE command line parsing with input file being read as command line value.
+4. Note that Windows EXE “open with” only works with release builds, for some reason.
+5. Wayland/Linux native app.
 
 ## 1.5.6
 
