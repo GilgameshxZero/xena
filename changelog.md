@@ -8,6 +8,12 @@
 4. Note that Windows EXE “open with” only works with release builds, for some reason.
 5. Wayland/Linux native app.
 
+## 1.5.7
+
+1. Add total page count in PDF `ScribbleActivity`.
+2. Allow prefix filtering in `FilePickerActivity`.
+3. `FilePickerActivity` now retains listing page when entering/exiting. Listing page is not retained when moving up the directory tree; this may be changed in the future.
+
 ## 1.5.6
 
 1. "Date" button uses `yyyy_MM_dd.svg` format instead of `yyyy-MM-dd.svg` format.
