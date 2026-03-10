@@ -63,12 +63,14 @@ public class FilePickerActivity extends BaseActivity
 	private LinearLayout listingLayout;
 	private LinearLayout modal;
 	private EditText modalEditPalm;
+	private ImageView modalEditSmallControls;
 	private ImageView modalEditPanUpdate;
 	private EditText modalEditDrawRefresh;
 	private EditText modalEditFlickDistance;
 
 	private FilePickerTouchManager touchManager;
 
+	private boolean tentativeModalEditSmallControlsState;
 	private boolean tentativeModalEditPanUpdateState;
 	private boolean ready = false;
 
@@ -81,6 +83,8 @@ public class FilePickerActivity extends BaseActivity
 		this.editText = findViewById(R.id.file_picker_activity_edit_text);
 		this.listingLayout = findViewById(R.id.file_picker_activity_layout_listing);
 		this.modal = findViewById(R.id.file_picker_activity_modal);
+		this.modalEditSmallControls
+			= findViewById(R.id.file_picker_activity_modal_edit_small_controls);
 		this.modalEditPalm
 			= findViewById(R.id.file_picker_activity_modal_edit_palm);
 		this.modalEditPanUpdate
@@ -157,8 +161,14 @@ public class FilePickerActivity extends BaseActivity
 			case R.id.file_picker_activity_button_settings:
 				this.modalEditPalm
 					.setText(String.valueOf(XenaApplication.getPalmTouchThreshold()));
+				this.tentativeModalEditSmallControlsState
+					= XenaApplication.getSmallControlsEnabled();
 				this.tentativeModalEditPanUpdateState
 					= XenaApplication.getPanUpdateEnabled();
+				this.modalEditSmallControls
+					.setBackgroundResource(this.tentativeModalEditSmallControlsState
+						? R.drawable.solid_filled
+						: R.drawable.solid_empty);
 				this.modalEditPanUpdate
 					.setBackgroundResource(this.tentativeModalEditPanUpdateState
 						? R.drawable.solid_filled
@@ -176,6 +186,14 @@ public class FilePickerActivity extends BaseActivity
 			case R.id.file_picker_activity_button_svg:
 				this.maybeStartScribbleActivity(true, null);
 				break;
+			case R.id.file_picker_activity_modal_edit_small_controls:
+				this.tentativeModalEditSmallControlsState
+					= !this.tentativeModalEditSmallControlsState;
+				this.modalEditSmallControls
+					.setBackgroundResource(this.tentativeModalEditSmallControlsState
+						? R.drawable.solid_filled
+						: R.drawable.solid_empty);
+				break;
 			case R.id.file_picker_activity_modal_edit_pan_update:
 				this.tentativeModalEditPanUpdateState
 					= !this.tentativeModalEditPanUpdateState;
@@ -190,6 +208,8 @@ public class FilePickerActivity extends BaseActivity
 			case R.id.file_picker_activity_modal_button_set:
 				XenaApplication.setPalmTouchThreshold(
 					Integer.parseInt(this.modalEditPalm.getText().toString()));
+				XenaApplication
+					.setSmallControlsEnabled(this.tentativeModalEditSmallControlsState);
 				XenaApplication
 					.setPanUpdateEnabled(this.tentativeModalEditPanUpdateState);
 				XenaApplication.setDrawEndRefresh(

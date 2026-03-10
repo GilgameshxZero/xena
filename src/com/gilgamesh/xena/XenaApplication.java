@@ -23,6 +23,10 @@ public class XenaApplication extends Application {
 		= "SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD";
 	static private final int PALM_TOUCH_THRESHOLD_DEFAULT = 9999;
 	static private int PALM_TOUCH_THRESHOLD;
+	static private final String SHARED_PREFERENCES_SMALL_CONTROLS_ENABLED
+		= "SHARED_PREFERENCES_SMALL_CONTROLS_ENABLED";
+	static private final boolean SMALL_CONTROLS_ENABLED_DEFAULT = false;
+	static private boolean SMALL_CONTROLS_ENABLED;
 	static private final String SHARED_PREFERENCES_PAN_UPDATE_ENABLED
 		= "SHARED_PREFERENCES_PAN_UPDATE_ENABLED";
 	static private final boolean PAN_UPDATE_ENABLED_DEFAULT = true;
@@ -51,6 +55,10 @@ public class XenaApplication extends Application {
 			= XenaApplication.preferences.getInt(
 				XenaApplication.SHARED_PREFERENCES_PALM_TOUCH_THRESHOLD,
 				XenaApplication.PALM_TOUCH_THRESHOLD_DEFAULT);
+		XenaApplication.SMALL_CONTROLS_ENABLED
+			= XenaApplication.preferences.getBoolean(
+				XenaApplication.SHARED_PREFERENCES_SMALL_CONTROLS_ENABLED,
+				XenaApplication.SMALL_CONTROLS_ENABLED_DEFAULT);
 		XenaApplication.PAN_UPDATE_ENABLED
 			= XenaApplication.preferences.getBoolean(
 				XenaApplication.SHARED_PREFERENCES_PAN_UPDATE_ENABLED,
@@ -106,6 +114,19 @@ public class XenaApplication extends Application {
 
 	static public int getPalmTouchThreshold() {
 		return XenaApplication.PALM_TOUCH_THRESHOLD;
+	}
+
+	static public void setSmallControlsEnabled(boolean value) {
+		XenaApplication.SMALL_CONTROLS_ENABLED = value;
+
+		SharedPreferences.Editor editor = XenaApplication.preferences.edit();
+		editor.putBoolean(XenaApplication.SHARED_PREFERENCES_SMALL_CONTROLS_ENABLED,
+			value);
+		editor.commit();
+	}
+
+	static public boolean getSmallControlsEnabled() {
+		return XenaApplication.SMALL_CONTROLS_ENABLED;
 	}
 
 	static public void setPanUpdateEnabled(boolean value) {

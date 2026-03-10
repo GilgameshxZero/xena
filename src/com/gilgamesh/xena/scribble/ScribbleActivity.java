@@ -74,6 +74,7 @@ public class ScribbleActivity extends BaseActivity
 	private ImageView exit;
 	private ImageView drawPanToggle;
 	private TextView textViewStatus;
+	private ImageView textViewStatusSmall;
 	// private ImageView artToggle;
 	// private TextView textViewPath;
 	ImageView drawEraseToggle;
@@ -107,6 +108,7 @@ public class ScribbleActivity extends BaseActivity
 		this.exit = findViewById(R.id.scribble_activity_exit);
 		this.drawPanToggle = findViewById(R.id.scribble_activity_draw_pan_toggle);
 		this.textViewStatus = findViewById(R.id.scribble_activity_text_status);
+		this.textViewStatusSmall = findViewById(R.id.scribble_activity_text_status_small);
 		// this.artToggle = findViewById(R.id.scribble_activity_art_toggle);
 		// this.textViewPath = findViewById(R.id.scribble_activity_text_path);
 		this.drawEraseToggle
@@ -124,6 +126,12 @@ public class ScribbleActivity extends BaseActivity
 				onScribbleViewReady();
 			}
 		});
+
+		if (XenaApplication.getSmallControlsEnabled()) {
+			this.textViewStatus.setVisibility(View.GONE);
+		} else {
+			this.textViewStatusSmall.setVisibility(View.GONE);
+		}
 	}
 
 	@Override
@@ -195,6 +203,7 @@ public class ScribbleActivity extends BaseActivity
 				this.redraw(this.redrawTask.isAwaiting());
 				break;
 			case R.id.scribble_activity_text_status:
+			case R.id.scribble_activity_text_status_small:
 				XenaApplication
 					.log("ScribbleActivity::onClick: scribble_activity_text_status.");
 				// Also manually save, since we disabled `scribble_activity_text_path`.
@@ -369,6 +378,8 @@ public class ScribbleActivity extends BaseActivity
 		// = this.pdfUri != null ? this.pdfUri.toString() : this.svgUri.toString();
 		// this.textViewPath.setText(uriString);
 		this.textViewStatus.setBackgroundResource(
+			isSaved ? R.drawable.solid_empty : R.drawable.dotted_empty);
+		this.textViewStatusSmall.setBackgroundResource(
 			isSaved ? R.drawable.solid_empty : R.drawable.dotted_empty);
 	}
 

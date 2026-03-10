@@ -8,6 +8,10 @@
 4. Note that Windows EXE “open with” only works with release builds, for some reason.
 5. Wayland/Linux native app.
 
+## 1.5.8
+
+1. Add “small controls” toggle for extremely narrow screens.
+
 ## 1.5.7
 
 1. Add total page count in PDF `ScribbleActivity`.

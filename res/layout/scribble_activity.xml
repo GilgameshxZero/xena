@@ -53,6 +53,14 @@
 			android:background="@drawable/solid_empty"
 			android:gravity="center"
 			android:onClick="onClick" />
+		<ImageView android:id="@+id/scribble_activity_text_status_small"
+			android:layout_width="60dp"
+			android:layout_height="60dp"
+			android:layout_marginRight="6dp"
+			android:padding="6dp"
+			android:src="@drawable/xena"
+			android:background="@drawable/solid_empty"
+			android:onClick="onClick" />
 		<!-- <ImageView android:id="@+id/scribble_activity_art_toggle"
 			android:layout_width="60dp"
 			android:layout_height="60dp"

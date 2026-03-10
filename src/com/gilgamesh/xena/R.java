@@ -36,6 +36,7 @@ public final class R {
         public static final int file_picker_activity_modal_edit_flick_distance=0x7f04000a;
         public static final int file_picker_activity_modal_edit_palm=0x7f040007;
         public static final int file_picker_activity_modal_edit_pan_update=0x7f040008;
+        public static final int file_picker_activity_modal_edit_small_controls=0x7f04001c;
         public static final int scribble_activity=0x7f04000d;
         public static final int scribble_activity_art_toggle=0x7f040013;
         public static final int scribble_activity_controls=0x7f04000f;
@@ -51,6 +52,7 @@ public final class R {
         public static final int scribble_activity_scribble_view=0x7f04000e;
         public static final int scribble_activity_text_path=0x7f040012;
         public static final int scribble_activity_text_status=0x7f040014;
+        public static final int scribble_activity_text_status_small=0x7f04001d;
     }
     public static final class layout {
         public static final int file_picker_activity=0x7f030000;

@@ -29,6 +29,35 @@
 				android:textColor="@android:color/black"
 				android:textSize="34dp"
 				android:background="@android:color/white"
+				android:text="Small controls:" />
+			<ImageView android:id="@+id/file_picker_activity_modal_edit_small_controls"
+				android:layout_width="60dp"
+				android:layout_height="60dp"
+				android:layout_margin="6dp"
+				android:paddingLeft="12dp"
+				android:paddingTop="6dp"
+				android:paddingRight="12dp"
+				android:paddingBottom="6dp"
+				android:background="@drawable/solid_filled"
+				android:onClick="onClick" />
+		</LinearLayout>
+		<LinearLayout
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:orientation="horizontal"
+			android:gravity="center"
+			android:background="@android:color/white">
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="60dp"
+				android:layout_margin="6dp"
+				android:paddingLeft="12dp"
+				android:paddingTop="6dp"
+				android:paddingRight="12dp"
+				android:paddingBottom="6dp"
+				android:textColor="@android:color/black"
+				android:textSize="34dp"
+				android:background="@android:color/white"
 				android:text="Palm threshold:" />
 			<EditText android:id="@+id/file_picker_activity_modal_edit_palm"
 				android:layout_width="200dp"
