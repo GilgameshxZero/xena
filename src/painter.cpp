@@ -80,7 +80,7 @@ namespace Xena {
 
 	void Painter::addPath(std::shared_ptr<Path const> const &path) {
 		// Adding an existing path ID is not allowed.
-		assert(this->paths.count(path->ID) == 0);
+		Rain::Error::debugAssert(this->paths.count(path->ID) == 0);
 
 		// Deduplicate close points.
 		std::shared_ptr<Path> dedupPath(new Path);
@@ -134,7 +134,7 @@ namespace Xena {
 	}
 	void Painter::removePath(std::size_t pathId) {
 		auto it{this->paths.find(pathId)};
-		assert(it != this->paths.end());
+		Rain::Error::debugAssert(it != this->paths.end());
 		std::shared_ptr<Path const> &path{it->second.first};
 		std::unordered_set<PointL> &containingChunks{it->second.second};
 		for (PointL const &coordinate : containingChunks) {

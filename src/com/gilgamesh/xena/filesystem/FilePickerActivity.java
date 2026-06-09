@@ -64,6 +64,7 @@ public class FilePickerActivity extends BaseActivity
 	private LinearLayout modal;
 	private EditText modalEditPalm;
 	private ImageView modalEditSmallControls;
+	private ImageView modalEditHoverMarker;
 	private ImageView modalEditPanUpdate;
 	private EditText modalEditDrawRefresh;
 	private EditText modalEditFlickDistance;
@@ -71,6 +72,7 @@ public class FilePickerActivity extends BaseActivity
 	private FilePickerTouchManager touchManager;
 
 	private boolean tentativeModalEditSmallControlsState;
+	private boolean tentativeModalEditHoverMarkerState;
 	private boolean tentativeModalEditPanUpdateState;
 	private boolean ready = false;
 
@@ -85,6 +87,8 @@ public class FilePickerActivity extends BaseActivity
 		this.modal = findViewById(R.id.file_picker_activity_modal);
 		this.modalEditSmallControls
 			= findViewById(R.id.file_picker_activity_modal_edit_small_controls);
+		this.modalEditHoverMarker
+			= findViewById(R.id.file_picker_activity_modal_edit_hover_marker);
 		this.modalEditPalm
 			= findViewById(R.id.file_picker_activity_modal_edit_palm);
 		this.modalEditPanUpdate
@@ -163,10 +167,16 @@ public class FilePickerActivity extends BaseActivity
 					.setText(String.valueOf(XenaApplication.getPalmTouchThreshold()));
 				this.tentativeModalEditSmallControlsState
 					= XenaApplication.getSmallControlsEnabled();
+				this.tentativeModalEditHoverMarkerState
+					= XenaApplication.getHoverMarkerEnabled();
 				this.tentativeModalEditPanUpdateState
 					= XenaApplication.getPanUpdateEnabled();
 				this.modalEditSmallControls
 					.setBackgroundResource(this.tentativeModalEditSmallControlsState
+						? R.drawable.solid_filled
+						: R.drawable.solid_empty);
+				this.modalEditHoverMarker
+					.setBackgroundResource(this.tentativeModalEditHoverMarkerState
 						? R.drawable.solid_filled
 						: R.drawable.solid_empty);
 				this.modalEditPanUpdate
@@ -194,6 +204,14 @@ public class FilePickerActivity extends BaseActivity
 						? R.drawable.solid_filled
 						: R.drawable.solid_empty);
 				break;
+			case R.id.file_picker_activity_modal_edit_hover_marker:
+				this.tentativeModalEditHoverMarkerState
+					= !this.tentativeModalEditHoverMarkerState;
+				this.modalEditHoverMarker
+					.setBackgroundResource(this.tentativeModalEditHoverMarkerState
+						? R.drawable.solid_filled
+						: R.drawable.solid_empty);
+				break;
 			case R.id.file_picker_activity_modal_edit_pan_update:
 				this.tentativeModalEditPanUpdateState
 					= !this.tentativeModalEditPanUpdateState;
@@ -210,6 +228,8 @@ public class FilePickerActivity extends BaseActivity
 					Integer.parseInt(this.modalEditPalm.getText().toString()));
 				XenaApplication
 					.setSmallControlsEnabled(this.tentativeModalEditSmallControlsState);
+				XenaApplication
+					.setHoverMarkerEnabled(this.tentativeModalEditHoverMarkerState);
 				XenaApplication
 					.setPanUpdateEnabled(this.tentativeModalEditPanUpdateState);
 				XenaApplication.setDrawEndRefresh(

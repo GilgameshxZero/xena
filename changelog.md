@@ -8,6 +8,11 @@
 4. Note that Windows EXE “open with” only works with release builds, for some reason.
 5. Wayland/Linux native app.
 
+## 1.5.9
+
+1. Added “hover marker” toggle to display a tracker for pen hover, useful for screen sharing.
+2. Bump `rain` and include some new practices (besides makefile, which requires more effort).
+
 ## 1.5.8
 
 1. Add “small controls” toggle for extremely narrow screens.

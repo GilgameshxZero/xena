@@ -1,3 +1,12 @@
+@REM Proxy file that calls `nmake` with evaluated wildcards.
+@ECHO OFF
+
+@REM Inject `nmake` with `vcvars` if not yet available.
+WHERE nmake >NUL 2>NUL
+IF %ERRORLEVEL% NEQ 0 (
+	CALL "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
+)
+
 @REM Proxy file that calls nmake with INCL set to all header directories.
 @ECHO OFF
 SETLOCAL ENABLEDELAYEDEXPANSION

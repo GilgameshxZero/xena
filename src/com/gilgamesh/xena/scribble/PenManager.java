@@ -1,5 +1,7 @@
 package com.gilgamesh.xena.scribble;
 
+import com.gilgamesh.multithreading.DebouncedTask;
+import com.gilgamesh.xena.XenaApplication;
 import com.onyx.android.sdk.data.note.TouchPoint;
 import com.onyx.android.sdk.pen.data.TouchPointList;
 import com.onyx.android.sdk.pen.RawInputCallback;
@@ -9,6 +11,19 @@ import android.graphics.RectF;
 
 public class PenManager extends RawInputCallback {
 	private ScribbleActivity scribbleActivity;
+
+	final DebouncedTask unHoverTask
+		= new DebouncedTask(new DebouncedTask.Callback() {
+			@Override
+			public void onRun() {
+				XenaApplication.log("PenManager::unHoverTask.");
+				scribbleActivity.hoverView.location.x
+					= -ScribbleActivity.STROKE_WIDTH_PX;
+				scribbleActivity.hoverView.location.y
+					= -ScribbleActivity.STROKE_WIDTH_PX;
+				scribbleActivity.hoverView.postInvalidate();
+			}
+		});
 
 	public PenManager(ScribbleActivity scribbleActivity) {
 		this.scribbleActivity = scribbleActivity;
@@ -103,6 +118,13 @@ public class PenManager extends RawInputCallback {
 
 	@Override
 	public void onPenActive(TouchPoint touchPoint) {
+		if (!XenaApplication.getHoverMarkerEnabled()) {
+			return;
+		}
+		this.scribbleActivity.hoverView.location.x = touchPoint.x;
+		this.scribbleActivity.hoverView.location.y = touchPoint.y;
+		this.scribbleActivity.hoverView.invalidate();
+		this.unHoverTask.debounce(1000);
 	}
 
 	@Override

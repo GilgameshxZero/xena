@@ -34,6 +34,7 @@ public final class R {
         public static final int file_picker_activity_modal_button_set=0x7f04000c;
         public static final int file_picker_activity_modal_edit_draw_refresh=0x7f040009;
         public static final int file_picker_activity_modal_edit_flick_distance=0x7f04000a;
+        public static final int file_picker_activity_modal_edit_hover_marker=0x7f04001d;
         public static final int file_picker_activity_modal_edit_palm=0x7f040007;
         public static final int file_picker_activity_modal_edit_pan_update=0x7f040008;
         public static final int file_picker_activity_modal_edit_small_controls=0x7f04001c;
@@ -43,6 +44,7 @@ public final class R {
         public static final int scribble_activity_draw_erase_toggle=0x7f040015;
         public static final int scribble_activity_draw_pan_toggle=0x7f040011;
         public static final int scribble_activity_exit=0x7f040010;
+        public static final int scribble_activity_hover_view=0x7f04001e;
         public static final int scribble_activity_modal=0x7f040016;
         public static final int scribble_activity_modal_button_cancel=0x7f04001a;
         public static final int scribble_activity_modal_button_set=0x7f04001b;
@@ -52,7 +54,7 @@ public final class R {
         public static final int scribble_activity_scribble_view=0x7f04000e;
         public static final int scribble_activity_text_path=0x7f040012;
         public static final int scribble_activity_text_status=0x7f040014;
-        public static final int scribble_activity_text_status_small=0x7f04001d;
+        public static final int scribble_activity_text_status_small=0x7f04001f;
     }
     public static final class layout {
         public static final int file_picker_activity=0x7f030000;

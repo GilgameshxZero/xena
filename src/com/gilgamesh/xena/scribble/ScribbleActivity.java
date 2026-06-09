@@ -67,6 +67,7 @@ public class ScribbleActivity extends BaseActivity
 
 	// General aliases.
 	ScribbleView scribbleView;
+	HoverView hoverView;
 	TouchHelper touchHelper;
 	Uri svgUri;
 	// pdfUri is null if no PDF is loaded.
@@ -119,6 +120,7 @@ public class ScribbleActivity extends BaseActivity
 		this.modalEditZoom = findViewById(R.id.scribble_activity_modal_edit_zoom);
 
 		this.scribbleView = findViewById(R.id.scribble_activity_scribble_view);
+		this.hoverView = findViewById(R.id.scribble_activity_hover_view);
 		this.scribbleView.scribbleActivity = this;
 		this.scribbleView.post(new Runnable() {
 			@Override

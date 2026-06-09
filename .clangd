@@ -1,4 +1,7 @@
 Completion:
   ArgumentLists: None
+  HeaderInsertion: Never
 InlayHints:
   Enabled: No
+Diagnostics:
+  UnusedIncludes: None

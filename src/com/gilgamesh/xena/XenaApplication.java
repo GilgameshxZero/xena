@@ -27,6 +27,10 @@ public class XenaApplication extends Application {
 		= "SHARED_PREFERENCES_SMALL_CONTROLS_ENABLED";
 	static private final boolean SMALL_CONTROLS_ENABLED_DEFAULT = false;
 	static private boolean SMALL_CONTROLS_ENABLED;
+	static private final String SHARED_PREFERENCES_HOVER_MARKER_ENABLED
+		= "SHARED_PREFERENCES_HOVER_MARKER_ENABLED";
+	static private final boolean HOVER_MARKER_ENABLED_DEFAULT = false;
+	static private boolean HOVER_MARKER_ENABLED;
 	static private final String SHARED_PREFERENCES_PAN_UPDATE_ENABLED
 		= "SHARED_PREFERENCES_PAN_UPDATE_ENABLED";
 	static private final boolean PAN_UPDATE_ENABLED_DEFAULT = true;
@@ -59,6 +63,10 @@ public class XenaApplication extends Application {
 			= XenaApplication.preferences.getBoolean(
 				XenaApplication.SHARED_PREFERENCES_SMALL_CONTROLS_ENABLED,
 				XenaApplication.SMALL_CONTROLS_ENABLED_DEFAULT);
+		XenaApplication.HOVER_MARKER_ENABLED
+			= XenaApplication.preferences.getBoolean(
+				XenaApplication.SHARED_PREFERENCES_HOVER_MARKER_ENABLED,
+				XenaApplication.HOVER_MARKER_ENABLED_DEFAULT);
 		XenaApplication.PAN_UPDATE_ENABLED
 			= XenaApplication.preferences.getBoolean(
 				XenaApplication.SHARED_PREFERENCES_PAN_UPDATE_ENABLED,
@@ -127,6 +135,19 @@ public class XenaApplication extends Application {
 
 	static public boolean getSmallControlsEnabled() {
 		return XenaApplication.SMALL_CONTROLS_ENABLED;
+	}
+
+	static public void setHoverMarkerEnabled(boolean value) {
+		XenaApplication.HOVER_MARKER_ENABLED = value;
+
+		SharedPreferences.Editor editor = XenaApplication.preferences.edit();
+		editor.putBoolean(XenaApplication.SHARED_PREFERENCES_HOVER_MARKER_ENABLED,
+			value);
+		editor.commit();
+	}
+
+	static public boolean getHoverMarkerEnabled() {
+		return XenaApplication.HOVER_MARKER_ENABLED;
 	}
 
 	static public void setPanUpdateEnabled(boolean value) {

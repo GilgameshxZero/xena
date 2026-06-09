@@ -12,6 +12,13 @@
 		android:layout_alignParentLeft="true"
 		android:layout_alignParentTop="true"
 	/>
+	<com.gilgamesh.xena.scribble.HoverView
+		android:id="@+id/scribble_activity_hover_view"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:layout_alignParentLeft="true"
+		android:layout_alignParentTop="true"
+	/>
 	<LinearLayout android:id="@+id/scribble_activity_controls"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
